@@ -1,0 +1,29 @@
+
+
+
+### **Mô tả cấu trúc thư mục:**
+```
+ ──cmd              // 1. Chứa các entry points (hàm main) để khởi chạy ứng dụng
+│   ├───cli         // Chạy lệnh thủ công qua command line (VD: seed data, tạo admin)
+│   ├───cronjob     // Chạy các tác vụ định kỳ theo lịch (VD: gửi email, dọn dữ liệu cũ)
+│   └───server      // Khởi động HTTP server chính của ứng dụng
+├───configs         // 2. Chứa file cấu hình (VD: config.yaml - DB, port, JWT secret, ...)
+├───docs            // 3. Tài liệu dự án (VD: Swagger/OpenAPI spec, hướng dẫn API)
+├───internal        // 4. Code CORE - Go tự chặn, package bên ngoài KHÔNG import được
+│   ├───controller  // Nhận request, parse & validate input, gọi service, trả response
+│   ├───initialize  // Khởi tạo các thành phần khi app start (DB, Redis, logger, DI)
+│   ├───middleware  // Xử lý trước/sau mỗi request (VD: Auth JWT, CORS, RateLimit)
+│   ├───models      // Định nghĩa struct dữ liệu, map với bảng DB (GORM models)
+│   ├───repo        // Tầng truy cập DB - toàn bộ query SQL/ORM tập trung tại đây
+│   ├───router      // Định nghĩa API routes, gắn URL với controller, áp dụng middleware
+│   └───service     // Tầng Business Logic - xử lý nghiệp vụ, KHÔNG biết gì về HTTP
+├───migrations      // 5. Lưu trữ những tệp tin ".sql" để tạo Database
+├───pkg             // 6. Package dùng chung - ĐƯỢC PHÉP import từ bên ngoài (khác internal)
+│   ├───logger      // Module logging tập trung, chuẩn hóa format log toàn app
+│   ├───setting     // Load & parse cấu hình từ file/env (VD: dùng Viper đọc config.yaml)
+│   └───utils       // Hàm tiện ích dùng chung (VD: HashPassword, GenerateToken, ...)
+├───response        // 7. Chuẩn hóa format HTTP response: { code, message, data } cho toàn app
+├───script          // 8. Script hỗ trợ dev & deploy (VD: build Docker, chạy migration)
+├───test            // 9. Chứa integration test & e2e test (unit test nằm cạnh file _test.go)
+└───third_party     // 10. Tích hợp dịch vụ bên thứ 3 (VD: Stripe, Twilio, Firebase, S3)
+```
