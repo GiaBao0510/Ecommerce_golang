@@ -1,9 +1,8 @@
 package controller
 
 import (
-	"net/http"
-
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/response"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,8 +18,5 @@ func NewUserController() *UserController {
 }
 
 func (obj *UserController) GetInforController( c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"status": "ok",
-		"message": obj.userService.UserRepo.GetInfo(),
-	})
+	response.SuccessResponse(c, response.ErrorCodeSuccess, obj.userService.GetInfoService()) 
 }

@@ -3,7 +3,7 @@
 
 ### **Mô tả cấu trúc thư mục:**
 ```
- ──cmd              // 1. Chứa các entry points (hàm main) để khởi chạy ứng dụng
+──cmd              // 1. Chứa các entry points (hàm main) để khởi chạy ứng dụng
 │   ├───cli         // Chạy lệnh thủ công qua command line (VD: seed data, tạo admin)
 │   ├───cronjob     // Chạy các tác vụ định kỳ theo lịch (VD: gửi email, dọn dữ liệu cũ)
 │   └───server      // Khởi động HTTP server chính của ứng dụng
@@ -27,3 +27,8 @@
 ├───test            // 9. Chứa integration test & e2e test (unit test nằm cạnh file _test.go)
 └───third_party     // 10. Tích hợp dịch vụ bên thứ 3 (VD: Stripe, Twilio, Firebase, S3)
 ```
+
+- Dự án này phát triển bằng các áp dụng framework Gin
+- Dự án này được thiết kế với kiến trúc MVC
+- Logs Handler bằng ZAP, ZAP phát triển bởi uber, đây là thư viện mã nguồn mở. Vì 90% dự án thực tế điều sử dụng chúng vì chúng mạnh mẽ, cấu trúc cực kỳ nhanh và phân bổ tài nguyên tối thiểu 
+- 

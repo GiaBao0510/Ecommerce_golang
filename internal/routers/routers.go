@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetUpRouter( ) *gin.Engine{ 
+func SetUpRouter() *gin.Engine{ 
 
 	var HealthController = controller.NewHealthController()
 

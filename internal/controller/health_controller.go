@@ -1,11 +1,11 @@
 package controller
 
 import (
-	"net/http"
 	"runtime"
 	"time"
 
 	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/response"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,10 +24,7 @@ func NewHealthController () *HealthController {
 
 // Hàm kiểm tra sức khỏe của ứng dụng
 func (obj *HealthController) CheckHealth(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H {
-		"status": "ok",
-		"timestamp": time.Now().UTC().Format(time.RFC3339),
-	})
+	response.SuccessResponse(c, response.ErrorCodeSuccess, nil,)
 }
 
 
@@ -40,15 +37,17 @@ func (obj *HealthController) Live(c *gin.Context) {
 
 	uptime := time.Since(obj.startTime)
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": "alive",
-		"uptime": util.FotmatUptime(uptime),
-		"memory": gin.H{
-			"used_mb": memStats.Alloc / 1024 / 1024,
-			"total_mb": memStats.Sys / 1024 / 1024,
+	response.SuccessResponse(
+		c, 
+		response.ErrorCodeSuccess,
+		gin.H{
+			"status": "alive",
+			"uptime": util.FotmatUptime(uptime),
+			"memory": gin.H{
+				"used_mb": memStats.Alloc / 1024 / 1024,
+				"total_mb": memStats.Sys / 1024 / 1024,
+			},
+			"goroutines": runtime.NumGoroutine(),
 		},
-		"goroutines": runtime.NumGoroutine(),
-	})
-
-
+	)
 }
