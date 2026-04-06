@@ -9,11 +9,12 @@ có thể debug và fix lỗi.
 const (
 	ErrorCodeSuccess = 2001			// Success
 	ErrorCodeParamInvalid = 2003	// Email is invalid
-
+	ErrorInvalidToken = 2004		// Unauthorized
 )
 
 //Message response: Giải thích chi tiết về mã lỗi, để developer có thể debug và fix lỗi dễ dàng hơn
 var msg = map[int]string {
 	ErrorCodeSuccess: "Success",
 	ErrorCodeParamInvalid: "Email is invalid",
+	ErrorInvalidToken: "Token is invalid",
 }

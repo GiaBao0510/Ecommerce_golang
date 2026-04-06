@@ -43,7 +43,6 @@ func main() {
 	//                   Phù hợp khi không cần tối ưu hiệu năng tối đa.
 	//
 	// Gọi .Sugar() trên một Logger để lấy SugaredLogger.
-
 	sugarLogger := zap.NewExample().Sugar()
 
 	// Infof: định dạng chuỗi như fmt.Printf

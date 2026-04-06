@@ -1,4 +1,4 @@
-package routers
+package initialize
 
 import (
 	"fmt"
@@ -40,7 +40,7 @@ func HttpRedirection() gin.HandlerFunc {
 	}
 }
 
-func SetUpRouter() *gin.Engine{ 
+func InitRouter() *gin.Engine{ 
 
 	var HealthController = controller.NewHealthController()
 

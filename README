@@ -31,4 +31,7 @@
 - Dự án này phát triển bằng các áp dụng framework Gin
 - Dự án này được thiết kế với kiến trúc MVC
 - Logs Handler bằng ZAP, ZAP phát triển bởi uber, đây là thư viện mã nguồn mở. Vì 90% dự án thực tế điều sử dụng chúng vì chúng mạnh mẽ, cấu trúc cực kỳ nhanh và phân bổ tài nguyên tối thiểu 
-- 
+- Dự án này sử dụng thư viện Viper để config yaml trong golang. Vì do định dạng cấu hình, tích hợp nhiều, tự động tải, quản lý đa môi trường 
+- Dự án này có sử dụng thêm một gói thư viện Testify để viết Unittest
+- Sử dụng Lumberjack để quản lý file Log lớn
+- Áp dụng thư viện GORM để tương tác với cơ sở dữ liệu dễ dàng hơn
