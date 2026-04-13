@@ -3,6 +3,14 @@ package setting
 type Config struct {
 	PostgreSQL PostgreSQLConfig `mapstructure:"postgres"`
 	Logger     LoggerSetting    `mapstructure:"log"`
+	Redis      RedisConfig      `mapstructure:"redis"`
+	Server     ServerConfig     `mapstructure:"server"`
+}
+
+type ServerConfig struct {
+	Port int    `mapstructure:"port"`
+	Host string `mapstructure:"host"`
+	Mode string `mapstructure:"mode"`
 }
 
 type PostgreSQLConfig struct {
@@ -25,11 +33,15 @@ type LoggerSetting struct {
 	Compress   bool   `mapstructure:"compress"`
 }
 
-type Redis struct {
-	Host string `mapstructure:"host"`
-	Port int   `mapstructure:"port"`
-	Password string `mapstructure:"password"`
-	IdleTimeout string `mapstructure:"idleTimeout"`
+type RedisConfig struct {
+	Address         string `mapstructure:"address"`
+	Port            string `mapstructure:"port"`
+	Password        string `mapstructure:"password"`
+	DB              int    `mapstructure:"db"`
+	IdleTimeout     string `mapstructure:"idleTimeout"`
 	MaxConnLifetime string `mapstructure:"maxConnLifetime"`
-	WaitTimeout string `mapstructure:"waitTimeout"`
+	WaitTimeout     string `mapstructure:"waitTimeout"`
+	ReadTimeout     string `mapstructure:"readTimeout"`
+	WriteTimeout    string `mapstructure:"writeTimeout"`
+	PoolSize        int    `mapstructure:"poolSize"`
 }
