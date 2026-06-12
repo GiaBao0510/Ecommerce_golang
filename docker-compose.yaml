@@ -1,0 +1,52 @@
+version: '3.9'
+
+# ============================================
+# Cấu hình logging dùng chung cho các service
+# ============================================
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  postgresql:
+    image: postgres:15
+    container_name: postgres.ecommerce
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: e-commerce
+    ports:
+      # Host 5423 -> Container 5432
+      - "5423:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Lưu dữ liệu DB bền vững
+      - ./init:/docker-entrypoint-initdb.d      # Chạy file SQL khởi tạo khi container tạo lần đầu
+    networks:
+      - ecommerce_net
+    logging: *default-logging
+
+  redis:
+    image: redis:7
+    container_name: redis.ecommerce
+    restart: unless-stopped
+    ports:
+      # Host 6381 -> Container 6379
+      - "6381:6379"
+    command: ["redis-server", "--requirepass", "admin123", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - ecommerce_net
+    logging: *default-logging
+
+volumes:
+  postgres_data:
+  redis_data:
+
+# Network dùng chung để các container gọi nhau qua service name
+networks:
+  ecommerce_net:
+    driver: bridge

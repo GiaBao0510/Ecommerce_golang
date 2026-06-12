@@ -1,5 +1,6 @@
 package setting
 
+// Cấu trúc cấu hình (config) chính của ứng dụng, được ánh xạ từ file YAML.
 type Config struct {
 	PostgreSQL PostgreSQLConfig `mapstructure:"postgres"`
 	Logger     LoggerSetting    `mapstructure:"log"`
@@ -7,12 +8,14 @@ type Config struct {
 	Server     ServerConfig     `mapstructure:"server"`
 }
 
+// Cấu trúc con cho phần cấu hình server (port, host, mode)
 type ServerConfig struct {
 	Port int    `mapstructure:"port"`
 	Host string `mapstructure:"host"`
 	Mode string `mapstructure:"mode"`
 }
 
+// Cấu trúc con cho phần cấu hình Database là PostgreSQL
 type PostgreSQLConfig struct {
 	Host            string `mapstructure:"host"`
 	Port            int    `mapstructure:"port"`
@@ -24,6 +27,7 @@ type PostgreSQLConfig struct {
 	ConnMaxLifetime int    `mapstructure:"connMaxLifetime"`
 }
 
+// Cấu trúc con cho phần cấu hình logger
 type LoggerSetting struct {
 	Loglevel   string `mapstructure:"log_level"`
 	LogFile    string `mapstructure:"log_file"`
@@ -33,6 +37,7 @@ type LoggerSetting struct {
 	Compress   bool   `mapstructure:"compress"`
 }
 
+// Cấu trúc con cho phần cấu hình caches là Redis
 type RedisConfig struct {
 	Address         string `mapstructure:"address"`
 	Port            string `mapstructure:"port"`

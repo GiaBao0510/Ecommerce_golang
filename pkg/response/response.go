@@ -8,6 +8,7 @@ import (
 
 /*
 	Mục đích chủ yếu của tệp tin này là để định nghĩa phản hồi chuẩn từ server đến client,
+
 bao gồm mã lỗi và thông điệp tương ứng. Điều này giúp đảm bảo rằng tất cả
 các phản hồi từ server đều có cấu trúc nhất quán và dễ dàng xử lý ở phía client.
 */
@@ -19,16 +20,16 @@ type ResponseData struct {
 
 func SuccessResponse(c *gin.Context, code int, data interface{}) {
 	c.JSON(http.StatusOK, ResponseData{
-		Code: code,
+		Code:    code,
 		Message: msg[code],
-		Data: data,
+		Data:    data,
 	})
 }
 
 func ErrorResponse(c *gin.Context, code int, message string) {
 	c.JSON(http.StatusBadRequest, ResponseData{
-		Code: code,
+		Code:    code,
 		Message: msg[code],
-		Data: nil,
+		Data:    nil,
 	})
 }

@@ -34,7 +34,7 @@ func NewLogger(config setting.LoggerSetting) *LoggerZap {
 	}
 
 	// Lấy encoder tùy chỉnh
-	encoder := getEncoderLog()
+	encoder := getEncoderLog() 
 
 	// Cấu hình hook để ghi log vào file với luân phiên (rotation)
 	hook := lumberjack.Logger{

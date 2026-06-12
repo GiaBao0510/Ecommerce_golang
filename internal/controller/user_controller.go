@@ -7,16 +7,24 @@ import (
 )
 
 type UserController struct {
-	userService *service.UserService
+	userService service.IUserService
 }
 
-//hàm khởi tạo
-func NewUserController() *UserController {
+// hàm khởi tạo
+func NewUserController(userService service.IUserService) *UserController {
 	return &UserController{
-		userService: service.NewUserService(),
+		userService: userService,
 	}
 }
 
-func (obj *UserController) GetInforController( c *gin.Context) {
-	response.SuccessResponse(c, response.ErrorCodeSuccess, obj.userService.GetInfoService()) 
+// Hàm đăng ký
+func (obj *UserController) RegisterController(c *gin.Context) {
+	result := obj.userService.Register("", "")
+	
+	response.SuccessResponse(c, result, nil)
 }
+
+// func (obj *UserController) GetInforController( c *gin.Context) {
+// 	response.SuccessResponse(c, response.ErrorCodeSuccess, obj.userService.GetInfoService()) 
+// }
+

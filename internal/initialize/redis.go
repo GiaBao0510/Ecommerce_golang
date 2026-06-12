@@ -20,12 +20,13 @@ func InitRedis() {
 		Password: r.Password,
 		DB:       r.DB,
 		PoolSize: r.PoolSize, // Số lượng kết nối tối đa trong pool (Ví dụ nếu đặt là 10, thì sẽ có 10 connec kết nối trong mỗi cpu khả dụng )
-
 	})
+
+	// Kiểm tra kết nối bằng cách ping Redis. Nếu có lỗi, nó sẽ log lỗi và panic để dừng chương trình
 	_, err := rdb.Ping(ctx).Result()
 	if err != nil {
 		global.Logger.Error("InitRedis: Failed to connect to Redis", zap.Error(err))
-		panic(fmt.Sprintf("InitRedis: Failed to connect to Redis: %v", err))			// Panic để dừng chương trình nếu có lỗi nghiêm trọng, đồng thời cung cấp thông tin chi tiết về lỗi
+		panic(fmt.Sprintf("InitRedis: Failed to connect to Redis: %v", err)) // Panic để dừng chương trình nếu có lỗi nghiêm trọng, đồng thời cung cấp thông tin chi tiết về lỗi
 	}
 
 	global.Redis = rdb

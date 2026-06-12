@@ -1,0 +1,16 @@
+#   Trong tệp tin này có nhiệm vụ là liệt kê các file hoặc thư mục mà 
+# bạn muốn Docker bỏ qua khi xây dựng hình ảnh (image) từ Dockerfile. 
+# Điều này giúp giảm kích thước của hình ảnh và tăng tốc quá trình xây dựng 
+# bằng cách loại bỏ các file không cần thiết.
+*.git
+*.vscode
+*.md
+*.log
+bin/
+obj/
+*gitignore
+*.test
+*.http
+*.env
+Makefile
+README.md

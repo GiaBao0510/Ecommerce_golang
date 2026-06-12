@@ -35,3 +35,4 @@
 - Dự án này có sử dụng thêm một gói thư viện Testify để viết Unittest
 - Sử dụng Lumberjack để quản lý file Log lớn
 - Áp dụng thư viện GORM để tương tác với cơ sở dữ liệu dễ dàng hơn
+- ĐỒng bộ cơ sở dữ liệu Postgresql với kafka thông qua thư viện Debezium

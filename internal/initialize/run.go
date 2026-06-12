@@ -14,7 +14,7 @@ func Run() {
 	InitRedis()
 
 	// Hiển thị cấu hình đã load để kiểm tra
-	DisplayConfig()
+	//DisplayConfig()
 
 	r := InitRouter()
 	r.Run(":8080")
