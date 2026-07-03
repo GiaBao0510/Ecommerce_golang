@@ -4,4 +4,5 @@ type ManagerRouterGroup struct {
 	AdminRouter
 	UserRouter
 	StatusRouter
+	RolesRouter
 }

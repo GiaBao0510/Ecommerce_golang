@@ -37,3 +37,6 @@ logs/
 
 configs/
 production.yaml
+
+# Air - live reload build artifacts
+tmp/

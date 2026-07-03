@@ -1,132 +1,119 @@
 package controller
 
 import (
-	"strconv"
+	"net/http"
 
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/response"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type StatusController struct {
 	statusService service.IStatusService
+	logger *zap.Logger
 }
 
 // hàm khởi tạo
-func NewStatusController(statusService service.IStatusService) *StatusController {
-	return &StatusController{
-		statusService: statusService,
-	}
+func NewStatusController(statusService service.IStatusService, logger *zap.Logger) *StatusController {
+	return &StatusController{ statusService: statusService, logger: logger,	}
+}
+
+// Build nhận logger từ controller instance
+func (s *StatusController) Build(handeler AppHandler) gin.HandlerFunc {
+	return Build(handeler, s.logger)
 }
 
 // -------- Xử lý các request liên quan đến CRUD của Status ở đây ----------
 // GET /statuses/:id
-func (s *StatusController) GetStatusByID(c *gin.Context) {
+func (s *StatusController) GetStatusByID(c *gin.Context) error {
 
-	id := c.Param("id")       // Lấy ID từ URL
-	id_int := verifyID(c, id) // Validate ID và chuyển đổi sang int32
-
-	result, err := s.statusService.GetStatusByID(c, id_int)
+	id := c.Param("id")              // Lấy ID từ URL
+	id_int, err := util.VerifyID(id) // Validate ID và chuyển đổi sang int32
 	if err != nil {
-		response.ErrorResponse(c, response.StatusBadRequest,
-			"Failed to get status by ID: "+err.Error())
-		return
+		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}
 
-	response.SuccessResponse(c, response.StatusOK, result)
+	result, err := s.statusService.GetByID(c, id_int)
+	if err != nil {
+		return err
+	}
+
+	response.Success_Response(c, http.StatusOK, "Status retrieved successfully", result)
+	return nil
 }
 
 // GET /statuses
-func (s *StatusController) GetAllStatuses(c *gin.Context) {
-	result, err := s.statusService.GetAllStatuses(c)
+func (s *StatusController) GetAllStatuses(c *gin.Context) error {
+	result, err := s.statusService.GetAll(c)
 	if err != nil {
-		response.ErrorResponse(c, response.StatusBadRequest,
-			"Failed to get all statuses: "+err.Error())
-		return
+		return err
 	}
 
-	response.SuccessResponse(c, response.StatusOK, result)
+	response.Success_Response(c, http.StatusOK, "All statuses retrieved successfully", result)
+	return nil
 }
 
 // POST /statuses
-func (s *StatusController) CreateStatus(c *gin.Context) {
+func (s *StatusController) CreateStatus(c *gin.Context) error {
 
 	input := models.Status{}
 
 	//Parse JSON body vào struct Status
 	if err := c.ShouldBindJSON(&input); err != nil {
-		response.ErrorResponse(c, response.StatusBadRequest,
-			"Invalid input data: "+err.Error())
-		return
+		return apperrors.NewBadRequestError("Invalid input data: " + err.Error())
 	}
 
 	// Gọi service để tạo mới status
-	result, err := s.statusService.CreateStatus(c, &input)
+	result, err := s.statusService.Create(c, &input)
 	if err != nil {
-		response.ErrorResponse(c, response.StatusBadRequest,
-			"Failed to create status: "+err.Error())
-		return
+		return apperrors.NewBadRequestError("Failed to create status: " + err.Error())
 	}
 
-	response.SuccessResponse(c, response.StatusOK, gin.H{"id": result})
+	response.Success_Response(c, http.StatusOK, "Status created successfully", gin.H{"id": result})
+	return nil
 }
 
 // PUT /statuses/:id
-func (s *StatusController) UpdateStatus(c *gin.Context) {
-	id := c.Param("id")       // Lấy ID từ URL
-	id_int := verifyID(c, id) // Validate ID và chuyển đổi sang int32
+func (s *StatusController) UpdateStatus(c *gin.Context) error {
+	id := c.Param("id")              // Lấy ID từ URL
+	id_int, err := util.VerifyID(id) // Validate ID và chuyển đổi sang int32
+	if err != nil {
+		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
+	}
 
 	input := models.Status{}
 
 	//Parse JSON body vào struct Status
 	if err := c.ShouldBindJSON(&input); err != nil {
-		response.ErrorResponse(c, response.StatusBadRequest, "Invalid input data: "+err.Error())
-		return
+		return apperrors.NewBadRequestError("Invalid input data: " + err.Error())
 	}
 
 	// Gọi service để cập nhật status
-	if err := s.statusService.UpdateStatus(c, int32(id_int), &input);err != nil {
-		response.ErrorResponse(c, response.StatusBadRequest, "Failed to update status: "+err.Error())
-		return
+	if err := s.statusService.Update(c, id_int, &input); err != nil {
+		return apperrors.NewBadRequestError("Failed to update status: " + err.Error())
 	}
-	response.SuccessResponse(c, response.StatusOK, "Status updated successfully")
+
+	response.Success_Response(c, http.StatusOK, "Status updated successfully", nil)
+	return nil
 }
 
 // DELETE /statuses/:id
-func (s *StatusController) DeleteStatus(c *gin.Context) {
-	id := c.Param("id")       // Lấy ID từ URL
-	id_int := verifyID(c, id) // Validate ID và chuyển đổi sang int32
-
+func (s *StatusController) DeleteStatus(c *gin.Context) error {
+	id := c.Param("id")              // Lấy ID từ URL
+	id_int, err := util.VerifyID(id) // Validate ID và chuyển đổi sang int32
+	if err != nil {
+		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
+	}
 
 	// Gọi service để xóa status
-	if err := s.statusService.DeleteStatus(c, int32(id_int)); err != nil {
-		response.ErrorResponse(c, response.StatusBadRequest, "Failed to delete status: "+err.Error())
-		return
-	}
-	response.SuccessResponse(c, response.StatusOK, "Status deleted successfully")
-}
-
-// ------------ Validate dữ liệu đầu vào cho Status ------------
-func verifyID(c *gin.Context, id string) int32 {
-	id_int, err := strconv.Atoi(id)
-
-	// Kiểm tra nếu có lỗi khi chuyển đổi ID từ string sang int
-	if err != nil {
-		response.ErrorResponse(c, response.StatusBadRequest, "Mã ID không phải số nguyên hợp lệ")
-		return 0
+	if err := s.statusService.Delete(c, id_int); err != nil {
+		return apperrors.NewBadRequestError("Failed to delete status: " + err.Error())
 	}
 
-	if id_int <= 0 {
-		response.ErrorResponse(c, response.StatusBadRequest, "Mã ID phải lớn hơn 0")
-		return 0
-	}
-
-	return int32(id_int)
-}
-
-func verifyStatusName(c *gin.Context, name string) {
-	if name == "" {
-		response.ErrorResponse(c, response.StatusBadRequest, "Status name cannot be empty")
-	}
+	response.Success_Response(c, http.StatusOK, "Status deleted successfully", nil)
+	return nil
 }

@@ -12,14 +12,25 @@ import (
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository/repository_impl"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
+	"go.uber.org/zap"
 )
+
+// Injectors from roles.wire.go:
+
+// Khởi tạo tiêm phụ thuộc cho RolesController
+func InitRolesRouterHandler(db *database.Queries, logger *zap.Logger) (*controller.RolesController, error) {
+	iRolesRepository := repositoryimpl.NewRolesRepository(db, logger)
+	iRolesService := service.NewRolesService(iRolesRepository)
+	rolesController := controller.NewRolesController(iRolesService, logger)
+	return rolesController, nil
+}
 
 // Injectors from status.wire.go:
 
-func InitStatusRouterHandler(db *database.Queries) (*controller.StatusController, error) {
-	iStatusRepository := repositoryimpl.NewStatusRepository(db)
+func InitStatusRouterHandler(db *database.Queries, logger *zap.Logger) (*controller.StatusController, error) {
+	iStatusRepository := repositoryimpl.NewStatusRepository(db, logger)
 	iStatusService := service.NewStatusService(iStatusRepository)
-	statusController := controller.NewStatusController(iStatusService)
+	statusController := controller.NewStatusController(iStatusService, logger)
 	return statusController, nil
 }
 

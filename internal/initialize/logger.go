@@ -6,5 +6,8 @@ import (
 )
 
 func InitLogger() {
+	// Khởi tạo logger và gán vào biến toàn cục
+	// global.Logger kiểu là *logger.LoggerZap — đây là struct wrapper bọc *zap.Logger
+	// global.Logger.Logger là *zap.Logger (raw, bên trong wrapper)
 	global.Logger = logger.NewLogger(global.Config.Logger) 
 }

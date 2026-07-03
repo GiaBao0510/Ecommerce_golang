@@ -12,7 +12,7 @@ import (
 
 var (
 	Config setting.Config
-	Logger *logger.LoggerZap
+	Logger *logger.AppLoggers
 	PostgreSQL *sql.DB
 	Redis *redis.Client
 	DB *database.Queries

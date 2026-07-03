@@ -9,18 +9,47 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-type LoggerZap struct {
-	*zap.Logger
+// AppLoggers là wrapper bọc quanh zap.Logger
+// Struct này để quản lý nhiều logger khác nhau trong cùng một ứng dụng, ví dụ:
+// - Access logger: ghi log truy cập (request/response)
+// - Error logger: ghi log lỗi (error, panic)
+// - App logger: ghi log thông tin ứng dụng (info, debug)
+type AppLoggers struct {
+	Access  *zap.Logger
+	Error   *zap.Logger
+	App     *zap.Logger
+	Warning *zap.Logger
 }
 
-func NewLogger(config setting.LoggerSetting) *LoggerZap {
+// Khởi tạo logger dựa trên cấu hình
+// - config.Loglevel: điều khiển mức log tối thiểu (debug/info/warn/error)
+// - config.LogFormat: "json" hoặc "console" — xác định định dạng output
+// - config.LogFile: đường dẫn file ghi log (sử dụng lumberjack để rotation)
+func NewLogger(config setting.LoggerSetting) *AppLoggers {
 
-	loglevel := config.Loglevel
-	// debug -> info -> warn -> error -> fatal -> panic
+	// -------------------------------------------------------
+	// Bước 1: Chọn encoder (định dạng output) dựa trên LOG_FORMAT
+	//
+	// "json"    → dùng cho production, Loki, Elasticsearch đọc được
+	// "console" → dùng cho development, có màu sắc, dễ đọc trực tiếp
+	//
+	// os.Getenv("LOG_FORMAT") đọc biến môi trường từ hệ thống
+	// -------------------------------------------------------
+	var encoder zapcore.Encoder
+	logFormat := config.LogFormat
+	if logFormat == "json" {
+		encoder = getJSON_Encoder()
+	} else {
+		encoder = getConsole_Encoder()
+	}
 
+	// -------------------------------------------------------
+	// Bước 2: Xác định log level từ config
+	// Thứ tự ưu tiên: debug < info < warn < error < fatal
+	// Ví dụ: nếu set "info", thì log DEBUG sẽ bị bỏ qua
+	// -------------------------------------------------------
 	var level zapcore.Level
-
-	switch loglevel {
+	switch config.Loglevel {
 	case "debug":
 		level = zap.DebugLevel
 	case "info":
@@ -33,43 +62,106 @@ func NewLogger(config setting.LoggerSetting) *LoggerZap {
 		level = zap.InfoLevel
 	}
 
-	// Lấy encoder tùy chỉnh
-	encoder := getEncoderLog() 
+	// -------------------------------------------------------
+	// Bước 3: Cấu hình lumberjack — thư viện quản lý file log
+	// - File log sẽ ngày càng to lên nếu không có cơ chế xoay vòng (rotation)
+	// - lumberjack tự động: cắt file khi đủ kích thước, xoá file cũ, nén file
+	// -------------------------------------------------------
 
-	// Cấu hình hook để ghi log vào file với luân phiên (rotation)
-	hook := lumberjack.Logger{
-		Filename:   config.LogFile,    // Đường dẫn file log
+	// -------------------------------------------------------
+	// Logger 1: Access Logger — ghi log truy cập (request/response)
+	accessHook := &lumberjack.Logger{
+		Filename:   config.LogAccessFile, // Đường dẫn file log
+		MaxSize:    config.MaxSize,       // Kích thước tối đa của file log (MB)
+		MaxBackups: config.MaxBackups,    // Số lượng file log cũ được giữ lại
+		MaxAge:     config.MaxAge,        // Số ngày giữ lại file log cũ, Nếu quá thời gian này, file log sẽ bị xóa
+		Compress:   config.Compress,      // Nén file log cũ thành định dạng .gz để tiết kiệm dung lượng
+	}
+	accessCore := zapcore.NewCore(
+		encoder,
+		zapcore.NewMultiWriteSyncer(
+			zapcore.AddSync(os.Stdout),
+			zapcore.AddSync(accessHook),
+		),
+		zap.InfoLevel,
+	)
+
+	// -------------------------------------------------------
+	// Logger 2: Error Logger — ghi log lỗi (errors)
+	errorHook := &lumberjack.Logger{
+		Filename:   config.LogErrorFile, // Đường dẫn file log
+		MaxSize:    config.MaxSize,      // Kích thước tối đa của file log (MB)
+		MaxBackups: config.MaxBackups,   // Số lượng file log cũ được giữ lại
+		MaxAge:     config.MaxAge,       // Số ngày giữ lại file log cũ, Nếu quá thời gian này, file log sẽ bị xóa
+		Compress:   config.Compress,     // Nén file log cũ thành định dạng .gz để tiết kiệm dung lượng
+	}
+	errorCore := zapcore.NewCore(
+		encoder,
+		zapcore.NewMultiWriteSyncer(
+			zapcore.AddSync(os.Stdout),
+			zapcore.AddSync(errorHook),
+		),
+		zap.ErrorLevel,
+	) 
+
+	// -------------------------------------------------------
+	// Logger 3: App Logger — ghi log app (request/response)
+	appHook := &lumberjack.Logger{
+		Filename:   config.LogAppFile, // Đường dẫn file log
 		MaxSize:    config.MaxSize,    // Kích thước tối đa của file log (MB)
 		MaxBackups: config.MaxBackups, // Số lượng file log cũ được giữ lại
 		MaxAge:     config.MaxAge,     // Số ngày giữ lại file log cũ, Nếu quá thời gian này, file log sẽ bị xóa
 		Compress:   config.Compress,   // Nén file log cũ thành định dạng .gz để tiết kiệm dung lượng
 	}
-
-	// Tạo zapcore với encoder, hook và level đã cấu hình
-	core := zapcore.NewCore(
+	appCore := zapcore.NewCore(
 		encoder,
-		zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(&hook)),
+		zapcore.NewMultiWriteSyncer(
+			zapcore.AddSync(os.Stdout),
+			zapcore.AddSync(appHook),
+		),
+		level,
+	) 
+
+	// -------------------------------------------------------
+	// Logger 4: Warning Logger — ghi log cảnh báo (warn)
+	warningHook := &lumberjack.Logger{
+		Filename: config.LogWarningFile,
+		MaxSize: config.MaxSize,
+		MaxAge: config.MaxAge,
+		MaxBackups: config.MaxBackups,
+		Compress: config.Compress,
+	}
+	warningCore := zapcore.NewCore(
+		encoder,
+		zapcore.NewMultiWriteSyncer(
+			zapcore.AddSync(os.Stdout),
+			zapcore.AddSync(warningHook),
+		),
 		level,
 	)
 
 	// Trả về LoggerZap với zap.Logger tùy chỉnh
-	return &LoggerZap{zap.New(
-		core,                               // Sử dụng core tùy chỉnh
-		zap.AddCaller(),                    // Hiển thị tên file và số dòng gọi logger
-		zap.AddStacktrace(zap.ErrorLevel)), // Chỉ ghi stacktrace cho log từ Error trở lên
+	return &AppLoggers{
+		Access: zap.New(accessCore, zap.AddCaller()),
+		Error: zap.New(errorCore, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel)),
+		App: zap.New(appCore, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel)),
+		Warning: zap.New(warningCore, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel)),
 	}
 }
 
 // ============================================================
-// getEncoderLog — Định nghĩa định dạng (format) của log
+// getConsoleEncoder — Encoder cho môi trường DEVELOPMENT
 // ============================================================
 //
-// Encoder kiểm soát mỗi dòng log trông như thế nào:
-// timestamp ở đâu, level hiển thị kiểu gì, caller có hiện không...
+// Console encoder xuất ra dạng text có màu sắc, dễ đọc trên terminal.
+// Ví dụ output:
 //
-// Ở đây ta dùng NewConsoleEncoder (định dạng dễ cho người đọc),
-// thay vì NewJSONEncoder (định dạng máy đọc, dùng trên production).
-func getEncoderLog() zapcore.Encoder {
+//	2026-06-20T23:00:00.000+0700    INFO    main/main.go:10    Server started
+//
+// Định dạng này phù hợp khi:
+//   - Chạy local bằng `go run` hoặc air
+//   - Debug nhanh trực tiếp trên terminal
+func getConsole_Encoder() zapcore.Encoder {
 
 	// Bắt đầu từ cấu hình chuẩn của Production làm nền tảng
 	encoderConfig := zap.NewProductionEncoderConfig()
@@ -92,4 +184,28 @@ func getEncoderLog() zapcore.Encoder {
 
 	// Trả về Console Encoder — định dạng dễ cho người đọc
 	return zapcore.NewConsoleEncoder(encoderConfig)
+}
+
+// ============================================================
+// getJSONEncoder — Encoder cho môi trường PRODUCTION
+// ============================================================
+//
+// JSON encoder xuất ra từng dòng log là một JSON object hoàn chỉnh.
+// Ví dụ output:
+//
+//	{"Time":"2026-06-20T23:00:00.000+0700","level":"info","caller":"main.go:10","msg":"Server started"}
+//
+// Định dạng này phù hợp để:
+//   - Gửi vào Loki, Elasticsearch, Datadog
+//   - Query bằng jq, LogQL, KQL
+//   - Parse tự động bởi log aggregation tools
+func getJSON_Encoder() zapcore.Encoder {
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	encoderConfig.TimeKey = "Time"
+	encoderConfig.EncodeLevel = zapcore.LowercaseLevelEncoder
+	encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+
+	// Trả về JSON Encoder — định dạng chuẩn cho production
+	return zapcore.NewJSONEncoder(encoderConfig)
 }

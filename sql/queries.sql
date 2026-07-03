@@ -10,10 +10,10 @@ SELECT * FROM status WHERE id_status = $1;
 -- name: GetAllStatus :many
 SELECT * FROM status;
 
--- name: UpdateStatus :exec
+-- name: UpdateStatus :execresult
 UPDATE status SET name = $1, description = $2, updated_at = $3 WHERE id_status = $4;
 
--- name: DeleteStatus :exec
+-- name: DeleteStatus :execresult
 DELETE FROM status WHERE id_status = $1;
 
 /*_______________ Bảng Role 1 ___________________*/
@@ -26,10 +26,10 @@ SELECT * FROM role WHERE role_id = $1;
 -- name: GetAllRoles :many
 SELECT * FROM role;
 
--- name: UpdateRole :exec
+-- name: UpdateRole :execresult
 UPDATE role SET role_name = $1, description = $2 WHERE role_id = $3;
 
--- name: DeleteRole :exec
+-- name: DeleteRole :execresult
 DELETE FROM role WHERE role_id = $1;
 
 /*_______________ Bảng permissions 2 ___________________*/

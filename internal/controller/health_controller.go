@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"net/http"
 	"runtime"
 	"time"
 
@@ -24,7 +25,7 @@ func NewHealthController () *HealthController {
 
 // Hàm kiểm tra sức khỏe của ứng dụng
 func (obj *HealthController) CheckHealth(c *gin.Context) {
-	response.SuccessResponse(c, response.ErrorCodeSuccess, nil,)
+	response.Success_Response(c, http.StatusOK, "Ứng dụng đang hoạt động", nil)
 }
 
 
@@ -37,9 +38,10 @@ func (obj *HealthController) Live(c *gin.Context) {
 
 	uptime := time.Since(obj.startTime)
 
-	response.SuccessResponse(
+	response.Success_Response(
 		c, 
-		response.ErrorCodeSuccess,
+		http.StatusOK,
+		"Server đang hoạt động",
 		gin.H{
 			"status": "alive",
 			"uptime": util.FotmatUptime(uptime),

@@ -46,7 +46,14 @@ func InitRouter() *gin.Engine {
 
 	managerRouter.InitAdminRouter(ManagerGroup.Group("/admin"))
 	managerRouter.InitUserRouter(ManagerGroup.Group("/user"))
-	managerRouter.InitStatusRouter(ManagerGroup.Group("/status"), global.DB)
+	managerRouter.InitStatusRouter(
+		ManagerGroup.Group("/status"),
+		global.DB,
+		global.Logger.Error)
+	managerRouter.InitRolesRouter(
+		ManagerGroup.Group("/roles"), 
+		global.DB, 
+		global.Logger.Error)
 
 	return r
 }

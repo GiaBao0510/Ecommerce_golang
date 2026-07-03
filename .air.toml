@@ -1,0 +1,86 @@
+# Air - Live reload configuration
+# Tài liệu: https://github.com/air-verse/air
+
+root = "."
+testdata_dir = "testdata"
+tmp_dir = "tmp"
+
+[build]
+  # Lệnh chạy trước khi build (để trống nếu không cần)
+  pre_cmd = []
+
+  # Lệnh build: biên dịch file main.go ra file thực thi trong thư mục tmp/
+  cmd = "go build -o ./tmp/main.exe ./cmd/server/main.go"
+
+  # File thực thi sau khi build xong
+  bin = "./tmp/main.exe"
+
+  # Lệnh chạy file thực thi (dùng full path để tránh lỗi PowerShell)
+  full_bin = "./tmp/main.exe"
+
+  # Các thư mục/file cần theo dõi sự thay đổi
+  include_dir = ["cmd", "internal", "pkg", "global", "configs"]
+
+  # Các phần mở rộng file cần theo dõi
+  include_ext = ["go", "yaml", "toml", "env"]
+
+  # Các thư mục/file bỏ qua — không cần theo dõi
+  exclude_dir = [
+    "tmp",
+    "vendor",
+    ".git",
+    "logs",
+    "docs",
+    "diagrams",
+    "test",
+    "migrations",
+    "storages",
+    "third_party",
+  ]
+
+  # Bỏ qua các file test
+  exclude_file = []
+  exclude_regex = ["_test\\.go"]
+
+  # Bỏ qua thay đổi không thực sự (file unchanged)
+  exclude_unchanged = true
+
+  # Theo dõi symlink
+  follow_symlink = false
+
+  # Thời gian trì hoãn (ms) trước khi rebuild — tránh rebuild liên tục khi lưu nhiều file cùng lúc
+  delay = 1000
+
+  # Dừng chương trình cũ trước khi chạy mới
+  stop_on_error = true
+
+  # Gửi tín hiệu dừng đến process
+  send_interrupt = true
+  kill_delay = "2s"
+
+  # Rerun khi không có thay đổi (false = chỉ chạy khi có thay đổi)
+  rerun = false
+  rerun_delay = 500
+
+[log]
+  # Hiển thị thời gian trong log
+  time = true
+
+  # Chỉ hiện log chính, ẩn log chi tiết của Air
+  main_only = false
+
+[color]
+  # Màu sắc cho các loại log
+  main    = "magenta"
+  watcher = "cyan"
+  build   = "yellow"
+  runner  = "green"
+
+[misc]
+  # Tự động xóa thư mục tmp/ khi dừng Air
+  clean_on_exit = true
+
+[screen]
+  # Xóa màn hình mỗi khi rebuild
+  clear_on_rebuild = true
+  keep_scroll = true

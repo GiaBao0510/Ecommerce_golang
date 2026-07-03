@@ -12,24 +12,30 @@ import (
 bao gồm mã lỗi và thông điệp tương ứng. Điều này giúp đảm bảo rằng tất cả
 các phản hồi từ server đều có cấu trúc nhất quán và dễ dàng xử lý ở phía client.
 */
-type ResponseData struct {
-	Code    int         `json:code`
-	Message string      `json:message`
-	Data    interface{} `json:data`
+type SuccessResponse struct {
+	Code    int         `json:"code"`           // Mã lỗi HTTP
+	Message string      `json:"message"`        // Thông điệp chi tiết
+	Data    interface{} `json:"data,omitempty"` // Dữ liệu trả về (nếu có)
 }
 
-func SuccessResponse(c *gin.Context, code int, data interface{}) {
-	c.JSON(http.StatusOK, ResponseData{
+type ErrorResponse struct {
+	Code    int    `json:"code"`    // Mã lỗi HTTP
+	Status  string `json:"status"`  // Thông điệp dành cho nhà phát triển
+	Message string `json:"message"` // Thông điệp chi tiết
+}
+
+func Success_Response(c *gin.Context, code int, message string, data interface{}){
+	c.JSON(code, SuccessResponse{
 		Code:    code,
-		Message: msg[code],
+		Message: message,
 		Data:    data,
 	})
 }
 
-func ErrorResponse(c *gin.Context, code int, message string) {
-	c.JSON(http.StatusBadRequest, ResponseData{
+func Error_Response(c *gin.Context, code int, message string) {
+	c.JSON(code, ErrorResponse{
 		Code:    code,
-		Message: msg[code],
-		Data:    nil,
+		Status:  http.StatusText(code),
+		Message: message,
 	})
 }

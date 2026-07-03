@@ -2,7 +2,6 @@ package service
 
 import (
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
-	"github.com/GiaBao0510/Ecommerce_golang/pkg/response"
 )
 
 // Tạo interface IUserService để định nghĩa các phương thức mà UserService sẽ triển khai
@@ -28,8 +27,8 @@ func (obj *UserService) Register(email string, purpose string) int {
 
 	// Nếu email đã tồn tại trong database, trả về lỗi
 	if obj.userRepo.GetUserByEmail(email) {
-		return response.ErrorCodeUserHasExisted
+		return 0
 	}
 
-	return response.ErrorCodeSuccess
+	return 0
 }

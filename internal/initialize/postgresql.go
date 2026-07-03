@@ -15,7 +15,7 @@ import (
 // Tạo hàm kiểm tra lỗi. Nếu xảy ra lỗi thì nó sẽ thông báo chi tiết nơi xảy và và đồng thời lưu trong log
 func CheckErrorPanic(err error, message string) {
 	if err != nil {
-		global.Logger.Error(message, zap.Error(err))
+		global.Logger.Error.Error("CheckErrorPanic: ", zap.String("message", message), zap.Error(err))
 		panic(fmt.Sprintf("%s: %v", message, err)) // Panic để dừng chương trình nếu có lỗi nghiêm trọng, đồng thời cung cấp thông tin chi tiết về lỗi
 	}
 }
@@ -39,7 +39,7 @@ func InitPostgreSQL() {
 	CheckErrorPanic(err, "InitPostgreSQL: Failed to connect to PostgreSQL")
 	CheckConnection(db)
 
-	global.Logger.Info("InitPostgreSQL: Successfully connected to PostgreSQL")
+	global.Logger.Access.Info("InitPostgreSQL: Successfully connected to PostgreSQL")
 	global.PostgreSQL = db // Gán *sql.DB vào global
 	global.DB = database.New(global.PostgreSQL) // Khởi tạo database.Queries và gán vào global
 

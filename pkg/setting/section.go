@@ -29,12 +29,16 @@ type PostgreSQLConfig struct {
 
 // Cấu trúc con cho phần cấu hình logger
 type LoggerSetting struct {
-	Loglevel   string `mapstructure:"log_level"`
-	LogFile    string `mapstructure:"log_file"`
-	MaxSize    int    `mapstructure:"maxSize"`
-	MaxBackups int    `mapstructure:"maxBackups"`
-	MaxAge     int    `mapstructure:"maxAge"`
-	Compress   bool   `mapstructure:"compress"`
+	Loglevel       string `mapstructure:"log_level"`
+	LogAccessFile  string `mapstructure:"log_access_file"`
+	LogErrorFile   string `mapstructure:"log_error_file"`
+	LogAppFile     string `mapstructure:"log_app_file"`
+	LogWarningFile string `mapstructure:"log_warning_file"`
+	MaxSize        int    `mapstructure:"maxSize"`
+	MaxBackups     int    `mapstructure:"maxBackups"`
+	MaxAge         int    `mapstructure:"maxAge"`
+	Compress       bool   `mapstructure:"compress"`
+	LogFormat      string `mapstructure:"log_format"` // Xác định định dạng log: "json" hoặc "console"
 }
 
 // Cấu trúc con cho phần cấu hình caches là Redis

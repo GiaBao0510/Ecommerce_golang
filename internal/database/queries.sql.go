@@ -80,22 +80,20 @@ func (q *Queries) DeletePermission(ctx context.Context, actionID int32) error {
 	return err
 }
 
-const deleteRole = `-- name: DeleteRole :exec
+const deleteRole = `-- name: DeleteRole :execresult
 DELETE FROM role WHERE role_id = $1
 `
 
-func (q *Queries) DeleteRole(ctx context.Context, roleID int32) error {
-	_, err := q.db.ExecContext(ctx, deleteRole, roleID)
-	return err
+func (q *Queries) DeleteRole(ctx context.Context, roleID int32) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteRole, roleID)
 }
 
-const deleteStatus = `-- name: DeleteStatus :exec
+const deleteStatus = `-- name: DeleteStatus :execresult
 DELETE FROM status WHERE id_status = $1
 `
 
-func (q *Queries) DeleteStatus(ctx context.Context, idStatus int32) error {
-	_, err := q.db.ExecContext(ctx, deleteStatus, idStatus)
-	return err
+func (q *Queries) DeleteStatus(ctx context.Context, idStatus int32) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteStatus, idStatus)
 }
 
 const getAllPermissions = `-- name: GetAllPermissions :many
@@ -255,7 +253,7 @@ func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionPara
 	return err
 }
 
-const updateRole = `-- name: UpdateRole :exec
+const updateRole = `-- name: UpdateRole :execresult
 UPDATE role SET role_name = $1, description = $2 WHERE role_id = $3
 `
 
@@ -265,12 +263,11 @@ type UpdateRoleParams struct {
 	RoleID      int32
 }
 
-func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) error {
-	_, err := q.db.ExecContext(ctx, updateRole, arg.RoleName, arg.Description, arg.RoleID)
-	return err
+func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateRole, arg.RoleName, arg.Description, arg.RoleID)
 }
 
-const updateStatus = `-- name: UpdateStatus :exec
+const updateStatus = `-- name: UpdateStatus :execresult
 UPDATE status SET name = $1, description = $2, updated_at = $3 WHERE id_status = $4
 `
 
@@ -281,12 +278,11 @@ type UpdateStatusParams struct {
 	IDStatus    int32
 }
 
-func (q *Queries) UpdateStatus(ctx context.Context, arg UpdateStatusParams) error {
-	_, err := q.db.ExecContext(ctx, updateStatus,
+func (q *Queries) UpdateStatus(ctx context.Context, arg UpdateStatusParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateStatus,
 		arg.Name,
 		arg.Description,
 		arg.UpdatedAt,
 		arg.IDStatus,
 	)
-	return err
 }

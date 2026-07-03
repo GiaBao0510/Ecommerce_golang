@@ -25,10 +25,10 @@ func InitRedis() {
 	// Kiểm tra kết nối bằng cách ping Redis. Nếu có lỗi, nó sẽ log lỗi và panic để dừng chương trình
 	_, err := rdb.Ping(ctx).Result()
 	if err != nil {
-		global.Logger.Error("InitRedis: Failed to connect to Redis", zap.Error(err))
+		global.Logger.Error.Error("InitRedis: Failed to connect to Redis", zap.Error(err))
 		panic(fmt.Sprintf("InitRedis: Failed to connect to Redis: %v", err)) // Panic để dừng chương trình nếu có lỗi nghiêm trọng, đồng thời cung cấp thông tin chi tiết về lỗi
 	}
 
 	global.Redis = rdb
-	global.Logger.Info("InitRedis: Successfully connected to Redis")
+	global.Logger.Access.Info("InitRedis: Successfully connected to Redis")
 }
