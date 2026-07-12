@@ -85,9 +85,9 @@ func (r *RolesRepository) Create(ctx context.Context, obj *models.Role) (int, er
 	return 0, nil
 }
 
-func (r *RolesRepository) Update(ctx context.Context, id int32, obj *models.Role) error {
+func (r *RolesRepository) Update_Put(ctx context.Context, id int32, obj *models.Role) error {
 	// Điền các giá trị đầu vào
-	params := database.UpdateRoleParams{
+	params := database.UpdateRole_PUTParams{
 		RoleName: obj.Role_name,
 		Description: sql.NullString{
 			String: obj.Description,
@@ -96,9 +96,9 @@ func (r *RolesRepository) Update(ctx context.Context, id int32, obj *models.Role
 		RoleID: id,
 	}
 
-	result, err := r.db.UpdateRole(ctx, params)
+	result, err := r.db.UpdateRole_PUT(ctx, params)
 	if err != nil {
-		r.dblog.LogError("Update", err, zap.Int32("id", id))
+		r.dblog.LogError("Update_Put", err, zap.Int32("id", id))
 		return apperrors.NewInternalServerError(err)
 	}
 
@@ -107,7 +107,36 @@ func (r *RolesRepository) Update(ctx context.Context, id int32, obj *models.Role
 		r.dblog.LogError("RowsAffected", err, zap.Int32("id", id))
 		return apperrors.NewInternalServerError(err)
 	} else if affected == 0 {
-		r.dblog.LogWarning("Update", "No rows affected", zap.Int32("id", id))
+		r.dblog.LogWarning("Update_Put", "No rows affected", zap.Int32("id", id))
+		return apperrors.NewNotFoundError("Lỗi không tìm thấy role với ID: " + strconv.Itoa(int(id)))
+	}
+
+	return nil
+}
+
+func (r *RolesRepository) Update_Patch(ctx context.Context, id int32, obj *models.Role) error {
+	// Điền các giá trị đầu vào
+	params := database.UpdateRole_PATCHParams{
+		RoleName: obj.Role_name,
+		Description: sql.NullString{
+			String: obj.Description,
+			Valid:  obj.Description != "",
+		},
+		RoleID: id,
+	}
+
+	result, err := r.db.UpdateRole_PATCH(ctx, params)
+	if err != nil {
+		r.dblog.LogError("Update_Patch", err, zap.Int32("id", id))
+		return apperrors.NewInternalServerError(err)
+	}
+
+	// Kiểm tra số lượng bản ghi bị ảnh hưởng
+	if affected, err := result.RowsAffected(); err != nil {
+		r.dblog.LogError("RowsAffected", err, zap.Int32("id", id))
+		return apperrors.NewInternalServerError(err)
+	} else if affected == 0 {
+		r.dblog.LogWarning("Update_Patch", "No rows affected", zap.Int32("id", id))
 		return apperrors.NewNotFoundError("Lỗi không tìm thấy role với ID: " + strconv.Itoa(int(id)))
 	}
 

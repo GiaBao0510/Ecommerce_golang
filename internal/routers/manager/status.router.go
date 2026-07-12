@@ -20,6 +20,7 @@ func (r *StatusRouter) InitStatusRouter(Router *gin.RouterGroup, db *database.Qu
 	Router.GET("", controller.Build(statusController.GetAllStatuses, logger))
 	Router.GET("/:id", controller.Build(statusController.GetStatusByID, logger))
 	Router.POST("", controller.Build(statusController.CreateStatus, logger))
-	Router.PUT("/:id", controller.Build(statusController.UpdateStatus, logger))
+	Router.PUT("/:id", controller.Build(statusController.Update_Put, logger))
+	Router.PATCH("/:id", controller.Build(statusController.Update_Patch, logger))
 	Router.DELETE("/:id", controller.Build(statusController.DeleteStatus, logger))
 }

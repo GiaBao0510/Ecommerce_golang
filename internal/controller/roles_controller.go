@@ -76,7 +76,7 @@ func (r *RolesController) Create(c *gin.Context) error {
 }
 
 //PUT /roles/:id
-func (r *RolesController) Update(c *gin.Context) error {
+func (r *RolesController) Update_Put(c *gin.Context) error {
 
 	//Lấy dữ liệu đầu vào
 	id := c.Param("id")
@@ -94,7 +94,34 @@ func (r *RolesController) Update(c *gin.Context) error {
 		return apperrors.NewBadRequestError("Role name cannot be empty")
 	}
 
-	if err := r.roleService.Update(c, id_int, &input); err != nil {
+	if err := r.roleService.Update_Put(c, id_int, &input); err != nil {
+		return apperrors.NewInternalServerError(err)
+	}
+
+	response.Success_Response(c, 200, "Role updated successfully", nil)
+	return nil
+}
+
+//PATCH /roles/:id
+func (r *RolesController) Update_Patch(c *gin.Context) error {
+
+	//Lấy dữ liệu đầu vào
+	id := c.Param("id")
+	id_int, err := util.VerifyID(id)
+	if err != nil {
+		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
+	}
+
+	input := models.Role{}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		return apperrors.NewBadRequestError("Invalid input: " + err.Error())
+	}
+
+	if util.VerifyName(input.Role_name) != nil {
+		return apperrors.NewBadRequestError("Role name cannot be empty")
+	}
+
+	if err := r.roleService.Update_Patch(c, id_int, &input); err != nil {
 		return apperrors.NewInternalServerError(err)
 	}
 

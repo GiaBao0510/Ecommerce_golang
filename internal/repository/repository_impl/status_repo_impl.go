@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"strconv"
-	"time"
 
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
@@ -90,25 +89,21 @@ func (s *StatusRepository) Create(ctx context.Context, obj *models.Status) (int,
 	return 0, nil
 }
 
-func (s *StatusRepository) Update(ctx context.Context, id int32, obj *models.Status) error {
+func (s *StatusRepository) Update_Put(ctx context.Context, id int32, obj *models.Status) error {
 
 	// Điền các giá trị đầu vào
-	params := database.UpdateStatusParams{
+	params := database.UpdateStatus_PUTParams{
 		Name: obj.Name,
 		Description: sql.NullString{
 			String: obj.Description,
 			Valid:  obj.Description != "",
 		},
-		UpdatedAt: sql.NullTime{
-			Time:  time.Now(),
-			Valid: true,
-		},
 		IDStatus: id,
 	}
 
-	result, err := s.db.UpdateStatus(ctx, params)
+	result, err := s.db.UpdateStatus_PUT(ctx, params)
 	if err != nil {
-		s.dblog.LogError("UpdateStatus", err, zap.Int32("id", id))
+		s.dblog.LogError("UpdateStatus_PUT", err, zap.Int32("id", id))
 		return apperrors.NewInternalServerError(err)
 	}
 
@@ -120,7 +115,40 @@ func (s *StatusRepository) Update(ctx context.Context, id int32, obj *models.Sta
 	}
 
 	if affected == 0 {
-		s.dblog.LogWarning("UpdateStatus", "No rows affected", zap.Int32("id", id))
+		s.dblog.LogWarning("UpdateStatus_PUT", "No rows affected", zap.Int32("id", id))
+		return apperrors.NewNotFoundError("Không tìm thấy status với ID: " + strconv.Itoa(int(id)))
+	}
+
+	return nil
+}
+
+func (s *StatusRepository) Update_Patch(ctx context.Context, id int32, obj *models.Status) error {
+
+	// Điền các giá trị đầu vào
+	params := database.UpdateStatus_PATCHParams{
+		Name: obj.Name,
+		Description: sql.NullString{
+			String: obj.Description,
+			Valid:  obj.Description != "",
+		},
+		IDStatus: id,
+	}
+
+	result, err := s.db.UpdateStatus_PATCH(ctx, params)
+	if err != nil {
+		s.dblog.LogError("UpdateStatus_PATCH", err, zap.Int32("id", id))
+		return apperrors.NewInternalServerError(err)
+	}
+
+	// Kiểm tra số lượng bản ghi bị ảnh hưởng
+	affected, err := result.RowsAffected()
+	if err != nil {
+		s.dblog.LogError("RowsAffected", err, zap.Int32("id", id))
+		return apperrors.NewInternalServerError(err)
+	}
+
+	if affected == 0 {
+		s.dblog.LogWarning("UpdateStatus_PATCH", "No rows affected", zap.Int32("id", id))
 		return apperrors.NewNotFoundError("Không tìm thấy status với ID: " + strconv.Itoa(int(id)))
 	}
 

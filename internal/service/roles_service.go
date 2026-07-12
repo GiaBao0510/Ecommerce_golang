@@ -13,7 +13,8 @@ type IRolesService interface {
 	GetByID(ctx context.Context, id int32) (*models.Role, error)
 	GetAll(ctx context.Context) ([]models.Role, error)
 	Create(ctx context.Context, obj *models.Role) (int, error)
-	Update(ctx context.Context, id int32, obj *models.Role) error
+	Update_Put(ctx context.Context, id int32, obj *models.Role) error
+	Update_Patch(ctx context.Context, id int32, obj *models.Role) error
 	Delete(ctx context.Context, id int32) error
 }
 
@@ -50,13 +51,21 @@ func(r *RolesService) Create(ctx context.Context, obj *models.Role) (int, error)
 	return r.RolesRepo.Create(ctx, obj)
 }
 
-func(r *RolesService) Update(ctx context.Context, id int32, obj *models.Role) error {
+func(r *RolesService) Update_Put(ctx context.Context, id int32, obj *models.Role) error {
 
 	if id <= 0 {
 		return apperrors.NewBadRequestError("Mã role không hợp lệ")
 	}
 
-	return r.RolesRepo.Update(ctx, id, obj)
+	return r.RolesRepo.Update_Put(ctx, id, obj)
+}
+
+func(r * RolesService) Update_Patch(ctx context.Context, id int32, obj *models.Role) error {
+	if id <= 0 {
+		return apperrors.NewBadRequestError("Mã role không hợp lệ")
+	}
+
+	return r.RolesRepo.Update_Patch(ctx, id, obj)
 }
 
 func(r *RolesService) Delete(ctx context.Context, id int32) error {

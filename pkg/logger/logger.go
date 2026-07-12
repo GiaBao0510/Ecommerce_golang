@@ -144,8 +144,8 @@ func NewLogger(config setting.LoggerSetting) *AppLoggers {
 	return &AppLoggers{
 		Access: zap.New(accessCore, zap.AddCaller()),
 		Error: zap.New(errorCore, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel)),
-		App: zap.New(appCore, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel)),
-		Warning: zap.New(warningCore, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel)),
+		App: zap.New(appCore, zap.AddCaller()),
+		Warning: zap.New(warningCore, zap.AddCaller()),
 	}
 }
 

@@ -11,24 +11,17 @@ import (
 )
 
 const createPermission = `-- name: CreatePermission :exec
-INSERT INTO permissions(action_name, description, updated_at, deleted_at) VALUES($1,$2,$3,$4) RETURNING action_id
+INSERT INTO permissions(action_name, description) VALUES($1,$2) RETURNING action_id
 `
 
 type CreatePermissionParams struct {
 	ActionName  string
 	Description sql.NullString
-	UpdatedAt   sql.NullTime
-	DeletedAt   sql.NullTime
 }
 
 // _______________ Bảng permissions 2 ___________________
 func (q *Queries) CreatePermission(ctx context.Context, arg CreatePermissionParams) error {
-	_, err := q.db.ExecContext(ctx, createPermission,
-		arg.ActionName,
-		arg.Description,
-		arg.UpdatedAt,
-		arg.DeletedAt,
-	)
+	_, err := q.db.ExecContext(ctx, createPermission, arg.ActionName, arg.Description)
 	return err
 }
 
@@ -44,6 +37,21 @@ type CreateRoleParams struct {
 // _______________ Bảng Role 1 ___________________
 func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) error {
 	_, err := q.db.ExecContext(ctx, createRole, arg.RoleName, arg.Description)
+	return err
+}
+
+const createRolePermission = `-- name: CreateRolePermission :exec
+INSERT INTO role_permission(action_id, role_id) VALUES($1,$2)
+`
+
+type CreateRolePermissionParams struct {
+	ActionID int32
+	RoleID   int32
+}
+
+// _______________ Bảng Role_Permissions 3 ___________________
+func (q *Queries) CreateRolePermission(ctx context.Context, arg CreateRolePermissionParams) error {
+	_, err := q.db.ExecContext(ctx, createRolePermission, arg.ActionID, arg.RoleID)
 	return err
 }
 
@@ -71,6 +79,52 @@ func (q *Queries) CreateStatus(ctx context.Context, arg CreateStatusParams) erro
 	return err
 }
 
+const createUser = `-- name: CreateUser :exec
+INSERT INTO "USER"(id_status, user_name,date_of_birth, email, phone_num, address, password_hash, avatar_url)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8)
+`
+
+type CreateUserParams struct {
+	IDStatus     sql.NullInt32
+	UserName     string
+	DateOfBirth  sql.NullTime
+	Email        string
+	PhoneNum     sql.NullString
+	Address      sql.NullString
+	PasswordHash string
+	AvatarUrl    sql.NullString
+}
+
+// _______________ Bảng User 4 ___________________
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
+	_, err := q.db.ExecContext(ctx, createUser,
+		arg.IDStatus,
+		arg.UserName,
+		arg.DateOfBirth,
+		arg.Email,
+		arg.PhoneNum,
+		arg.Address,
+		arg.PasswordHash,
+		arg.AvatarUrl,
+	)
+	return err
+}
+
+const createUserRole = `-- name: CreateUserRole :exec
+INSERT INTO user_role(uuid, role_id) VALUES($1, $2)
+`
+
+type CreateUserRoleParams struct {
+	Uuid   string
+	RoleID int32
+}
+
+// _______________ Bảng User-Roles 5 ___________________
+func (q *Queries) CreateUserRole(ctx context.Context, arg CreateUserRoleParams) error {
+	_, err := q.db.ExecContext(ctx, createUserRole, arg.Uuid, arg.RoleID)
+	return err
+}
+
 const deletePermission = `-- name: DeletePermission :exec
 DELETE FROM permissions WHERE action_id = $1
 `
@@ -88,12 +142,49 @@ func (q *Queries) DeleteRole(ctx context.Context, roleID int32) (sql.Result, err
 	return q.db.ExecContext(ctx, deleteRole, roleID)
 }
 
+const deleteRolePermission = `-- name: DeleteRolePermission :exec
+DELETE FROM role_permission WHERE action_id = $1 AND role_id = $2
+`
+
+type DeleteRolePermissionParams struct {
+	ActionID int32
+	RoleID   int32
+}
+
+func (q *Queries) DeleteRolePermission(ctx context.Context, arg DeleteRolePermissionParams) error {
+	_, err := q.db.ExecContext(ctx, deleteRolePermission, arg.ActionID, arg.RoleID)
+	return err
+}
+
 const deleteStatus = `-- name: DeleteStatus :execresult
 DELETE FROM status WHERE id_status = $1
 `
 
 func (q *Queries) DeleteStatus(ctx context.Context, idStatus int32) (sql.Result, error) {
 	return q.db.ExecContext(ctx, deleteStatus, idStatus)
+}
+
+const deleteUser = `-- name: DeleteUser :exec
+DELETE FROM "USER" WHERE uuid = $1
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, uuid string) error {
+	_, err := q.db.ExecContext(ctx, deleteUser, uuid)
+	return err
+}
+
+const deleteUserRole = `-- name: DeleteUserRole :exec
+DELETE FROM user_role WHERE uuid = $1 AND role_id = $2
+`
+
+type DeleteUserRoleParams struct {
+	Uuid   string
+	RoleID int32
+}
+
+func (q *Queries) DeleteUserRole(ctx context.Context, arg DeleteUserRoleParams) error {
+	_, err := q.db.ExecContext(ctx, deleteUserRole, arg.Uuid, arg.RoleID)
+	return err
 }
 
 const getAllPermissions = `-- name: GetAllPermissions :many
@@ -191,6 +282,46 @@ func (q *Queries) GetAllStatus(ctx context.Context) ([]Status, error) {
 	return items, nil
 }
 
+const getAllUsers = `-- name: GetAllUsers :many
+SELECT uuid, id_status, user_name, date_of_birth, email, phone_num, address, password_hash, avatar_url, created_at, updated_at, deleted_at FROM "USER"
+`
+
+func (q *Queries) GetAllUsers(ctx context.Context) ([]USER, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []USER
+	for rows.Next() {
+		var i USER
+		if err := rows.Scan(
+			&i.Uuid,
+			&i.IDStatus,
+			&i.UserName,
+			&i.DateOfBirth,
+			&i.Email,
+			&i.PhoneNum,
+			&i.Address,
+			&i.PasswordHash,
+			&i.AvatarUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPermissionByID = `-- name: GetPermissionByID :one
 SELECT action_id, action_name, description, created_at, updated_at, deleted_at FROM permissions WHERE action_id = $1
 `
@@ -209,6 +340,43 @@ func (q *Queries) GetPermissionByID(ctx context.Context, actionID int32) (Permis
 	return i, err
 }
 
+const getPermissionsByRoleID = `-- name: GetPermissionsByRoleID :many
+SELECT p.action_id, p.action_name, p.action_name
+FROM role r 
+	INNER JOIN role_permission rp ON r.role_id = rp.role_id
+	INNER JOIN permissions p ON p.action_id = rp.action_id
+WHERE r.role_id = $1
+`
+
+type GetPermissionsByRoleIDRow struct {
+	ActionID     int32
+	ActionName   string
+	ActionName_2 string
+}
+
+func (q *Queries) GetPermissionsByRoleID(ctx context.Context, roleID int32) ([]GetPermissionsByRoleIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPermissionsByRoleID, roleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPermissionsByRoleIDRow
+	for rows.Next() {
+		var i GetPermissionsByRoleIDRow
+		if err := rows.Scan(&i.ActionID, &i.ActionName, &i.ActionName_2); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRoleByID = `-- name: GetRoleByID :one
 SELECT role_id, role_name, description FROM role WHERE role_id = $1
 `
@@ -218,6 +386,68 @@ func (q *Queries) GetRoleByID(ctx context.Context, roleID int32) (Role, error) {
 	var i Role
 	err := row.Scan(&i.RoleID, &i.RoleName, &i.Description)
 	return i, err
+}
+
+const getRolesByPermissionID = `-- name: GetRolesByPermissionID :many
+SELECT r.role_id, r.role_name, r.description
+FROM role r 
+	INNER JOIN role_permission rp ON r.role_id = rp.role_id
+	INNER JOIN permissions p ON p.action_id = rp.action_id
+WHERE p.action_id = $1
+`
+
+func (q *Queries) GetRolesByPermissionID(ctx context.Context, actionID int32) ([]Role, error) {
+	rows, err := q.db.QueryContext(ctx, getRolesByPermissionID, actionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Role
+	for rows.Next() {
+		var i Role
+		if err := rows.Scan(&i.RoleID, &i.RoleName, &i.Description); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRolesByUserID = `-- name: GetRolesByUserID :many
+SELECT r.role_id, r.role_name, r.description
+FROM "USER" u 
+	JOIN user_role ur ON u.uuid = ur.uuid 
+	JOIN role r ON r.role_id = ur.role_id
+	WHERE u.uuid = $1
+`
+
+func (q *Queries) GetRolesByUserID(ctx context.Context, uuid string) ([]Role, error) {
+	rows, err := q.db.QueryContext(ctx, getRolesByUserID, uuid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Role
+	for rows.Next() {
+		var i Role
+		if err := rows.Scan(&i.RoleID, &i.RoleName, &i.Description); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getStatusByID = `-- name: GetStatusByID :one
@@ -238,51 +468,331 @@ func (q *Queries) GetStatusByID(ctx context.Context, idStatus int32) (Status, er
 	return i, err
 }
 
-const updatePermission = `-- name: UpdatePermission :exec
-UPDATE permissions SET action_name = $1, description = $2 WHERE action_id = $3
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT uuid, id_status, user_name, date_of_birth, email, phone_num, address, password_hash, avatar_url, created_at, updated_at, deleted_at FROM "USER" WHERE email = $1
 `
 
-type UpdatePermissionParams struct {
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (USER, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i USER
+	err := row.Scan(
+		&i.Uuid,
+		&i.IDStatus,
+		&i.UserName,
+		&i.DateOfBirth,
+		&i.Email,
+		&i.PhoneNum,
+		&i.Address,
+		&i.PasswordHash,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT uuid, id_status, user_name, date_of_birth, email, phone_num, address, password_hash, avatar_url, created_at, updated_at, deleted_at FROM "USER" WHERE uuid = $1
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, uuid string) (USER, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, uuid)
+	var i USER
+	err := row.Scan(
+		&i.Uuid,
+		&i.IDStatus,
+		&i.UserName,
+		&i.DateOfBirth,
+		&i.Email,
+		&i.PhoneNum,
+		&i.Address,
+		&i.PasswordHash,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getUserByPhone = `-- name: GetUserByPhone :one
+SELECT uuid, id_status, user_name, date_of_birth, email, phone_num, address, password_hash, avatar_url, created_at, updated_at, deleted_at FROM "USER" WHERE phone_num = $1
+`
+
+func (q *Queries) GetUserByPhone(ctx context.Context, phoneNum sql.NullString) (USER, error) {
+	row := q.db.QueryRowContext(ctx, getUserByPhone, phoneNum)
+	var i USER
+	err := row.Scan(
+		&i.Uuid,
+		&i.IDStatus,
+		&i.UserName,
+		&i.DateOfBirth,
+		&i.Email,
+		&i.PhoneNum,
+		&i.Address,
+		&i.PasswordHash,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getUserByRoleID = `-- name: GetUserByRoleID :many
+SELECT u.uuid, u.user_name, u.email, u.phone_num, u.address
+FROM "USER" u 
+	JOIN user_role ur ON u.uuid = ur.uuid 
+	JOIN role r ON r.role_id = ur.role_id
+	WHERE r.role_id = $1
+`
+
+type GetUserByRoleIDRow struct {
+	Uuid     string
+	UserName string
+	Email    string
+	PhoneNum sql.NullString
+	Address  sql.NullString
+}
+
+func (q *Queries) GetUserByRoleID(ctx context.Context, roleID int32) ([]GetUserByRoleIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserByRoleID, roleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserByRoleIDRow
+	for rows.Next() {
+		var i GetUserByRoleIDRow
+		if err := rows.Scan(
+			&i.Uuid,
+			&i.UserName,
+			&i.Email,
+			&i.PhoneNum,
+			&i.Address,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updatePermission_PATCH = `-- name: UpdatePermission_PATCH :exec
+UPDATE permissions SET action_name = COALESCE($1, action_name), description = COALESCE($2, description) WHERE action_id = $3
+`
+
+type UpdatePermission_PATCHParams struct {
 	ActionName  string
 	Description sql.NullString
 	ActionID    int32
 }
 
-func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error {
-	_, err := q.db.ExecContext(ctx, updatePermission, arg.ActionName, arg.Description, arg.ActionID)
+func (q *Queries) UpdatePermission_PATCH(ctx context.Context, arg UpdatePermission_PATCHParams) error {
+	_, err := q.db.ExecContext(ctx, updatePermission_PATCH, arg.ActionName, arg.Description, arg.ActionID)
 	return err
 }
 
-const updateRole = `-- name: UpdateRole :execresult
-UPDATE role SET role_name = $1, description = $2 WHERE role_id = $3
+const updatePermission_PUT = `-- name: UpdatePermission_PUT :exec
+UPDATE permissions SET action_name = $1, description = $2 WHERE action_id = $3
 `
 
-type UpdateRoleParams struct {
+type UpdatePermission_PUTParams struct {
+	ActionName  string
+	Description sql.NullString
+	ActionID    int32
+}
+
+func (q *Queries) UpdatePermission_PUT(ctx context.Context, arg UpdatePermission_PUTParams) error {
+	_, err := q.db.ExecContext(ctx, updatePermission_PUT, arg.ActionName, arg.Description, arg.ActionID)
+	return err
+}
+
+const updateRolePermissionByRoleID_PUT = `-- name: UpdateRolePermissionByRoleID_PUT :exec
+UPDATE role_permission SET action_id = $1, role_id = $2 WHERE action_id = $2
+`
+
+type UpdateRolePermissionByRoleID_PUTParams struct {
+	ActionID int32
+	RoleID   int32
+}
+
+func (q *Queries) UpdateRolePermissionByRoleID_PUT(ctx context.Context, arg UpdateRolePermissionByRoleID_PUTParams) error {
+	_, err := q.db.ExecContext(ctx, updateRolePermissionByRoleID_PUT, arg.ActionID, arg.RoleID)
+	return err
+}
+
+const updateRole_PATCH = `-- name: UpdateRole_PATCH :execresult
+UPDATE role SET role_name = COALESCE($1, role_name), description = COALESCE($2, description) WHERE role_id = $3
+`
+
+type UpdateRole_PATCHParams struct {
 	RoleName    string
 	Description sql.NullString
 	RoleID      int32
 }
 
-func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, updateRole, arg.RoleName, arg.Description, arg.RoleID)
+func (q *Queries) UpdateRole_PATCH(ctx context.Context, arg UpdateRole_PATCHParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateRole_PATCH, arg.RoleName, arg.Description, arg.RoleID)
 }
 
-const updateStatus = `-- name: UpdateStatus :execresult
-UPDATE status SET name = $1, description = $2, updated_at = $3 WHERE id_status = $4
+const updateRole_PUT = `-- name: UpdateRole_PUT :execresult
+UPDATE role SET role_name = $1, description = $2 WHERE role_id = $3
 `
 
-type UpdateStatusParams struct {
+type UpdateRole_PUTParams struct {
+	RoleName    string
+	Description sql.NullString
+	RoleID      int32
+}
+
+func (q *Queries) UpdateRole_PUT(ctx context.Context, arg UpdateRole_PUTParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateRole_PUT, arg.RoleName, arg.Description, arg.RoleID)
+}
+
+const updateStatus_PATCH = `-- name: UpdateStatus_PATCH :execresult
+UPDATE status SET name = COALESCE($1, name), description =  COALESCE($2, description), updated_at = NOW() WHERE  id_status = $3
+`
+
+type UpdateStatus_PATCHParams struct {
 	Name        string
 	Description sql.NullString
-	UpdatedAt   sql.NullTime
 	IDStatus    int32
 }
 
-func (q *Queries) UpdateStatus(ctx context.Context, arg UpdateStatusParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, updateStatus,
-		arg.Name,
-		arg.Description,
-		arg.UpdatedAt,
+func (q *Queries) UpdateStatus_PATCH(ctx context.Context, arg UpdateStatus_PATCHParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateStatus_PATCH, arg.Name, arg.Description, arg.IDStatus)
+}
+
+const updateStatus_PUT = `-- name: UpdateStatus_PUT :execresult
+UPDATE status SET name = $1, description = $2, updated_at = NOW() WHERE id_status = $3
+`
+
+type UpdateStatus_PUTParams struct {
+	Name        string
+	Description sql.NullString
+	IDStatus    int32
+}
+
+func (q *Queries) UpdateStatus_PUT(ctx context.Context, arg UpdateStatus_PUTParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateStatus_PUT, arg.Name, arg.Description, arg.IDStatus)
+}
+
+const updateUserAvatar_PATCH = `-- name: UpdateUserAvatar_PATCH :exec
+UPDATE "USER"
+	SET avatar_url = $1
+	WHERE uuid = $2
+`
+
+type UpdateUserAvatar_PATCHParams struct {
+	AvatarUrl sql.NullString
+	Uuid      string
+}
+
+func (q *Queries) UpdateUserAvatar_PATCH(ctx context.Context, arg UpdateUserAvatar_PATCHParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserAvatar_PATCH, arg.AvatarUrl, arg.Uuid)
+	return err
+}
+
+const updateUserPassword_PATCH = `-- name: UpdateUserPassword_PATCH :exec
+UPDATE "USER"
+	SET password_hash = $1
+	WHERE uuid = $2
+`
+
+type UpdateUserPassword_PATCHParams struct {
+	PasswordHash string
+	Uuid         string
+}
+
+func (q *Queries) UpdateUserPassword_PATCH(ctx context.Context, arg UpdateUserPassword_PATCHParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserPassword_PATCH, arg.PasswordHash, arg.Uuid)
+	return err
+}
+
+const updateUserRoleByUserID_PUT = `-- name: UpdateUserRoleByUserID_PUT :exec
+UPDATE user_role SET role_id = $1 WHERE uuid = $2
+`
+
+type UpdateUserRoleByUserID_PUTParams struct {
+	RoleID int32
+	Uuid   string
+}
+
+func (q *Queries) UpdateUserRoleByUserID_PUT(ctx context.Context, arg UpdateUserRoleByUserID_PUTParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserRoleByUserID_PUT, arg.RoleID, arg.Uuid)
+	return err
+}
+
+const updateUser_PATCH = `-- name: UpdateUser_PATCH :exec
+UPDATE "USER" 
+	SET id_status = COALESCE($1, id_status), 
+		user_name = COALESCE($2, user_name), 
+		date_of_birth = COALESCE($3, date_of_birth), 
+		email = COALESCE($4, email), 
+		phone_num = COALESCE($5, phone_num), 
+		address = COALESCE($6, address) 
+	WHERE uuid = $7
+`
+
+type UpdateUser_PATCHParams struct {
+	IDStatus    sql.NullInt32
+	UserName    string
+	DateOfBirth sql.NullTime
+	Email       string
+	PhoneNum    sql.NullString
+	Address     sql.NullString
+	Uuid        string
+}
+
+func (q *Queries) UpdateUser_PATCH(ctx context.Context, arg UpdateUser_PATCHParams) error {
+	_, err := q.db.ExecContext(ctx, updateUser_PATCH,
 		arg.IDStatus,
+		arg.UserName,
+		arg.DateOfBirth,
+		arg.Email,
+		arg.PhoneNum,
+		arg.Address,
+		arg.Uuid,
 	)
+	return err
+}
+
+const updateUser_PUT = `-- name: UpdateUser_PUT :exec
+UPDATE "USER" 
+	SET id_status = $1, 
+		user_name = $2, 
+		date_of_birth = $3, 
+		email = $4, phone_num = $5, address = $6 
+	WHERE uuid = $7
+`
+
+type UpdateUser_PUTParams struct {
+	IDStatus    sql.NullInt32
+	UserName    string
+	DateOfBirth sql.NullTime
+	Email       string
+	PhoneNum    sql.NullString
+	Address     sql.NullString
+	Uuid        string
+}
+
+func (q *Queries) UpdateUser_PUT(ctx context.Context, arg UpdateUser_PUTParams) error {
+	_, err := q.db.ExecContext(ctx, updateUser_PUT,
+		arg.IDStatus,
+		arg.UserName,
+		arg.DateOfBirth,
+		arg.Email,
+		arg.PhoneNum,
+		arg.Address,
+		arg.Uuid,
+	)
+	return err
 }

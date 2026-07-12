@@ -20,6 +20,7 @@ func (r *RolesRouter) InitRolesRouter(Router *gin.RouterGroup, db *database.Quer
 	Router.GET("", controller.Build(rolesController.GetAll, logger))
 	Router.GET("/:id", controller.Build(rolesController.GetByID, logger))
 	Router.POST("", controller.Build(rolesController.Create, logger))
-	Router.PUT("/:id", controller.Build(rolesController.Update, logger))
+	Router.PUT("/:id", controller.Build(rolesController.Update_Put, logger))
+	Router.PATCH("/:id", controller.Build(rolesController.Update_Patch, logger))
 	Router.DELETE("/:id", controller.Build(rolesController.Delete, logger))
 }

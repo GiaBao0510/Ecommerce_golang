@@ -69,7 +69,6 @@ func Build(handler AppHandler, logger *zap.Logger) gin.HandlerFunc {
 					zap.String("method", ctx.Request.Method),
 					zap.String("path", ctx.Request.URL.Path),
 					zap.Int("status_code", appErr.Code),
-					zap.String("error_status", appErr.Status),
 					zap.String("error_message", appErr.Message),
 				)
 			}

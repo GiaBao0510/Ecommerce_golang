@@ -13,7 +13,8 @@ type IStatusService interface {
 	GetByID(ctx context.Context, id int32) (*models.Status, error)
 	GetAll(ctx context.Context) ([]models.Status, error)
 	Create(ctx context.Context, obj *models.Status) (int, error)
-	Update(ctx context.Context, id int32, obj *models.Status) error
+	Update_Put(ctx context.Context, id int32, obj *models.Status) error
+	Update_Patch(ctx context.Context, id int32, obj *models.Status) error
 	Delete(ctx context.Context, id int32) error
 }
 
@@ -51,11 +52,18 @@ func (s *StatusService) Create(ctx context.Context, obj *models.Status) (int, er
 	return s.StatusRepo.Create(ctx, obj)
 }
 
-func (s *StatusService) Update(ctx context.Context, id int32, obj *models.Status) error {
+func (s *StatusService) Update_Put(ctx context.Context, id int32, obj *models.Status) error {
 	if id <= 0 {
 		return apperrors.NewBadRequestError("Mã trạng thái không hợp lệ")
 	}
-	return s.StatusRepo.Update(ctx, id, obj)
+	return s.StatusRepo.Update_Put(ctx, id, obj)
+}
+
+func (s *StatusService) Update_Patch(ctx context.Context, id int32, obj *models.Status) error {
+	if id <= 0 {
+		return apperrors.NewBadRequestError("Mã trạng thái không hợp lệ")
+	}
+	return s.StatusRepo.Update_Patch(ctx, id, obj)
 }
 
 func (s *StatusService) Delete(ctx context.Context, id int32) error {

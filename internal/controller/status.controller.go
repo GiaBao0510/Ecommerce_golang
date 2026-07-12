@@ -78,7 +78,7 @@ func (s *StatusController) CreateStatus(c *gin.Context) error {
 }
 
 // PUT /statuses/:id
-func (s *StatusController) UpdateStatus(c *gin.Context) error {
+func (s *StatusController) Update_Put(c *gin.Context) error {
 	id := c.Param("id")              // Lấy ID từ URL
 	id_int, err := util.VerifyID(id) // Validate ID và chuyển đổi sang int32
 	if err != nil {
@@ -93,7 +93,31 @@ func (s *StatusController) UpdateStatus(c *gin.Context) error {
 	}
 
 	// Gọi service để cập nhật status
-	if err := s.statusService.Update(c, id_int, &input); err != nil {
+	if err := s.statusService.Update_Put(c, id_int, &input); err != nil {
+		return apperrors.NewBadRequestError("Failed to update status: " + err.Error())
+	}
+
+	response.Success_Response(c, http.StatusOK, "Status updated successfully", nil)
+	return nil
+}
+
+// PUT /statuses/:id
+func (s *StatusController) Update_Patch(c *gin.Context) error {
+	id := c.Param("id")              // Lấy ID từ URL
+	id_int, err := util.VerifyID(id) // Validate ID và chuyển đổi sang int32
+	if err != nil {
+		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
+	}
+
+	input := models.Status{}
+
+	//Parse JSON body vào struct Status
+	if err := c.ShouldBindJSON(&input); err != nil {
+		return apperrors.NewBadRequestError("Invalid input data: " + err.Error())
+	}
+
+	// Gọi service để cập nhật status
+	if err := s.statusService.Update_Patch(c, id_int, &input); err != nil {
 		return apperrors.NewBadRequestError("Failed to update status: " + err.Error())
 	}
 
