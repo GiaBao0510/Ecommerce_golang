@@ -5,4 +5,5 @@ type ManagerRouterGroup struct {
 	UserRouter
 	StatusRouter
 	RolesRouter
+	PermissionRouter
 }

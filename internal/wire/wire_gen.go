@@ -15,6 +15,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// Injectors from permission.wire.go:
+
+func InitPermissionRouterHandler(db *database.Queries, logger *zap.Logger) (*controller.PermissionController, error) {
+	iPermissionRepository := repositoryimpl.NewPermissionRepository(db, logger)
+	iPermissionService := service.NewPermissionService(iPermissionRepository)
+	permissionController := controller.NewPermissionController(iPermissionService, logger)
+	return permissionController, nil
+}
+
 // Injectors from roles.wire.go:
 
 // Khởi tạo tiêm phụ thuộc cho RolesController
@@ -29,7 +38,7 @@ func InitRolesRouterHandler(db *database.Queries, logger *zap.Logger) (*controll
 
 func InitStatusRouterHandler(db *database.Queries, logger *zap.Logger) (*controller.StatusController, error) {
 	iStatusRepository := repositoryimpl.NewStatusRepository(db, logger)
-	iStatusService := service.NewStatusService(iStatusRepository)
+	iStatusService := service.NewStatusService(iStatusRepository, logger)
 	statusController := controller.NewStatusController(iStatusService, logger)
 	return statusController, nil
 }

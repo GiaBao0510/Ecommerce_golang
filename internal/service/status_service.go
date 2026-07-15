@@ -6,6 +6,7 @@ import (
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
+	"go.uber.org/zap"
 )
 
 // Interface for StatusService
@@ -20,12 +21,14 @@ type IStatusService interface {
 
 type StatusService struct {
 	StatusRepo repository.IStatusRepository
+	logger *zap.Logger
 }
 
 // Constructor for StatusService
-func NewStatusService(StatusRepo repository.IStatusRepository) IStatusService {
+func NewStatusService(StatusRepo repository.IStatusRepository, logger *zap.Logger) IStatusService {
 	return &StatusService{
 		StatusRepo: StatusRepo,
+		logger: logger,
 	}
 }
 
@@ -47,13 +50,24 @@ func (s *StatusService) Create(ctx context.Context, obj *models.Status) (int, er
 	
 	// Validate input data
 	if obj.Name == "" {
+		s.logger.Warn("Service: Create status - validation failed",
+            zap.String("layer", "service"),
+            zap.String("reason", "name is empty"),)
 		return 0, apperrors.NewBadRequestError("Tên trạng thái không được để trống")
 	}
+
+	s.logger.Info(
+		"service: Status created successfully", 
+		zap.String("layer", "service"), 
+		zap.String("name", obj.Name))
 	return s.StatusRepo.Create(ctx, obj)
 }
 
 func (s *StatusService) Update_Put(ctx context.Context, id int32, obj *models.Status) error {
 	if id <= 0 {
+		s.logger.Warn("Service: Update_Put status - validation failed",
+            zap.String("layer", "service"),
+            zap.String("reason", "invalid ID"))
 		return apperrors.NewBadRequestError("Mã trạng thái không hợp lệ")
 	}
 	return s.StatusRepo.Update_Put(ctx, id, obj)
@@ -61,6 +75,9 @@ func (s *StatusService) Update_Put(ctx context.Context, id int32, obj *models.St
 
 func (s *StatusService) Update_Patch(ctx context.Context, id int32, obj *models.Status) error {
 	if id <= 0 {
+		s.logger.Warn("Service: Update_Patch status - validation failed",
+            zap.String("layer", "service"),
+            zap.String("reason", "invalid ID"))
 		return apperrors.NewBadRequestError("Mã trạng thái không hợp lệ")
 	}
 	return s.StatusRepo.Update_Patch(ctx, id, obj)
@@ -68,6 +85,9 @@ func (s *StatusService) Update_Patch(ctx context.Context, id int32, obj *models.
 
 func (s *StatusService) Delete(ctx context.Context, id int32) error {
 	if id <= 0 {
+		s.logger.Warn("Service: Delete status - validation failed",
+            zap.String("layer", "service"),
+            zap.String("reason", "invalid ID"))
 		return apperrors.NewBadRequestError("Mã trạng thái không hợp lệ")
 	}
 	return s.StatusRepo.Delete(ctx, id)

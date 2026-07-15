@@ -48,13 +48,17 @@ SELECT * FROM permissions WHERE action_id = $1;
 -- name: GetAllPermissions :many
 SELECT * FROM permissions;
 
--- name: UpdatePermission_PUT :exec
-UPDATE permissions SET action_name = $1, description = $2 WHERE action_id = $3;
+-- name: UpdatePermission_PUT :execresult
+UPDATE permissions SET action_name = $1, description = $2, updated_at = NOW() WHERE action_id = $3;
 
--- name: UpdatePermission_PATCH :exec
-UPDATE permissions SET action_name = COALESCE($1, action_name), description = COALESCE($2, description) WHERE action_id = $3;
+-- name: UpdatePermission_PATCH :execresult
+UPDATE permissions SET 
+	action_name = COALESCE($1, action_name), 
+	description = COALESCE($2, description), 
+	updated_at = NOW()
+WHERE action_id = $3;
 
--- name: DeletePermission :exec
+-- name: DeletePermission :execresult
 DELETE FROM permissions WHERE action_id = $1;
 
 /*_______________ Bảng Role_Permissions 3 ___________________*/
@@ -62,7 +66,7 @@ DELETE FROM permissions WHERE action_id = $1;
 INSERT INTO role_permission(action_id, role_id) VALUES($1,$2);
 
 -- name: GetPermissionsByRoleID :many
-SELECT p.action_id, p.action_name, p.action_name
+SELECT p.action_id, p.action_name, p.description
 FROM role r 
 	INNER JOIN role_permission rp ON r.role_id = rp.role_id
 	INNER JOIN permissions p ON p.action_id = rp.action_id
@@ -79,7 +83,11 @@ WHERE p.action_id = $1;
 DELETE FROM role_permission WHERE action_id = $1 AND role_id = $2;
 
 -- name: UpdateRolePermissionByRoleID_PUT :exec
-UPDATE role_permission SET action_id = $1, role_id = $2 WHERE action_id = $2;
+UPDATE role_permission 
+	SET action_id = $1, 
+	role_id = $2,
+	updated_at = NOW() 
+WHERE action_id = $2;
 
 /*_______________ Bảng User 4 ___________________*/
 -- name: CreateUser :exec
@@ -98,7 +106,7 @@ SELECT * FROM "USER" WHERE email = $1;
 -- name: GetUserByPhone :one
 SELECT * FROM "USER" WHERE phone_num = $1;
 
--- name: UpdateUser_PUT :exec
+-- name: UpdateUser_PUT :execresult
 UPDATE "USER" 
 	SET id_status = $1, 
 		user_name = $2, 
@@ -106,27 +114,30 @@ UPDATE "USER"
 		email = $4, phone_num = $5, address = $6 
 	WHERE uuid = $7;
 
--- name: UpdateUser_PATCH :exec
+-- name: UpdateUser_PATCH :execresult
 UPDATE "USER" 
 	SET id_status = COALESCE($1, id_status), 
 		user_name = COALESCE($2, user_name), 
 		date_of_birth = COALESCE($3, date_of_birth), 
 		email = COALESCE($4, email), 
 		phone_num = COALESCE($5, phone_num), 
-		address = COALESCE($6, address) 
+		address = COALESCE($6, address),
+		updated_at = NOW() 
 	WHERE uuid = $7;
 
 -- name: UpdateUserPassword_PATCH :exec
 UPDATE "USER"
-	SET password_hash = $1
+	SET password_hash = $1,
+		updated_at = NOW()
 	WHERE uuid = $2;
 
 -- name: UpdateUserAvatar_PATCH :exec
 UPDATE "USER"
-	SET avatar_url = $1
+	SET avatar_url = $1,
+		updated_at = NOW()
 	WHERE uuid = $2;
 
--- name: DeleteUser :exec
+-- name: DeleteUser :execresult
 DELETE FROM "USER" WHERE uuid = $1;
 
 /*_______________ Bảng User-Roles 5 ___________________*/

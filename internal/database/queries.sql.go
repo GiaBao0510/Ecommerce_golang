@@ -125,13 +125,12 @@ func (q *Queries) CreateUserRole(ctx context.Context, arg CreateUserRoleParams) 
 	return err
 }
 
-const deletePermission = `-- name: DeletePermission :exec
+const deletePermission = `-- name: DeletePermission :execresult
 DELETE FROM permissions WHERE action_id = $1
 `
 
-func (q *Queries) DeletePermission(ctx context.Context, actionID int32) error {
-	_, err := q.db.ExecContext(ctx, deletePermission, actionID)
-	return err
+func (q *Queries) DeletePermission(ctx context.Context, actionID int32) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deletePermission, actionID)
 }
 
 const deleteRole = `-- name: DeleteRole :execresult
@@ -164,13 +163,12 @@ func (q *Queries) DeleteStatus(ctx context.Context, idStatus int32) (sql.Result,
 	return q.db.ExecContext(ctx, deleteStatus, idStatus)
 }
 
-const deleteUser = `-- name: DeleteUser :exec
+const deleteUser = `-- name: DeleteUser :execresult
 DELETE FROM "USER" WHERE uuid = $1
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, uuid string) error {
-	_, err := q.db.ExecContext(ctx, deleteUser, uuid)
-	return err
+func (q *Queries) DeleteUser(ctx context.Context, uuid string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteUser, uuid)
 }
 
 const deleteUserRole = `-- name: DeleteUserRole :exec
@@ -341,7 +339,7 @@ func (q *Queries) GetPermissionByID(ctx context.Context, actionID int32) (Permis
 }
 
 const getPermissionsByRoleID = `-- name: GetPermissionsByRoleID :many
-SELECT p.action_id, p.action_name, p.action_name
+SELECT p.action_id, p.action_name, p.description
 FROM role r 
 	INNER JOIN role_permission rp ON r.role_id = rp.role_id
 	INNER JOIN permissions p ON p.action_id = rp.action_id
@@ -349,9 +347,9 @@ WHERE r.role_id = $1
 `
 
 type GetPermissionsByRoleIDRow struct {
-	ActionID     int32
-	ActionName   string
-	ActionName_2 string
+	ActionID    int32
+	ActionName  string
+	Description sql.NullString
 }
 
 func (q *Queries) GetPermissionsByRoleID(ctx context.Context, roleID int32) ([]GetPermissionsByRoleIDRow, error) {
@@ -363,7 +361,7 @@ func (q *Queries) GetPermissionsByRoleID(ctx context.Context, roleID int32) ([]G
 	var items []GetPermissionsByRoleIDRow
 	for rows.Next() {
 		var i GetPermissionsByRoleIDRow
-		if err := rows.Scan(&i.ActionID, &i.ActionName, &i.ActionName_2); err != nil {
+		if err := rows.Scan(&i.ActionID, &i.ActionName, &i.Description); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -585,8 +583,12 @@ func (q *Queries) GetUserByRoleID(ctx context.Context, roleID int32) ([]GetUserB
 	return items, nil
 }
 
-const updatePermission_PATCH = `-- name: UpdatePermission_PATCH :exec
-UPDATE permissions SET action_name = COALESCE($1, action_name), description = COALESCE($2, description) WHERE action_id = $3
+const updatePermission_PATCH = `-- name: UpdatePermission_PATCH :execresult
+UPDATE permissions SET 
+	action_name = COALESCE($1, action_name), 
+	description = COALESCE($2, description), 
+	updated_at = NOW()
+WHERE action_id = $3
 `
 
 type UpdatePermission_PATCHParams struct {
@@ -595,13 +597,12 @@ type UpdatePermission_PATCHParams struct {
 	ActionID    int32
 }
 
-func (q *Queries) UpdatePermission_PATCH(ctx context.Context, arg UpdatePermission_PATCHParams) error {
-	_, err := q.db.ExecContext(ctx, updatePermission_PATCH, arg.ActionName, arg.Description, arg.ActionID)
-	return err
+func (q *Queries) UpdatePermission_PATCH(ctx context.Context, arg UpdatePermission_PATCHParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updatePermission_PATCH, arg.ActionName, arg.Description, arg.ActionID)
 }
 
-const updatePermission_PUT = `-- name: UpdatePermission_PUT :exec
-UPDATE permissions SET action_name = $1, description = $2 WHERE action_id = $3
+const updatePermission_PUT = `-- name: UpdatePermission_PUT :execresult
+UPDATE permissions SET action_name = $1, description = $2, updated_at = NOW() WHERE action_id = $3
 `
 
 type UpdatePermission_PUTParams struct {
@@ -610,13 +611,16 @@ type UpdatePermission_PUTParams struct {
 	ActionID    int32
 }
 
-func (q *Queries) UpdatePermission_PUT(ctx context.Context, arg UpdatePermission_PUTParams) error {
-	_, err := q.db.ExecContext(ctx, updatePermission_PUT, arg.ActionName, arg.Description, arg.ActionID)
-	return err
+func (q *Queries) UpdatePermission_PUT(ctx context.Context, arg UpdatePermission_PUTParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updatePermission_PUT, arg.ActionName, arg.Description, arg.ActionID)
 }
 
 const updateRolePermissionByRoleID_PUT = `-- name: UpdateRolePermissionByRoleID_PUT :exec
-UPDATE role_permission SET action_id = $1, role_id = $2 WHERE action_id = $2
+UPDATE role_permission 
+	SET action_id = $1, 
+	role_id = $2,
+	updated_at = NOW() 
+WHERE action_id = $2
 `
 
 type UpdateRolePermissionByRoleID_PUTParams struct {
@@ -687,7 +691,8 @@ func (q *Queries) UpdateStatus_PUT(ctx context.Context, arg UpdateStatus_PUTPara
 
 const updateUserAvatar_PATCH = `-- name: UpdateUserAvatar_PATCH :exec
 UPDATE "USER"
-	SET avatar_url = $1
+	SET avatar_url = $1,
+		updated_at = NOW()
 	WHERE uuid = $2
 `
 
@@ -703,7 +708,8 @@ func (q *Queries) UpdateUserAvatar_PATCH(ctx context.Context, arg UpdateUserAvat
 
 const updateUserPassword_PATCH = `-- name: UpdateUserPassword_PATCH :exec
 UPDATE "USER"
-	SET password_hash = $1
+	SET password_hash = $1,
+		updated_at = NOW()
 	WHERE uuid = $2
 `
 
@@ -731,14 +737,15 @@ func (q *Queries) UpdateUserRoleByUserID_PUT(ctx context.Context, arg UpdateUser
 	return err
 }
 
-const updateUser_PATCH = `-- name: UpdateUser_PATCH :exec
+const updateUser_PATCH = `-- name: UpdateUser_PATCH :execresult
 UPDATE "USER" 
 	SET id_status = COALESCE($1, id_status), 
 		user_name = COALESCE($2, user_name), 
 		date_of_birth = COALESCE($3, date_of_birth), 
 		email = COALESCE($4, email), 
 		phone_num = COALESCE($5, phone_num), 
-		address = COALESCE($6, address) 
+		address = COALESCE($6, address),
+		updated_at = NOW() 
 	WHERE uuid = $7
 `
 
@@ -752,8 +759,8 @@ type UpdateUser_PATCHParams struct {
 	Uuid        string
 }
 
-func (q *Queries) UpdateUser_PATCH(ctx context.Context, arg UpdateUser_PATCHParams) error {
-	_, err := q.db.ExecContext(ctx, updateUser_PATCH,
+func (q *Queries) UpdateUser_PATCH(ctx context.Context, arg UpdateUser_PATCHParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateUser_PATCH,
 		arg.IDStatus,
 		arg.UserName,
 		arg.DateOfBirth,
@@ -762,10 +769,9 @@ func (q *Queries) UpdateUser_PATCH(ctx context.Context, arg UpdateUser_PATCHPara
 		arg.Address,
 		arg.Uuid,
 	)
-	return err
 }
 
-const updateUser_PUT = `-- name: UpdateUser_PUT :exec
+const updateUser_PUT = `-- name: UpdateUser_PUT :execresult
 UPDATE "USER" 
 	SET id_status = $1, 
 		user_name = $2, 
@@ -784,8 +790,8 @@ type UpdateUser_PUTParams struct {
 	Uuid        string
 }
 
-func (q *Queries) UpdateUser_PUT(ctx context.Context, arg UpdateUser_PUTParams) error {
-	_, err := q.db.ExecContext(ctx, updateUser_PUT,
+func (q *Queries) UpdateUser_PUT(ctx context.Context, arg UpdateUser_PUTParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateUser_PUT,
 		arg.IDStatus,
 		arg.UserName,
 		arg.DateOfBirth,
@@ -794,5 +800,4 @@ func (q *Queries) UpdateUser_PUT(ctx context.Context, arg UpdateUser_PUTParams) 
 		arg.Address,
 		arg.Uuid,
 	)
-	return err
 }
