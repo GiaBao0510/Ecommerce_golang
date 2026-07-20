@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/mapper"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
@@ -24,15 +25,6 @@ func NewRolesRepository(db *database.Queries, logger *zap.Logger) repository.IRo
 	return &RolesRepository{db: db, dblog: loghelper.NewDBLogger(logger, "RolesRepository")}
 }
 
-// Tạo Helper để chuyển đổi giữa models.Role và database.Queries trả về
-func toRoleModel(r database.Role) models.Role {
-	return models.Role{
-		Role_id:     r.RoleID,
-		Role_name:   r.RoleName,
-		Description: r.Description.String,
-	}
-}
-
 func (r *RolesRepository) GetByID(ctx context.Context, id int32) (*models.Role, error) {
 	rows, err := r.db.GetRoleByID(ctx, id)
 	if err != nil {
@@ -40,7 +32,7 @@ func (r *RolesRepository) GetByID(ctx context.Context, id int32) (*models.Role, 
 		return nil, apperrors.NewNotFoundError("Lỗi không tìm thấy role với ID: " + strconv.Itoa(int(id)))
 	}
 
-	result := toRoleModel(rows)
+	result := mapper.ToRoleModel(rows)
 
 	return &result, nil
 }
@@ -60,7 +52,7 @@ func (r *RolesRepository) GetAll(ctx context.Context) ([]models.Role, error) {
 
 	var roles []models.Role
 	for _, role := range query {
-		roles = append(roles, toRoleModel(role))
+		roles = append(roles, mapper.ToRoleModel(role))
 	}
 
 	return roles, nil

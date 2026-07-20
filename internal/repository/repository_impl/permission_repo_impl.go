@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/mapper"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
@@ -23,17 +24,7 @@ func NewPermissionRepository(db *database.Queries, logger *zap.Logger) repositor
 	return &PermissionRepository{db: db, dblog: loghelper.NewDBLogger(logger, "PermissionRepository")}
 }
 
-// Tạo Helper để chuyển đổi giữa models.Permission và Database
-func toPermissionModel(p database.Permission) models.Permission {
-	return models.Permission{
-		Action_id:   p.ActionID,
-		Action_name: p.ActionName,
-		Description: p.Description.String,
-		Created_at:  p.CreatedAt,
-		Updated_at:  p.UpdatedAt,
-		Deleted_at:  p.UpdatedAt,
-	}
-}
+
 
 func (p *PermissionRepository) GetByID(ctx context.Context, id int32) (*models.Permission, error) {
 	row, err := p.db.GetPermissionByID(ctx, id)
@@ -41,7 +32,7 @@ func (p *PermissionRepository) GetByID(ctx context.Context, id int32) (*models.P
 		return nil, apperrors.NewNotFoundError("Lỗi không tìm thấy với ID: " + strconv.Itoa(int(id)))
 	}
 
-	result := toPermissionModel(row)
+	result := mapper.ToPermissionModel(row)
 	return &result, nil
 
 }
@@ -61,7 +52,7 @@ func (p *PermissionRepository) GetAll(ctx context.Context) ([]models.Permission,
 
 	var permissions []models.Permission
 	for _, v := range query {
-		permissions = append(permissions, toPermissionModel(v))
+		permissions = append(permissions, mapper.ToPermissionModel(v))
 	}
 
 	return permissions, nil

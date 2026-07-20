@@ -33,14 +33,15 @@ func HttpLoggerMiddleware(logger *zap.Logger) gin.HandlerFunc {
 
 		// ---- TRƯỚC KHI XỬ LÝ REQUEST ----
 
-		startTime := time.Now()    // Ghi lại thời điểm bắt đầu xử lý request
-		traceID := GetTraceID(ctx) // Lấy trace_id từ context (được set bởi TraceIDMiddleware)
+		startTime := time.Now() // Ghi lại thời điểm bắt đầu xử lý request
 
 		ctx.Next() // Thực thi handler tiếp theo (Controller, Service, Repository)
 
 		// ---- SAU KHI XỬ LÝ REQUEST ----
 
 		latency := time.Since(startTime)  // Tính thời gian xử lý
+		requestID := GetRequestID(ctx)    // Lấy request_id từ context (được set bởi RequestIDMiddleware)
+		realIP, _ := ctx.Get(RealIPKey)   // Lấy real_ip từ context (được set bởi RealIPMiddleware)
 		statusCode := ctx.Writer.Status() // Lấy status code trả về cho client
 
 		// Lấy thông tin lỗi nếu có (gin lưu lỗi qua c.Errors)
@@ -54,7 +55,8 @@ func HttpLoggerMiddleware(logger *zap.Logger) gin.HandlerFunc {
 		// Tổng hợp các field log chung cho mọi request
 		// -------------------------------------------------------
 		fields := []zap.Field{
-			zap.String("trace_id", traceID),                   // ID duy nhất của request
+			zap.String("request_id", requestID),               // ID duy nhất của request
+			zap.String("real IP", realIP.(string)),            // Real IP của client (nếu có)
 			zap.String("method", ctx.Request.Method),          // GET / POST / PUT / DELETE
 			zap.String("path", ctx.FullPath()),                // /v1/api/statuses/:id
 			zap.String("uri", ctx.Request.RequestURI),         // /v1/api/statuses/1?limit=10

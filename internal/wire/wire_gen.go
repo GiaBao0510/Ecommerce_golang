@@ -19,7 +19,7 @@ import (
 
 func InitPermissionRouterHandler(db *database.Queries, logger *zap.Logger) (*controller.PermissionController, error) {
 	iPermissionRepository := repositoryimpl.NewPermissionRepository(db, logger)
-	iPermissionService := service.NewPermissionService(iPermissionRepository)
+	iPermissionService := service.NewPermissionService(iPermissionRepository, logger)
 	permissionController := controller.NewPermissionController(iPermissionService, logger)
 	return permissionController, nil
 }
@@ -29,7 +29,7 @@ func InitPermissionRouterHandler(db *database.Queries, logger *zap.Logger) (*con
 // Khởi tạo tiêm phụ thuộc cho RolesController
 func InitRolesRouterHandler(db *database.Queries, logger *zap.Logger) (*controller.RolesController, error) {
 	iRolesRepository := repositoryimpl.NewRolesRepository(db, logger)
-	iRolesService := service.NewRolesService(iRolesRepository)
+	iRolesService := service.NewRolesService(iRolesRepository, logger)
 	rolesController := controller.NewRolesController(iRolesService, logger)
 	return rolesController, nil
 }

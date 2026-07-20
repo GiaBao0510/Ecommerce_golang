@@ -1,0 +1,200 @@
+{
+  "main": {
+    "id": "d88d79373cead8e1",
+    "type": "split",
+    "children": [
+      {
+        "id": "aadc940f9e61a8a7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "64848e31367ad0c8",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "HuongDan.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "HuongDan"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "88ce8a37abbd5132",
+    "type": "split",
+    "children": [
+      {
+        "id": "30508533fa6a767c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a3a2b8e06e746ee3",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "570d16e5e9dfe5b6",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "6a683cb02b5ef202",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "29b2d51c2005a0dc",
+    "type": "split",
+    "children": [
+      {
+        "id": "ea9a8fa5ad028009",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "cf2bbc5777d72a28",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "HuongDan.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for HuongDan"
+            }
+          },
+          {
+            "id": "8184c1ed208c6223",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "HuongDan.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from HuongDan"
+            }
+          },
+          {
+            "id": "2caeb094f20f5810",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "665473708dc4cd1a",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "68f7f0810b299b85",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "HuongDan.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of HuongDan"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "64848e31367ad0c8",
+  "lastOpenFiles": [
+    "internal/middleware/rateLimiter.middleware.go",
+    "internal/middleware/timeout.middleware.go",
+    "internal/middleware/tracing.middleware.go",
+    "internal/middleware/metrics.middleware.go",
+    "tmp/main.exe",
+    "tmp/build-errors.log",
+    "tmp",
+    "internal/middleware/realIP.middleware.go",
+    "internal/middleware/traceid.middleware.go",
+    "internal/middleware/requestID.middleware.go",
+    "internal/middleware/recovery.middleware.go"
+  ]
+}
