@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "29b2d51c2005a0dc",
@@ -185,6 +186,8 @@
   },
   "active": "64848e31367ad0c8",
   "lastOpenFiles": [
+    "internal/middleware/securityHeader.middleware.go",
+    "internal/middleware/validation.middleware.go",
     "internal/middleware/rateLimiter.middleware.go",
     "internal/middleware/timeout.middleware.go",
     "internal/middleware/tracing.middleware.go",
@@ -193,8 +196,6 @@
     "tmp/build-errors.log",
     "tmp",
     "internal/middleware/realIP.middleware.go",
-    "internal/middleware/traceid.middleware.go",
-    "internal/middleware/requestID.middleware.go",
-    "internal/middleware/recovery.middleware.go"
+    "internal/middleware/traceid.middleware.go"
   ]
 }

@@ -6,6 +6,7 @@ type Config struct {
 	Logger     LoggerSetting    `mapstructure:"log"`
 	Redis      RedisConfig      `mapstructure:"redis"`
 	Server     ServerConfig     `mapstructure:"server"`
+	Cors       CORS_Config      `mapstructure:"cors"`
 }
 
 // Cấu trúc con cho phần cấu hình server (port, host, mode)
@@ -53,4 +54,13 @@ type RedisConfig struct {
 	ReadTimeout     string `mapstructure:"readTimeout"`
 	WriteTimeout    string `mapstructure:"writeTimeout"`
 	PoolSize        int    `mapstructure:"poolSize"`
+}
+
+// Cấu trúc CORS
+type CORS_Config struct {
+	Allowed_origins   []string `mapstructure:"allowed_origins"`
+	Allowed_methods   []string `mapstructure:"allowed_methods"`
+	Allowed_headers   []string `mapstructure:"allowed_headers"`
+	Allow_credentials bool     `mapstructure:"allow_credentials"`
+	Max_age           int      `mapstructure:"max_age"`
 }
