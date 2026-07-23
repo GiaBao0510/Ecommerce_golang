@@ -34,21 +34,21 @@ func InitRouter() *gin.Engine {
 		// Limiter
 
 		// [1] TraceID — PHẢI chạy ĐẦU TIÊN
-        // → Sinh UUID duy nhất cho mỗi request
-        // → Lưu vào context để tất cả middleware/handler SAU có thể dùng
-        // → Nếu đặt sau Logger, Logger sẽ không có trace_id để ghi
-        middleware.TraceID_Middleware(),
-		
+		// → Sinh UUID duy nhất cho mỗi request
+		// → Lưu vào context để tất cả middleware/handler SAU có thể dùng
+		// → Nếu đặt sau Logger, Logger sẽ không có trace_id để ghi
+		middleware.TraceID_Middleware(),
+
 		// [2] HTTP Logger — PHẢI sau TraceID
-        // → Ghi access log: method, path, status, latency, trace_id
-        // → Ghi vào storages/logs/access.log
-        // → Dùng Access logger (không phải Error logger)
+		// → Ghi access log: method, path, status, latency, trace_id
+		// → Ghi vào storages/logs/access.log
+		// → Dùng Access logger (không phải Error logger)
 		middleware.HttpLoggerMiddleware(global.Logger.Access),
-		
-		 // [3] Recovery — Bắt panic, ngăn app crash
-        // → Nếu handler nào bị panic (lỗi không mong đợi), Recovery bắt lại
-        // → Trả về 500 thay vì để server tắt
-        // → PHẢI đăng ký để đảm bảo an toàn cho production
+
+		// [3] Recovery — Bắt panic, ngăn app crash
+		// → Nếu handler nào bị panic (lỗi không mong đợi), Recovery bắt lại
+		// → Trả về 500 thay vì để server tắt
+		// → PHẢI đăng ký để đảm bảo an toàn cho production
 		gin.Recovery(), // Middleware Recovery giúp phục hồi sau panic, tránh crash server và ghi log lỗi
 		//middleware.AuthenMiddleware(),
 		// cors
@@ -56,24 +56,24 @@ func InitRouter() *gin.Engine {
 		// Permission
 
 		// [4] CORS — Cho phép cross-origin requests (frontend khác domain)
-        // → Chưa implement, sẽ thêm sau
-        // middleware.CorsMiddleware(),
+		// → Chưa implement, sẽ thêm sau
+		// middleware.CorsMiddleware(),
 
-        // [5] Rate Limiter — Giới hạn số request từ 1 IP
-        // → Ngăn DDoS, brute force
-        // → Chưa implement, sẽ thêm sau
-        // middleware.RateLimitMiddleware(),
+		// [5] Rate Limiter — Giới hạn số request từ 1 IP
+		// → Ngăn DDoS, brute force
+		// → Chưa implement, sẽ thêm sau
+		// middleware.RateLimitMiddleware(),
 
-        // [6] Authentication — Xác thực JWT token
-        // → Kiểm tra Authorization header
-        // → PHẢI sau Recovery (để Recovery bắt được panic nếu auth bị lỗi)
-        // → Chưa implement đầy đủ, bật khi sẵn sàng
-        // middleware.AuthenMiddleware(),
+		// [6] Authentication — Xác thực JWT token
+		// → Kiểm tra Authorization header
+		// → PHẢI sau Recovery (để Recovery bắt được panic nếu auth bị lỗi)
+		// → Chưa implement đầy đủ, bật khi sẵn sàng
+		// middleware.AuthenMiddleware(),
 	)
 
-    // ================================================================
-    // ROUTES
-    // ================================================================
+	// ================================================================
+	// ROUTES
+	// ================================================================
 	managerRouter := routers.RouterGroupApp.Manager
 	userRouter := routers.RouterGroupApp.User
 
@@ -101,6 +101,10 @@ func InitRouter() *gin.Engine {
 		global.Logger.Error)
 	managerRouter.InitPermissionRouter(
 		ManagerGroup.Group("/permission"),
+		global.DB,
+		global.Logger.Error)
+	managerRouter.InitRolePermissionRouter(
+		ManagerGroup.Group("/role_permission"),
 		global.DB,
 		global.Logger.Error)
 

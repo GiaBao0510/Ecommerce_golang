@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
+	"github.com/gin-gonic/gin"
 )
 
 // Hàm định dạng thời gian uptime
@@ -38,4 +39,17 @@ func VerifyName(name string) error {
 		return apperrors.NewBadRequestError("Status name cannot be empty")
 	}
 	return nil
+}
+
+// Hàm helpers để lấy string từ context, nếu không có thì trả về giá trị mặc định
+func GetSringFromContextVlue(ctx *gin.Context, key string) string {
+	value, exists := ctx.Get(key)
+	if !exists {
+		return ""
+	}
+	s, ok := value.(string)
+	if !ok {
+		return ""
+	}
+	return s
 }

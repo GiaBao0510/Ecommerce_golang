@@ -24,6 +24,16 @@ func InitPermissionRouterHandler(db *database.Queries, logger *zap.Logger) (*con
 	return permissionController, nil
 }
 
+// Injectors from role_permission.wire.go:
+
+// KHởi tạo tiêm phụ thuộc cho RolesController
+func InitRolePermissionRouterHandler(db *database.Queries, logger *zap.Logger) (*controller.RolePermissionController, error) {
+	iRolePermissionRepository := repositoryimpl.NewRolePermissionRepositoryImpl(db, logger)
+	iRolePermissionService := service.NewRolePermissionService(iRolePermissionRepository, logger)
+	rolePermissionController := controller.NewRolePermissionController(iRolePermissionService, logger)
+	return rolePermissionController, nil
+}
+
 // Injectors from roles.wire.go:
 
 // Khởi tạo tiêm phụ thuộc cho RolesController

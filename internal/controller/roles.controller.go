@@ -12,18 +12,18 @@ import (
 
 type RolesController struct {
 	roleService service.IRolesService
-	logger *zap.Logger
+	logger      *zap.Logger
 }
 
 // hàm khởi tạo
 func NewRolesController(roleService service.IRolesService, logger *zap.Logger) *RolesController {
-	return &RolesController{ roleService: roleService, logger: logger,	}
+	return &RolesController{roleService: roleService, logger: logger}
 }
 
 // -------- Xử lý các request liên quan đến CRUD của Roles ở đây ----------
-//GET /roles/:id
+// GET /roles/:id
 func (r *RolesController) GetByID(c *gin.Context) error {
-	
+
 	//Lấy Thông số ở Param
 	id := c.Param("id")
 	id_int, err := util.VerifyID(id)
@@ -37,10 +37,10 @@ func (r *RolesController) GetByID(c *gin.Context) error {
 	}
 
 	response.Success_Response(c, 200, "Role retrieved successfully", result)
-	return nil	
+	return nil
 }
 
-//GET /roles
+// GET /roles
 func (r *RolesController) GetAll(c *gin.Context) error {
 	result, err := r.roleService.GetAll(c)
 	if err != nil {
@@ -51,9 +51,9 @@ func (r *RolesController) GetAll(c *gin.Context) error {
 	return nil
 }
 
-//POST /roles
+// POST /roles
 func (r *RolesController) Create(c *gin.Context) error {
-	
+
 	// Lấy dữ liệu từ body
 	input := models.Role{}
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -75,7 +75,7 @@ func (r *RolesController) Create(c *gin.Context) error {
 
 }
 
-//PUT /roles/:id
+// PUT /roles/:id
 func (r *RolesController) Update_Put(c *gin.Context) error {
 
 	//Lấy dữ liệu đầu vào
@@ -102,7 +102,7 @@ func (r *RolesController) Update_Put(c *gin.Context) error {
 	return nil
 }
 
-//PATCH /roles/:id
+// PATCH /roles/:id
 func (r *RolesController) Update_Patch(c *gin.Context) error {
 
 	//Lấy dữ liệu đầu vào
@@ -129,7 +129,7 @@ func (r *RolesController) Update_Patch(c *gin.Context) error {
 	return nil
 }
 
-//DELETE /roles/:id
+// DELETE /roles/:id
 func (r *RolesController) Delete(c *gin.Context) error {
 	id := c.Param("id")
 	id_int, err := util.VerifyID(id)
@@ -137,7 +137,7 @@ func (r *RolesController) Delete(c *gin.Context) error {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}
 
-	if err := r.roleService.Delete(c,id_int); err != nil {
+	if err := r.roleService.Delete(c, id_int); err != nil {
 		return apperrors.NewInternalServerError(err)
 	}
 

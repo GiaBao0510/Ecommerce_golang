@@ -6,4 +6,5 @@ type ManagerRouterGroup struct {
 	StatusRouter
 	RolesRouter
 	PermissionRouter
+	RolePermissionRouter
 }

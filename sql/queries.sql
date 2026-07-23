@@ -79,20 +79,37 @@ FROM role r
 	INNER JOIN permissions p ON p.action_id = rp.action_id
 WHERE p.action_id = $1;
 
--- name: DeleteRolePermission :exec
+-- name: DeleteRolePermission :execresult
 DELETE FROM role_permission WHERE action_id = $1 AND role_id = $2;
 
--- name: UpdateRolePermissionByRoleID_PUT :exec
+-- name: UpdateRolePermissionByRoleID_PUT :execresult
 UPDATE role_permission 
 	SET action_id = $1, 
 	role_id = $2,
 	updated_at = NOW() 
-WHERE action_id = $2;
+WHERE action_id = $1 AND role_id = $2;
 
 /*_______________ Bảng User 4 ___________________*/
 -- name: CreateUser :exec
 INSERT INTO "USER"(id_status, user_name,date_of_birth, email, phone_num, address, password_hash, avatar_url)
 VALUES($1, $2, $3, $4, $5, $6, $7, $8);
+
+-- name: RegisterUser :exec
+INSERT INTO "USER"(id_status, user_name,date_of_birth, email, phone_num, address, password_hash, avatar_url)
+VALUES(2, 	/*Mặc định là client thông thường*/
+	$1, $2, $3, $4, $5, $6, $7);
+
+-- name: UserEmailExists :one
+SELECT EXISTS(SELECT 1 FROM "USER" WHERE email = $1);
+
+-- name: UserPhoneExists :one
+SELECT EXISTS(SELECT 1 FROM "USER" WHERE phone_num = $1);
+
+-- name: GetUID_PasswordHashByEmail :one
+SELECT uuid, password_hash FROM "USER" WHERE email = $1;
+
+-- name: GetUID_PasswordHashByPhone :one
+SELECT uuid, password_hash FROM "USER" WHERE phone_num = $1;
 
 -- name: GetAllUsers :many
 SELECT * FROM "USER";

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -32,17 +33,18 @@ func HttpLoggerMiddleware(logger *zap.Logger) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		// ---- TRƯỚC KHI XỬ LÝ REQUEST ----
-
 		startTime := time.Now() // Ghi lại thời điểm bắt đầu xử lý request
-
-		ctx.Next() // Thực thi handler tiếp theo (Controller, Service, Repository)
+		ctx.Next()              // Thực thi handler tiếp theo (Controller, Service, Repository)
 
 		// ---- SAU KHI XỬ LÝ REQUEST ----
 
-		latency := time.Since(startTime)  // Tính thời gian xử lý
-		requestID := GetRequestID(ctx)    // Lấy request_id từ context (được set bởi RequestIDMiddleware)
-		realIP, _ := ctx.Get(RealIPKey)   // Lấy real_ip từ context (được set bởi RealIPMiddleware)
-		statusCode := ctx.Writer.Status() // Lấy status code trả về cho client
+		latency := time.Since(startTime)                       // Tính thời gian xử lý
+		requestID := GetRequestID(ctx)                         // Lấy request_id từ context (được set bởi RequestIDMiddleware)
+		statusCode := ctx.Writer.Status()                      // Lấy status code trả về cho client
+		realIP := util.GetSringFromContextVlue(ctx, RealIPKey) // Lấy real_ip từ context (được set bởi RealIPMiddleware)
+		if realIP == "" {
+			realIP = ctx.ClientIP() // Nếu không có real_ip trong context thì lấy từ ctx.ClientIP()
+		}
 
 		// Lấy thông tin lỗi nếu có (gin lưu lỗi qua c.Errors)
 		// c.Errors là slice chứa các lỗi phát sinh trong quá trình xử lý
@@ -56,7 +58,7 @@ func HttpLoggerMiddleware(logger *zap.Logger) gin.HandlerFunc {
 		// -------------------------------------------------------
 		fields := []zap.Field{
 			zap.String("request_id", requestID),               // ID duy nhất của request
-			zap.String("real IP", realIP.(string)),            // Real IP của client (nếu có)
+			zap.String("real IP", realIP),                     // Real IP của client (nếu có)
 			zap.String("method", ctx.Request.Method),          // GET / POST / PUT / DELETE
 			zap.String("path", ctx.FullPath()),                // /v1/api/statuses/:id
 			zap.String("uri", ctx.Request.RequestURI),         // /v1/api/statuses/1?limit=10
@@ -73,17 +75,18 @@ func HttpLoggerMiddleware(logger *zap.Logger) gin.HandlerFunc {
 		// 4xx → WARN  (lỗi từ phía client, bất thường cần theo dõi)
 		// 2xx → INFO  (thành công, thông tin bình thường)
 		// -------------------------------------------------------
-		if statusCode >= http.StatusInternalServerError {
+		switch {
+		case statusCode >= http.StatusInternalServerError:
 			// Lỗi server (5xx)
 			logger.Error("HTTP Request",
 				append(fields, zap.String("error", errMsg))...,
 			)
-		} else if statusCode >= http.StatusBadRequest {
+		case statusCode >= http.StatusBadRequest:
 			// Lỗi client (4xx)
 			logger.Warn("HTTP Request",
 				append(fields, zap.String("error", errMsg))...,
 			)
-		} else {
+		default:
 			// Thành công (2xx)
 			logger.Info("HTTP Request", fields...)
 		}
