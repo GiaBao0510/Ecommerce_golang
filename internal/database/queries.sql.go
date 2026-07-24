@@ -748,7 +748,7 @@ func (q *Queries) UpdateStatus_PUT(ctx context.Context, arg UpdateStatus_PUTPara
 	return q.db.ExecContext(ctx, updateStatus_PUT, arg.Name, arg.Description, arg.IDStatus)
 }
 
-const updateUserAvatar_PATCH = `-- name: UpdateUserAvatar_PATCH :exec
+const updateUserAvatar_PATCH = `-- name: UpdateUserAvatar_PATCH :execresult
 UPDATE "USER"
 	SET avatar_url = $1,
 		updated_at = NOW()
@@ -760,12 +760,11 @@ type UpdateUserAvatar_PATCHParams struct {
 	Uuid      string
 }
 
-func (q *Queries) UpdateUserAvatar_PATCH(ctx context.Context, arg UpdateUserAvatar_PATCHParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserAvatar_PATCH, arg.AvatarUrl, arg.Uuid)
-	return err
+func (q *Queries) UpdateUserAvatar_PATCH(ctx context.Context, arg UpdateUserAvatar_PATCHParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateUserAvatar_PATCH, arg.AvatarUrl, arg.Uuid)
 }
 
-const updateUserPassword_PATCH = `-- name: UpdateUserPassword_PATCH :exec
+const updateUserPassword_PATCH = `-- name: UpdateUserPassword_PATCH :execresult
 UPDATE "USER"
 	SET password_hash = $1,
 		updated_at = NOW()
@@ -777,9 +776,8 @@ type UpdateUserPassword_PATCHParams struct {
 	Uuid         string
 }
 
-func (q *Queries) UpdateUserPassword_PATCH(ctx context.Context, arg UpdateUserPassword_PATCHParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserPassword_PATCH, arg.PasswordHash, arg.Uuid)
-	return err
+func (q *Queries) UpdateUserPassword_PATCH(ctx context.Context, arg UpdateUserPassword_PATCHParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateUserPassword_PATCH, arg.PasswordHash, arg.Uuid)
 }
 
 const updateUserRoleByUserID_PUT = `-- name: UpdateUserRoleByUserID_PUT :exec

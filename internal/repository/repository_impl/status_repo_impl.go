@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/mapper"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
@@ -23,18 +24,6 @@ func NewStatusRepository(db *database.Queries, logger *zap.Logger) repository.IS
 	return &StatusRepository{db: db, dblog: loghelper.NewDBLogger(logger, "StatusRepository")}
 }
 
-// Tạo Hepper để chuyển đổi giữa models.Status và database.Queries trả về
-func toStatusModel(s database.Status) models.Status {
-	return models.Status{
-		Id_status:   s.IDStatus,
-		Name:        s.Name,
-		Description: s.Description.String,
-		Created_at:  s.CreatedAt,
-		Updated_at:  s.UpdatedAt,
-		Deleted_at:  s.DeletedAt,
-	}
-}
-
 // Các phương thức CRUD sẽ được triển khai ở đây
 func (s *StatusRepository) GetByID(ctx context.Context, id int32) (*models.Status, error) {
 	rows, err := s.db.GetStatusByID(ctx, id)
@@ -45,7 +34,7 @@ func (s *StatusRepository) GetByID(ctx context.Context, id int32) (*models.Statu
 		return nil, apperrors.NewNotFoundError("Lỗi không tìm thấy status với ID: " + strconv.Itoa(int(id)))
 	}
 
-	result := toStatusModel(rows)
+	result := mapper.ToStatusModel(rows)
 	return &result, nil
 }
 
@@ -63,7 +52,7 @@ func (s *StatusRepository) GetAll(ctx context.Context) ([]models.Status, error) 
 
 	var statuses []models.Status
 	for _, status := range query {
-		statuses = append(statuses, toStatusModel(status))
+		statuses = append(statuses, mapper.ToStatusModel(status))
 	}
 
 	return statuses, nil

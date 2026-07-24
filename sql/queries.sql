@@ -142,13 +142,13 @@ UPDATE "USER"
 		updated_at = NOW() 
 	WHERE uuid = $7;
 
--- name: UpdateUserPassword_PATCH :exec
+-- name: UpdateUserPassword_PATCH :execresult
 UPDATE "USER"
 	SET password_hash = $1,
 		updated_at = NOW()
 	WHERE uuid = $2;
 
--- name: UpdateUserAvatar_PATCH :exec
+-- name: UpdateUserAvatar_PATCH :execresult
 UPDATE "USER"
 	SET avatar_url = $1,
 		updated_at = NOW()
