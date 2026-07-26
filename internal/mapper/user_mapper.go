@@ -19,5 +19,7 @@ func ToUserModel(u database.USER) models.Users {
 		Created_at:    u.CreatedAt.Time,
 		Updated_at:    u.UpdatedAt,
 		Deleted_at:    u.DeletedAt,
+		Is_email_verified: u.IsEmailVerified.Bool,
+		Is_phone_verified: u.IsPhoneVerified.Bool,
 	}
 }

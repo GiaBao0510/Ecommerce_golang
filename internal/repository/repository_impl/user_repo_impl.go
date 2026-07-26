@@ -20,11 +20,11 @@ type UserRepository struct {
 }
 
 // triển khai
-func NewUserRepository (db    *database.Queries, logger *zap.Logger) repository.IUserRepository {
+func NewUserRepository(db *database.Queries, logger *zap.Logger) repository.IUserRepository {
 	return &UserRepository{db: db, dblog: loghelper.NewDBLogger(logger, "UserRepository")}
 }
 
-func(r *UserRepository) GetByID(ctx context.Context, id string) (*models.Users, error) {
+func (r *UserRepository) GetByID(ctx context.Context, id string) (*models.Users, error) {
 	rows, err := r.db.GetUserByID(ctx, id)
 	if err != nil {
 		r.dblog.LogError("GetByID", err, zap.String("id", id))
@@ -35,7 +35,7 @@ func(r *UserRepository) GetByID(ctx context.Context, id string) (*models.Users, 
 	return &result, nil
 }
 
-func(r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*models.Users, error) {
+func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*models.Users, error) {
 	rows, err := r.db.GetUserByEmail(ctx, email)
 	if err != nil {
 		r.dblog.LogError("GetUserByEmail", err, zap.String("email", email))
@@ -46,8 +46,8 @@ func(r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*mode
 	return &result, nil
 }
 
-func(r *UserRepository) GetUserByPhone(ctx context.Context, phone sql.NullString) (*models.Users, error) {
-	
+func (r *UserRepository) GetUserByPhone(ctx context.Context, phone sql.NullString) (*models.Users, error) {
+
 	rows, err := r.db.GetUserByPhone(ctx, phone)
 	if err != nil {
 		r.dblog.LogError("GetUserByPhone", err, zap.String("phone", phone.String))
@@ -58,8 +58,8 @@ func(r *UserRepository) GetUserByPhone(ctx context.Context, phone sql.NullString
 	return &result, nil
 }
 
-func(r *UserRepository) GetUID_PasswordHashByEmail(ctx context.Context, email string) (*dto.UserResponseBase, error) {
-	row, err := r.db.GetUID_PasswordHashByEmail(ctx,email)
+func (r *UserRepository) GetUID_PasswordHashByEmail(ctx context.Context, email string) (*dto.UserResponseBase, error) {
+	row, err := r.db.GetUID_PasswordHashByEmail(ctx, email)
 	if err != nil {
 		r.dblog.LogError("GetUID_PasswordHashByEmail", err, zap.String("email", email))
 		return nil, apperrors.NewNotFoundError("Lỗi không tìm thấy người dùng với email: " + email)
@@ -72,7 +72,7 @@ func(r *UserRepository) GetUID_PasswordHashByEmail(ctx context.Context, email st
 	return &result, nil
 }
 
-func(r *UserRepository) GetUID_PasswordHashByPhone(ctx context.Context, phone sql.NullString) (*dto.UserResponseBase, error) {
+func (r *UserRepository) GetUID_PasswordHashByPhone(ctx context.Context, phone sql.NullString) (*dto.UserResponseBase, error) {
 	row, err := r.db.GetUID_PasswordHashByPhone(ctx, phone)
 	if err != nil {
 		r.dblog.LogError("GetUID_PasswordHashByPhone", err, zap.String("phone", phone.String))
@@ -86,8 +86,7 @@ func(r *UserRepository) GetUID_PasswordHashByPhone(ctx context.Context, phone sq
 	return &result, nil
 }
 
-
-func(r *UserRepository) GetAll(ctx context.Context) ([]models.Users, error) {
+func (r *UserRepository) GetAll(ctx context.Context) ([]models.Users, error) {
 	query, err := r.db.GetAllUsers(ctx)
 	if err != nil {
 		r.dblog.LogError("GetAll", err)
@@ -107,21 +106,11 @@ func(r *UserRepository) GetAll(ctx context.Context) ([]models.Users, error) {
 	return users, nil
 }
 
-func(r *UserRepository) RegisterUser(ctx context.Context, obj *models.Users) (int, error) {
-	// Kiểm tra xem email hoặc số điện thoại đã tồn tại chưa
-
-	// Lưu tạm thông tin người dùng
-}
-
-func(r *UserRepository) Create(ctx context.Context, obj *models.Users) (int, error) {
-	params := database.CreateUserParams {
-		IDStatus: sql.NullInt32{
-			Int32: obj.Id_status,
-			Valid: obj.Id_status != 0,
-		},
+func (r *UserRepository) Create(ctx context.Context, obj *models.Users) (int, error) {
+	params := database.CreateUserParams{
 		UserName: obj.User_name,
 		DateOfBirth: sql.NullTime{
-			Time: obj.Birth_date,
+			Time:  obj.Birth_date,
 			Valid: !obj.Birth_date.IsZero(),
 		},
 		Email: obj.Email,
@@ -149,15 +138,15 @@ func(r *UserRepository) Create(ctx context.Context, obj *models.Users) (int, err
 	return 0, nil
 }
 
-func(r *UserRepository) Update_Put(ctx context.Context, id string, obj *models.Users) error {	
-	params := database.UpdateUser_PUTParams {
+func (r *UserRepository) Update_Put(ctx context.Context, id string, obj *models.Users) error {
+	params := database.UpdateUser_PUTParams{
 		IDStatus: sql.NullInt32{
 			Int32: obj.Id_status,
 			Valid: obj.Id_status != 0,
 		},
 		UserName: obj.User_name,
 		DateOfBirth: sql.NullTime{
-			Time: obj.Birth_date,
+			Time:  obj.Birth_date,
 			Valid: !obj.Birth_date.IsZero(),
 		},
 		Email: obj.Email,
@@ -192,15 +181,15 @@ func(r *UserRepository) Update_Put(ctx context.Context, id string, obj *models.U
 	return nil
 }
 
-func(r *UserRepository) Update_Patch(ctx context.Context, id string, obj *models.Users) error {
-	params := database.UpdateUser_PATCHParams {
+func (r *UserRepository) Update_Patch(ctx context.Context, id string, obj *models.Users) error {
+	params := database.UpdateUser_PATCHParams{
 		IDStatus: sql.NullInt32{
 			Int32: obj.Id_status,
 			Valid: obj.Id_status != 0,
 		},
 		UserName: obj.User_name,
 		DateOfBirth: sql.NullTime{
-			Time: obj.Birth_date,
+			Time:  obj.Birth_date,
 			Valid: !obj.Birth_date.IsZero(),
 		},
 		Email: obj.Email,
@@ -235,10 +224,10 @@ func(r *UserRepository) Update_Patch(ctx context.Context, id string, obj *models
 	return nil
 }
 
-func(r *UserRepository) UpdateUserPassword_PATCH(ctx context.Context, id string, passwordHash string) error {
-	params := database.UpdateUserPassword_PATCHParams {
+func (r *UserRepository) UpdateUserPassword_PATCH(ctx context.Context, id string, passwordHash string) error {
+	params := database.UpdateUserPassword_PATCHParams{
 		PasswordHash: passwordHash,
-		Uuid: id,
+		Uuid:         id,
 	}
 
 	result, err := r.db.UpdateUserPassword_PATCH(ctx, params)
@@ -261,5 +250,90 @@ func(r *UserRepository) UpdateUserPassword_PATCH(ctx context.Context, id string,
 
 	return nil
 }
-func(r *UserRepository) UpdateUserAvatar_PATCH(ctx context.Context, id string, avatarURL string) error
-func(r *UserRepository) Delete(ctx context.Context, id string) error
+func (r *UserRepository) UpdateUserAvatar_PATCH(ctx context.Context, id string, avatarURL string) error {
+	params := database.UpdateUserAvatar_PATCHParams{
+		AvatarUrl: sql.NullString{
+			String: avatarURL,
+			Valid:  avatarURL != "",
+		},
+		Uuid: id,
+	}
+
+	result, err := r.db.UpdateUserAvatar_PATCH(ctx, params)
+	if err != nil {
+		r.dblog.LogError("UpdateUserAvatar_PATCH", err, zap.String("id", id))
+		return apperrors.NewInternalServerError(err)
+	}
+
+	if err := CheckRowsAffected(
+		result,
+		"UpdateUserAvatar_PATCH",
+		"Không tìm thấy người dùng với ID: "+id,
+		r.dblog,
+		zap.String("id", id),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *UserRepository) Delete(ctx context.Context, id string) error {
+	result, err := r.db.DeleteUser(ctx, id)
+	if err != nil {
+		r.dblog.LogError("DeleteUser", err, zap.String("id", id))
+		return apperrors.NewInternalServerError(err)
+	}
+
+	if err := CheckRowsAffected(
+		result,
+		"DeleteUser",
+		"Không tìm thấy người dùng với ID: "+id,
+		r.dblog,
+		zap.String("id", id),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *UserRepository) VerifyUserEmail(ctx context.Context, id string) error {
+	result, err := r.db.VerifyEmail(ctx, id)
+	if err != nil {
+		r.dblog.LogError("VerifyUserEmail", err, zap.String("id", id))
+		return apperrors.NewInternalServerError(err)
+	}
+
+	if err := CheckRowsAffected(
+		result, 
+		"VerifyUserEmail",
+		"Không tìm thấy người dùng với ID: "+id,
+		r.dblog,
+		zap.String("id", id),
+	); err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func (r *UserRepository) VerifyUserPhone(ctx context.Context, id string) error {
+	result, err := r.db.VerifyPhone(ctx, id)
+	if err != nil {
+		r.dblog.LogError("VerifyUserPhone", err, zap.String("id", id))
+		return apperrors.NewInternalServerError(err)
+	}
+
+	if err := CheckRowsAffected(
+		result, 
+		"VerifyUserPhone",
+		"Không tìm thấy người dùng với ID: "+id,
+		r.dblog,
+		zap.String("id", id),
+	); err != nil {
+		return err
+	}
+	
+	return nil
+}

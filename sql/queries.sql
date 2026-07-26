@@ -92,12 +92,7 @@ WHERE action_id = $1 AND role_id = $2;
 /*_______________ Bảng User 4 ___________________*/
 -- name: CreateUser :exec
 INSERT INTO "USER"(id_status, user_name,date_of_birth, email, phone_num, address, password_hash, avatar_url)
-VALUES($1, $2, $3, $4, $5, $6, $7, $8);
-
--- name: RegisterUser :exec
-INSERT INTO "USER"(id_status, user_name,date_of_birth, email, phone_num, address, password_hash, avatar_url)
-VALUES(2, 	/*Mặc định là client thông thường*/
-	$1, $2, $3, $4, $5, $6, $7);
+VALUES(2, $1, $2, $3, $4, $5, $6, $7);
 
 -- name: UserEmailExists :one
 SELECT EXISTS(SELECT 1 FROM "USER" WHERE email = $1);
@@ -156,6 +151,18 @@ UPDATE "USER"
 
 -- name: DeleteUser :execresult
 DELETE FROM "USER" WHERE uuid = $1;
+
+-- name: VerifyEmail :execresult
+UPDATE "USER"
+	SET is_email_verified = TRUE,
+		updated_at = NOW()
+	WHERE uuid = $1;
+
+-- name: VerifyPhone :execresult
+UPDATE "USER"
+	SET is_phone_verified = TRUE,
+		updated_at = NOW()
+	WHERE uuid = $1;
 
 /*_______________ Bảng User-Roles 5 ___________________*/
 -- name: CreateUserRole :exec

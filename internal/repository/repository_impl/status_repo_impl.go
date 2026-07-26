@@ -97,15 +97,14 @@ func (s *StatusRepository) Update_Put(ctx context.Context, id int32, obj *models
 	}
 
 	// Kiểm tra số lượng bản ghi bị ảnh hưởng
-	affected, err := result.RowsAffected()
-	if err != nil {
-		s.dblog.LogError("RowsAffected", err, zap.Int32("id", id))
-		return apperrors.NewInternalServerError(err)
-	}
-
-	if affected == 0 {
-		s.dblog.LogWarning("UpdateStatus_PUT", "No rows affected", zap.Int32("id", id))
-		return apperrors.NewNotFoundError("Không tìm thấy status với ID: " + strconv.Itoa(int(id)))
+	if err := CheckRowsAffected(
+		result,
+		"UpdateStatus_PUT",
+		"Không tìm thấy status với ID: "+strconv.Itoa(int(id)),
+		s.dblog,
+		zap.Int32("id", id),
+	); err != nil {
+		return err
 	}
 
 	return nil

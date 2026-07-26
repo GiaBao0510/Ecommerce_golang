@@ -81,11 +81,10 @@ func (q *Queries) CreateStatus(ctx context.Context, arg CreateStatusParams) erro
 
 const createUser = `-- name: CreateUser :exec
 INSERT INTO "USER"(id_status, user_name,date_of_birth, email, phone_num, address, password_hash, avatar_url)
-VALUES($1, $2, $3, $4, $5, $6, $7, $8)
+VALUES(2, $1, $2, $3, $4, $5, $6, $7)
 `
 
 type CreateUserParams struct {
-	IDStatus     sql.NullInt32
 	UserName     string
 	DateOfBirth  sql.NullTime
 	Email        string
@@ -98,7 +97,6 @@ type CreateUserParams struct {
 // _______________ Bảng User 4 ___________________
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	_, err := q.db.ExecContext(ctx, createUser,
-		arg.IDStatus,
 		arg.UserName,
 		arg.DateOfBirth,
 		arg.Email,
@@ -280,7 +278,7 @@ func (q *Queries) GetAllStatus(ctx context.Context) ([]Status, error) {
 }
 
 const getAllUsers = `-- name: GetAllUsers :many
-SELECT uuid, id_status, user_name, date_of_birth, email, phone_num, address, password_hash, avatar_url, created_at, updated_at, deleted_at FROM "USER"
+SELECT uuid, id_status, user_name, date_of_birth, email, phone_num, is_email_verified, is_phone_verified, address, password_hash, avatar_url, created_at, updated_at, deleted_at FROM "USER"
 `
 
 func (q *Queries) GetAllUsers(ctx context.Context) ([]USER, error) {
@@ -299,6 +297,8 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]USER, error) {
 			&i.DateOfBirth,
 			&i.Email,
 			&i.PhoneNum,
+			&i.IsEmailVerified,
+			&i.IsPhoneVerified,
 			&i.Address,
 			&i.PasswordHash,
 			&i.AvatarUrl,
@@ -498,7 +498,7 @@ func (q *Queries) GetUID_PasswordHashByPhone(ctx context.Context, phoneNum sql.N
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT uuid, id_status, user_name, date_of_birth, email, phone_num, address, password_hash, avatar_url, created_at, updated_at, deleted_at FROM "USER" WHERE email = $1
+SELECT uuid, id_status, user_name, date_of_birth, email, phone_num, is_email_verified, is_phone_verified, address, password_hash, avatar_url, created_at, updated_at, deleted_at FROM "USER" WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (USER, error) {
@@ -511,6 +511,8 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (USER, error
 		&i.DateOfBirth,
 		&i.Email,
 		&i.PhoneNum,
+		&i.IsEmailVerified,
+		&i.IsPhoneVerified,
 		&i.Address,
 		&i.PasswordHash,
 		&i.AvatarUrl,
@@ -522,7 +524,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (USER, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT uuid, id_status, user_name, date_of_birth, email, phone_num, address, password_hash, avatar_url, created_at, updated_at, deleted_at FROM "USER" WHERE uuid = $1
+SELECT uuid, id_status, user_name, date_of_birth, email, phone_num, is_email_verified, is_phone_verified, address, password_hash, avatar_url, created_at, updated_at, deleted_at FROM "USER" WHERE uuid = $1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, uuid string) (USER, error) {
@@ -535,6 +537,8 @@ func (q *Queries) GetUserByID(ctx context.Context, uuid string) (USER, error) {
 		&i.DateOfBirth,
 		&i.Email,
 		&i.PhoneNum,
+		&i.IsEmailVerified,
+		&i.IsPhoneVerified,
 		&i.Address,
 		&i.PasswordHash,
 		&i.AvatarUrl,
@@ -546,7 +550,7 @@ func (q *Queries) GetUserByID(ctx context.Context, uuid string) (USER, error) {
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT uuid, id_status, user_name, date_of_birth, email, phone_num, address, password_hash, avatar_url, created_at, updated_at, deleted_at FROM "USER" WHERE phone_num = $1
+SELECT uuid, id_status, user_name, date_of_birth, email, phone_num, is_email_verified, is_phone_verified, address, password_hash, avatar_url, created_at, updated_at, deleted_at FROM "USER" WHERE phone_num = $1
 `
 
 func (q *Queries) GetUserByPhone(ctx context.Context, phoneNum sql.NullString) (USER, error) {
@@ -559,6 +563,8 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phoneNum sql.NullString) (
 		&i.DateOfBirth,
 		&i.Email,
 		&i.PhoneNum,
+		&i.IsEmailVerified,
+		&i.IsPhoneVerified,
 		&i.Address,
 		&i.PasswordHash,
 		&i.AvatarUrl,
@@ -612,35 +618,6 @@ func (q *Queries) GetUserByRoleID(ctx context.Context, roleID int32) ([]GetUserB
 		return nil, err
 	}
 	return items, nil
-}
-
-const registerUser = `-- name: RegisterUser :exec
-INSERT INTO "USER"(id_status, user_name,date_of_birth, email, phone_num, address, password_hash, avatar_url)
-VALUES(2, 	/*Mặc định là client thông thường*/
-	$1, $2, $3, $4, $5, $6, $7)
-`
-
-type RegisterUserParams struct {
-	UserName     string
-	DateOfBirth  sql.NullTime
-	Email        string
-	PhoneNum     sql.NullString
-	Address      sql.NullString
-	PasswordHash string
-	AvatarUrl    sql.NullString
-}
-
-func (q *Queries) RegisterUser(ctx context.Context, arg RegisterUserParams) error {
-	_, err := q.db.ExecContext(ctx, registerUser,
-		arg.UserName,
-		arg.DateOfBirth,
-		arg.Email,
-		arg.PhoneNum,
-		arg.Address,
-		arg.PasswordHash,
-		arg.AvatarUrl,
-	)
-	return err
 }
 
 const updatePermission_PATCH = `-- name: UpdatePermission_PATCH :execresult
@@ -879,4 +856,26 @@ func (q *Queries) UserPhoneExists(ctx context.Context, phoneNum sql.NullString) 
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const verifyEmail = `-- name: VerifyEmail :execresult
+UPDATE "USER"
+	SET is_email_verified = TRUE,
+		updated_at = NOW()
+	WHERE uuid = $1
+`
+
+func (q *Queries) VerifyEmail(ctx context.Context, uuid string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, verifyEmail, uuid)
+}
+
+const verifyPhone = `-- name: VerifyPhone :execresult
+UPDATE "USER"
+	SET is_phone_verified = TRUE,
+		updated_at = NOW()
+	WHERE uuid = $1
+`
+
+func (q *Queries) VerifyPhone(ctx context.Context, uuid string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, verifyPhone, uuid)
 }

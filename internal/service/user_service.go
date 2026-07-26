@@ -1,34 +1,30 @@
 package service
 
 import (
-	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
+	"context"
+	"database/sql"
+
+	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 )
 
 // Tạo interface IUserService để định nghĩa các phương thức mà UserService sẽ triển khai
 type IUserService interface {
-	Register(email string, purpose string) int
-	//....
-}
+	// CRUD
+	GetByID(ctx context.Context, id string) (*models.Users, error)
+	Create(ctx context.Context, obj *models.Users) (int, error)
+	Update_Put(ctx context.Context, id string, obj *models.Users) error
+	Update_Patch(ctx context.Context, id string, obj *models.Users) error
+	Delete(ctx context.Context, id string) error
 
-// UserService là struct triển khai interface IUserService
-// Trong một service, chúng ta có thể chứa nhiều repository khác nhau để phục vụ cho các chức năng khác nhau của service đó
-type UserService struct {
-	userRepo repository.IUserRepository
-	//....
-}
+	// List operations 
+	GetAll(ctx context.Context) ([]models.Users, error)
 
-func NewUserService(userRepo repository.IUserRepository) IUserService {
-	return &UserService{
-		userRepo: userRepo,
-	}
-}
+	// Search operations
+	GetUserByEmail(ctx context.Context, email string) (*models.Users, error)
+	GetUserByPhone(ctx context.Context, phone sql.NullString) (*models.Users, error)
 
-func (obj *UserService) Register(email string, purpose string) int {
+	// Relationship operations
 
-	// Nếu email đã tồn tại trong database, trả về lỗi
-	if obj.userRepo.GetUserByEmail(email) {
-		return 0
-	}
-
-	return 0
+	// Update other operations
+	UpdateUserAvatar_PATCH(ctx context.Context, id string, avatarURL string) error
 }

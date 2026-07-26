@@ -236,18 +236,20 @@ type SubCategory struct {
 }
 
 type USER struct {
-	Uuid         string
-	IDStatus     sql.NullInt32
-	UserName     string
-	DateOfBirth  sql.NullTime
-	Email        string
-	PhoneNum     sql.NullString
-	Address      sql.NullString
-	PasswordHash string
-	AvatarUrl    sql.NullString
-	CreatedAt    sql.NullTime
-	UpdatedAt    sql.NullTime
-	DeletedAt    sql.NullTime
+	Uuid            string
+	IDStatus        sql.NullInt32
+	UserName        string
+	DateOfBirth     sql.NullTime
+	Email           string
+	PhoneNum        sql.NullString
+	IsEmailVerified sql.NullBool
+	IsPhoneVerified sql.NullBool
+	Address         sql.NullString
+	PasswordHash    string
+	AvatarUrl       sql.NullString
+	CreatedAt       sql.NullTime
+	UpdatedAt       sql.NullTime
+	DeletedAt       sql.NullTime
 }
 
 type UserActivityLog struct {
