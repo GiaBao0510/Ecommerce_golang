@@ -3,9 +3,9 @@ package controller
 import (
 	"net/http"
 
+	"github.com/GiaBao0510/Ecommerce_golang/internal/dto"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
-	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/response"
 	"github.com/gin-gonic/gin"
@@ -31,13 +31,12 @@ func (s *StatusController) Build(handeler AppHandler) gin.HandlerFunc {
 // GET /statuses/:id
 func (s *StatusController) GetStatusByID(c *gin.Context) error {
 
-	id := c.Param("id")              // Lấy ID từ URL
-	id_int, err := util.ValidationPositiveInt("ID", id) // Validate ID và chuyển đổi sang int32
-	if err != nil {
-		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
+	var param dto.ID_Param
+	if err := c.ShouldBindUri(&param); err !=nil {
+		return HandleValidationError(err)
 	}
 
-	result, err := s.statusService.GetByID(c, id_int)
+	result, err := s.statusService.GetByID(c, param.ID)
 	if err != nil {
 		return err
 	}
@@ -79,11 +78,12 @@ func (s *StatusController) CreateStatus(c *gin.Context) error {
 
 // PUT /statuses/:id
 func (s *StatusController) Update_Put(c *gin.Context) error {
-	id := c.Param("id")              // Lấy ID từ URL
-	id_int, err := util.ValidationPositiveInt("ID", id) // Validate ID và chuyển đổi sang int32
-	if err != nil {
-		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
+	
+	var param dto.ID_Param
+	if err := c.ShouldBindUri(&param); err != nil {
+		return HandleValidationError(err)
 	}
+
 
 	input := models.Status{}
 
@@ -93,7 +93,7 @@ func (s *StatusController) Update_Put(c *gin.Context) error {
 	}
 
 	// Gọi service để cập nhật status
-	if err := s.statusService.Update_Put(c, id_int, &input); err != nil {
+	if err := s.statusService.Update_Put(c, param.ID, &input); err != nil {
 		return apperrors.NewBadRequestError("Failed to update status: " + err.Error())
 	}
 
@@ -103,10 +103,10 @@ func (s *StatusController) Update_Put(c *gin.Context) error {
 
 // PUT /statuses/:id
 func (s *StatusController) Update_Patch(c *gin.Context) error {
-	id := c.Param("id")              // Lấy ID từ URL
-	id_int, err := util.ValidationPositiveInt("ID", id) // Validate ID và chuyển đổi sang int32
-	if err != nil {
-		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
+	
+	var param dto.ID_Param
+	if err := c.ShouldBindUri(&param); err != nil {
+		return HandleValidationError(err)
 	}
 
 	input := models.Status{}
@@ -117,7 +117,7 @@ func (s *StatusController) Update_Patch(c *gin.Context) error {
 	}
 
 	// Gọi service để cập nhật status
-	if err := s.statusService.Update_Patch(c, id_int, &input); err != nil {
+	if err := s.statusService.Update_Patch(c, param.ID, &input); err != nil {
 		return apperrors.NewBadRequestError("Failed to update status: " + err.Error())
 	}
 
@@ -127,14 +127,14 @@ func (s *StatusController) Update_Patch(c *gin.Context) error {
 
 // DELETE /statuses/:id
 func (s *StatusController) DeleteStatus(c *gin.Context) error {
-	id := c.Param("id")              // Lấy ID từ URL
-	id_int, err := util.ValidationPositiveInt("ID", id) // Validate ID và chuyển đổi sang int32
-	if err != nil {
-		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
+	
+	var param dto.ID_Param
+	if err := c.ShouldBindUri(&param); err != nil {
+		return HandleValidationError(err)
 	}
 
 	// Gọi service để xóa status
-	if err := s.statusService.Delete(c, id_int); err != nil {
+	if err := s.statusService.Delete(c, param.ID); err != nil {
 		return apperrors.NewBadRequestError("Failed to delete status: " + err.Error())
 	}
 

@@ -14,9 +14,9 @@ import (
 type IUserService interface {
 	// CRUD
 	GetByID(ctx context.Context, id string) (*models.Users, error)
-	Create(ctx context.Context, obj *models.Users) (int, error)
-	Update_Put(ctx context.Context, id string, obj *models.Users) error
-	Update_Patch(ctx context.Context, id string, obj *models.Users) error
+	Create(ctx context.Context, obj *models.CreateUsersRequest) (int, error)
+	Update_Put(ctx context.Context, id string, obj *models.UpdateUsersPutRequest) error
+	Update_Patch(ctx context.Context, id string, obj *models.UpdateUsersPatchRequest) error
 	Delete(ctx context.Context, id string) error
 
 	// List operations 
@@ -51,17 +51,12 @@ func (s *UserService) GetByID(ctx context.Context, id string) (*models.Users, er
 	return s.UserRepo.GetByID(ctx, id)
 }
 
-func (s *UserService) Create(ctx context.Context, obj *models.Users) (int, error) {
-	
-	// Validate input data
-	if err := ValidateUserInput("Create user", "validation failed", s.logger, obj); err != nil {
-		return 0, err
-	}
+func (s *UserService) Create(ctx context.Context, obj *models.CreateUsersRequest) (int, error) {
 
 	return s.UserRepo.Create(ctx, obj)
 }
 
-func (s *UserService) Update_Put(ctx context.Context, id string, obj *models.Users) error {
+func (s *UserService) Update_Put(ctx context.Context, id string, obj *models.UpdateUsersPutRequest) error {
 	
 	if id == "" {
 		s.logger.Warn("Service: Update user - validation failed",
@@ -73,7 +68,7 @@ func (s *UserService) Update_Put(ctx context.Context, id string, obj *models.Use
 	return s.UserRepo.Update_Put(ctx, id, obj)
 }
 
-func (s *UserService) Update_Patch(ctx context.Context, id string, obj *models.Users) error {
+func (s *UserService) Update_Patch(ctx context.Context, id string, obj *models.UpdateUsersPatchRequest) error {
 	
 	if id == "" {
 		s.logger.Warn("Service: Update user - validation failed",

@@ -106,7 +106,7 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]models.Users, error) {
 	return users, nil
 }
 
-func (r *UserRepository) Create(ctx context.Context, obj *models.Users) (int, error) {
+func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequest) (int, error) {
 	params := database.CreateUserParams{
 		UserName: obj.User_name,
 		DateOfBirth: sql.NullTime{
@@ -138,7 +138,7 @@ func (r *UserRepository) Create(ctx context.Context, obj *models.Users) (int, er
 	return 0, nil
 }
 
-func (r *UserRepository) Update_Put(ctx context.Context, id string, obj *models.Users) error {
+func (r *UserRepository) Update_Put(ctx context.Context, id string, obj *models.UpdateUsersPutRequest) error {
 	params := database.UpdateUser_PUTParams{
 		IDStatus: sql.NullInt32{
 			Int32: obj.Id_status,
@@ -181,25 +181,25 @@ func (r *UserRepository) Update_Put(ctx context.Context, id string, obj *models.
 	return nil
 }
 
-func (r *UserRepository) Update_Patch(ctx context.Context, id string, obj *models.Users) error {
+func (r *UserRepository) Update_Patch(ctx context.Context, id string, obj *models.UpdateUsersPatchRequest) error {
 	params := database.UpdateUser_PATCHParams{
 		IDStatus: sql.NullInt32{
-			Int32: obj.Id_status,
-			Valid: obj.Id_status != 0,
+			Int32: *obj.Id_status,
+			Valid: obj.Id_status != nil && *obj.Id_status != 0,
 		},
-		UserName: obj.User_name,
+		UserName: *obj.User_name,
 		DateOfBirth: sql.NullTime{
-			Time:  obj.Birth_date,
-			Valid: !obj.Birth_date.IsZero(),
+			Time:  *obj.Birth_date,
+			Valid: obj.Birth_date != nil && !(*obj.Birth_date).IsZero(),
 		},
-		Email: obj.Email,
+		Email: *obj.Email,
 		PhoneNum: sql.NullString{
-			String: obj.Phone_num,
-			Valid:  obj.Phone_num != "",
+			String: *obj.Phone_num,
+			Valid:  obj.Phone_num != nil && *obj.Phone_num != "",
 		},
 		Address: sql.NullString{
-			String: obj.Address,
-			Valid:  obj.Address != "",
+			String: *obj.Address,
+			Valid:  obj.Address != nil && *obj.Address != "",
 		},
 	}
 

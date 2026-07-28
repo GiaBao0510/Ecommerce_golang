@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/GiaBao0510/Ecommerce_golang/internal/dto"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
@@ -25,13 +26,12 @@ func NewRolesController(roleService service.IRolesService, logger *zap.Logger) *
 func (r *RolesController) GetByID(c *gin.Context) error {
 
 	//Lấy Thông số ở Param
-	id := c.Param("id")
-	id_int, err := util.ValidationPositiveInt("ID", id)
-	if err != nil {
-		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
+	var param dto.ID_Param
+	if err := c.ShouldBindUri(&param); err != nil {
+		return HandleValidationError(err)
 	}
 
-	result, err := r.roleService.GetByID(c, id_int)
+	result, err := r.roleService.GetByID(c, param.ID)
 	if err != nil {
 		return err
 	}
@@ -106,10 +106,9 @@ func (r *RolesController) Update_Put(c *gin.Context) error {
 func (r *RolesController) Update_Patch(c *gin.Context) error {
 
 	//Lấy dữ liệu đầu vào
-	id := c.Param("id")
-	id_int, err := util.ValidationPositiveInt("ID", id)
-	if err != nil {
-		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
+	var param dto.ID_Param
+	if err := c.ShouldBindUri(&param); err != nil {
+		return HandleValidationError(err)
 	}
 
 	input := models.Role{}
@@ -121,7 +120,7 @@ func (r *RolesController) Update_Patch(c *gin.Context) error {
 		return apperrors.NewBadRequestError("Role name cannot be empty")
 	}
 
-	if err := r.roleService.Update_Patch(c, id_int, &input); err != nil {
+	if err := r.roleService.Update_Patch(c, param.ID, &input); err != nil {
 		return apperrors.NewInternalServerError(err)
 	}
 
@@ -131,13 +130,13 @@ func (r *RolesController) Update_Patch(c *gin.Context) error {
 
 // DELETE /roles/:id
 func (r *RolesController) Delete(c *gin.Context) error {
-	id := c.Param("id")
-	id_int, err := util.ValidationPositiveInt("ID", id)
-	if err != nil {
-		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
+	//Lấy dữ liệu đầu vào
+	var param dto.ID_Param
+	if err := c.ShouldBindUri(&param); err != nil {
+		return HandleValidationError(err)
 	}
 
-	if err := r.roleService.Delete(c, id_int); err != nil {
+	if err := r.roleService.Delete(c, param.ID); err != nil {
 		return apperrors.NewInternalServerError(err)
 	}
 

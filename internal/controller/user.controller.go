@@ -3,6 +3,8 @@ package controller
 import (
 	"net/http"
 
+	"github.com/GiaBao0510/Ecommerce_golang/internal/dto"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/response"
 	"github.com/gin-gonic/gin"
@@ -24,11 +26,34 @@ func NewUserController(userService service.IUserService, logger *zap.Logger) *Us
 
 // CRUD
 func(ctr *UserController)	GetByID(c *gin.Context) error {
-	id := c.Param("id") // Lấy ID từ URL
-	result, err := ctr.
+	var param dto.UUID_Param
+	if err := c.ShouldBindUri(&param); err != nil {
+		return HandleValidationError(err)
+	}
+
+	result, err := ctr.userService.GetByID(c, param.UUID)
+	if err != nil {
+		return err
+	}
+
+	response.Success_Response(c, http.StatusOK, "User retrieved successfully", result)
+	return nil
 }
 
-func(ctr *UserController)	Create(c *gin.Context) error
+func(ctr *UserController)	Create(c *gin.Context) error {
+	var input models.CreateUsersRequest
+	if err := c.ShouldBindJSON(&input); err != nil {
+		return HandleValidationError(err)
+	}
+
+	result, err := ctr.userService.Create(c, input)
+	if err != nil {
+		return err
+	}
+
+	response.Success_Response(c, http.StatusCreated, "User created successfully", result)
+	return nil
+}
 func(ctr *UserController)	Update_Put(c *gin.Context) error
 func(ctr *UserController)	Update_Patch(c *gin.Context) error
 func(ctr *UserController)	Delete(c *gin.Context) error
