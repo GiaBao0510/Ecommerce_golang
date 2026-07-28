@@ -13,3 +13,18 @@ type Role_Permission struct {
 	Updated_at    sql.NullTime
 	Deleted_at    sql.NullTime
 }
+
+type CreateRolePermissionRequest struct {
+	Role_id       int32 `json:"role_id" binding:"required"`
+	Permission_id int32 `json:"permission_id" binding:"required"`
+}
+
+type UpdateRolePermissionPutRequest struct {
+	Role_id       int32 `json:"role_id" binding:"required"`
+	Permission_id int32 `json:"permission_id" binding:"required"`
+}
+
+type UpdateRolePermissionPatchRequest struct {
+	Role_id       *int32 `json:"role_id" binding:"omitempty,required"`
+	Permission_id *int32 `json:"permission_id" binding:"omitempty,required"`
+}

@@ -2,7 +2,6 @@ package util
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
@@ -15,22 +14,6 @@ func FotmatUptime(d time.Duration) string {
 	hours := int(d.Hours()) % 24
 	minutes := int(d.Minutes()) % 60
 	return fmt.Sprintf("%dd %dh %dm", days, hours, minutes)
-}
-
-// Hàm kiểm tra và chuyển đổi ID từ string sang int32
-func VerifyID(id string) (int32, error) {
-	id_int, err := strconv.Atoi(id)
-
-	// Kiểm tra nếu có lỗi khi chuyển đổi ID từ string sang int
-	if err != nil {
-		return 0, apperrors.NewBadRequestError("ID phải là một số nguyên hợp lệ")
-	}
-
-	if id_int <= 0 {
-		return 0, apperrors.NewBadRequestError("Mã ID phải lớn hơn 0")
-	}
-
-	return int32(id_int), nil
 }
 
 // Hàm xác minh tên không được để trống

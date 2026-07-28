@@ -31,7 +31,7 @@ func (ctr *PermissionController) Build(handler AppHandler) gin.HandlerFunc {
 // GET /permissions/:id
 func (ctr *PermissionController) GetByID(c *gin.Context) error {
 	id := c.Param("id")
-	id_int, err := util.VerifyID(id)
+	id_int, err := util.ValidationPositiveInt("ID", id)
 
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
@@ -79,7 +79,7 @@ func (ctr *PermissionController) Create(c *gin.Context) error {
 // PUT /permissions/:id
 func (ctr *PermissionController) Update_Put(c *gin.Context) error {
 	id := c.Param("id")
-	id_int, err := util.VerifyID(id)
+	id_int, err := util.ValidationPositiveInt("ID", id)
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}
@@ -102,7 +102,7 @@ func (ctr *PermissionController) Update_Put(c *gin.Context) error {
 // PATCH /permissions/:id
 func (ctr *PermissionController) Update_Patch(c *gin.Context) error {
 	id := c.Param("id")
-	id_int, err := util.VerifyID(id)
+	id_int, err := util.ValidationPositiveInt("ID", id)
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}
@@ -125,7 +125,7 @@ func (ctr *PermissionController) Update_Patch(c *gin.Context) error {
 // DELETE /permissions/:id
 func (ctr *PermissionController) Delete(c *gin.Context) error {
 	id := c.Param("id")
-	id_int, err := util.VerifyID(id)
+	id_int, err := util.ValidationPositiveInt("ID", id)
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}

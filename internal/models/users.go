@@ -21,3 +21,32 @@ type Users struct {
 	Updated_at        sql.NullTime
 	Deleted_at        sql.NullTime
 }
+
+type CreateUsersRequest struct {
+	Id_status     int32     `json:"id_status" binding:"required"`
+	User_name     string    `json:"user_name" binding:"required,min=2,max=100"`
+	Birth_date    time.Time `json:"birth_date"`
+	Email         string    `json:"email" binding:"required,email"`
+	Phone_num     string    `json:"phone_num" binding:"required"`
+	Address       string    `json:"address" binding:"required"`
+	Password_hash string    `json:"password_hash" binding:"required"`
+	Avatar_url    string    `json:"avatar_url" binding:"omitempty,url"`
+}
+
+type UpdateUsersPutRequest struct {
+	Id_status  int32     `json:"id_status" binding:"required"`
+	User_name  string    `json:"user_name" binding:"required,min=2,max=100"`
+	Birth_date time.Time `json:"birth_date"`
+	Email      string    `json:"email" binding:"required,email"`
+	Phone_num  string    `json:"phone_num" binding:"required"`
+	Address    string    `json:"address" binding:"required"`
+}
+
+type UpdateUsersPatchRequest struct {
+	Id_status  *int32     `json:"id_status" binding:"omitempty,required"`
+	User_name  *string    `json:"user_name" binding:"omitempty,required,min=2,max=100"`
+	Birth_date *time.Time `json:"birth_date"`
+	Email      *string    `json:"email" binding:"omitempty,required,email"`
+	Phone_num  *string    `json:"phone_num" binding:"omitempty,required"`
+	Address    *string    `json:"address" binding:"omitempty,required"`
+}

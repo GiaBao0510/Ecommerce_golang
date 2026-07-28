@@ -26,7 +26,7 @@ func (r *RolesController) GetByID(c *gin.Context) error {
 
 	//Lấy Thông số ở Param
 	id := c.Param("id")
-	id_int, err := util.VerifyID(id)
+	id_int, err := util.ValidationPositiveInt("ID", id)
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}
@@ -80,7 +80,7 @@ func (r *RolesController) Update_Put(c *gin.Context) error {
 
 	//Lấy dữ liệu đầu vào
 	id := c.Param("id")
-	id_int, err := util.VerifyID(id)
+	id_int, err := util.ValidationPositiveInt("ID", id)
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}
@@ -107,7 +107,7 @@ func (r *RolesController) Update_Patch(c *gin.Context) error {
 
 	//Lấy dữ liệu đầu vào
 	id := c.Param("id")
-	id_int, err := util.VerifyID(id)
+	id_int, err := util.ValidationPositiveInt("ID", id)
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}
@@ -132,7 +132,7 @@ func (r *RolesController) Update_Patch(c *gin.Context) error {
 // DELETE /roles/:id
 func (r *RolesController) Delete(c *gin.Context) error {
 	id := c.Param("id")
-	id_int, err := util.VerifyID(id)
+	id_int, err := util.ValidationPositiveInt("ID", id)
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}

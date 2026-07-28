@@ -32,7 +32,7 @@ func (s *StatusController) Build(handeler AppHandler) gin.HandlerFunc {
 func (s *StatusController) GetStatusByID(c *gin.Context) error {
 
 	id := c.Param("id")              // Lấy ID từ URL
-	id_int, err := util.VerifyID(id) // Validate ID và chuyển đổi sang int32
+	id_int, err := util.ValidationPositiveInt("ID", id) // Validate ID và chuyển đổi sang int32
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}
@@ -80,7 +80,7 @@ func (s *StatusController) CreateStatus(c *gin.Context) error {
 // PUT /statuses/:id
 func (s *StatusController) Update_Put(c *gin.Context) error {
 	id := c.Param("id")              // Lấy ID từ URL
-	id_int, err := util.VerifyID(id) // Validate ID và chuyển đổi sang int32
+	id_int, err := util.ValidationPositiveInt("ID", id) // Validate ID và chuyển đổi sang int32
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}
@@ -104,7 +104,7 @@ func (s *StatusController) Update_Put(c *gin.Context) error {
 // PUT /statuses/:id
 func (s *StatusController) Update_Patch(c *gin.Context) error {
 	id := c.Param("id")              // Lấy ID từ URL
-	id_int, err := util.VerifyID(id) // Validate ID và chuyển đổi sang int32
+	id_int, err := util.ValidationPositiveInt("ID", id) // Validate ID và chuyển đổi sang int32
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}
@@ -128,7 +128,7 @@ func (s *StatusController) Update_Patch(c *gin.Context) error {
 // DELETE /statuses/:id
 func (s *StatusController) DeleteStatus(c *gin.Context) error {
 	id := c.Param("id")              // Lấy ID từ URL
-	id_int, err := util.VerifyID(id) // Validate ID và chuyển đổi sang int32
+	id_int, err := util.ValidationPositiveInt("ID", id) // Validate ID và chuyển đổi sang int32
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}

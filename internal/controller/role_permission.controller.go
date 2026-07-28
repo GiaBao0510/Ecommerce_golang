@@ -24,7 +24,7 @@ func NewRolePermissionController(rp service.IRolePermissionService, logger *zap.
 func (c *RolePermissionController) GetPermissionsByRoleID(ctx *gin.Context) error {
 	// Lấy ID từ param
 	id := ctx.Param("id")
-	id_int, err := util.VerifyID(id)
+	id_int, err := util.ValidationPositiveInt("ID", id)
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}
@@ -42,7 +42,7 @@ func (c *RolePermissionController) GetPermissionsByRoleID(ctx *gin.Context) erro
 func (c *RolePermissionController) GetRolesByPermissionID(ctx *gin.Context) error {
 	// Lấy ID từ param
 	id := ctx.Param("id")
-	id_int, err := util.VerifyID(id)
+	id_int, err := util.ValidationPositiveInt("ID", id)
 	if err != nil {
 		return apperrors.NewBadRequestError("Invalid ID: " + err.Error())
 	}
