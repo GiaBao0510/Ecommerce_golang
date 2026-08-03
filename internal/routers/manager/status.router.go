@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
-
+ 
 type StatusRouter struct{}
 
 func (r *StatusRouter) InitStatusRouter(Router *gin.RouterGroup, db *database.Queries, logger *zap.Logger) {

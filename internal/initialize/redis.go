@@ -32,3 +32,11 @@ func InitRedis() {
 	global.Redis = rdb
 	global.Logger.Access.Info("InitRedis: Successfully connected to Redis")
 }
+
+func CloseRedis() {
+	if global.Redis != nil {
+		if err := global.Redis.Close(); err != nil {
+			global.Logger.Error.Error("CloseRedis: Failed to close Redis connection", zap.Error(err))
+		}
+	}
+}

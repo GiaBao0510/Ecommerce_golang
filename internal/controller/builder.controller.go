@@ -60,6 +60,7 @@ func Build(handler AppHandler, logger *zap.Logger) gin.HandlerFunc {
 					zap.Int("status_code", appErr.Code),
 					zap.String("error_status", appErr.Status),
 					zap.String("error_message", appErr.Message),
+					zap.NamedError("root_cause", appErr.Unwrap()),
 					zap.Error(err), // Ghi cả stack trace nếu có
 				)
 			} else if appErr.Code >= http.StatusBadRequest {
@@ -86,55 +87,67 @@ func Build(handler AppHandler, logger *zap.Logger) gin.HandlerFunc {
 		// Bước 4: Fallback — các lỗi không phải AppError
 		// (Ít gặp nhưng cần xử lý để không crash app)
 		// -------------------------------------------------------
-		switch {
-		case errors.Is(err, apperrors.ErrUnauthorized):
-			logger.Warn("Unauthorized access", zap.String("trace_id", traceID), zap.String("path", ctx.Request.URL.Path),)
-			ctx.JSON(http.StatusUnauthorized, response.ErrorResponse{
-				Code:    http.StatusUnauthorized,
-				Status:  "Unauthorized",
-				Message: "Không có quyền truy cập - detail: " + err.Error(),
-			})
-		case errors.Is(err, apperrors.ErrForbidden):
-			logger.Warn("Forbidden access", zap.String("trace_id", traceID), zap.String("path", ctx.Request.URL.Path))
-			ctx.JSON(http.StatusForbidden, response.ErrorResponse{
-				Code:    http.StatusForbidden,
-				Status:  "Forbidden",
-				Message: "Hành động bị cấm - detail: " + err.Error(),
-			})
-		case errors.Is(err, apperrors.ErrNotFound):
-			logger.Warn("Not Found", zap.String("trace_id", traceID), zap.String("path", ctx.Request.URL.Path))
-			ctx.JSON(http.StatusNotFound, response.ErrorResponse{
-				Code:    http.StatusNotFound,
-				Status:  "Not Found",
-				Message: "Không tìm thấy tài nguyên - detail: " + err.Error(),
-			})
-		case errors.Is(err, apperrors.ErrInvalidFormat):
-			logger.Warn("Invalid Format", zap.String("trace_id", traceID), zap.String("path", ctx.Request.URL.Path))
-			ctx.JSON(http.StatusBadRequest, response.ErrorResponse{
-				Code:    http.StatusBadRequest,
-				Status:  "Bad Request",
-				Message: "Định dạng không hợp lệ - detail: " + err.Error(),
-			})
-		case errors.Is(err, apperrors.ErrPhoneDuplicate):
-			ctx.JSON(http.StatusBadRequest, response.ErrorResponse{
-				Code:    http.StatusBadRequest,
-				Status:  "Bad Request",
-				Message: "Số điện thoại đã tồn tại - detail: " + err.Error(),
-			})
-		default:
-			logger.Warn("Forbidden access", 
-				zap.String("trace_id", traceID), 
-				zap.String("method", ctx.Request.Method),
-				zap.String("path", ctx.Request.URL.Path),
-				zap.String("error_message", err.Error()),
-				zap.Error(err),
-			)
-			ctx.JSON(http.StatusInternalServerError, response.ErrorResponse{
-				Code:    http.StatusInternalServerError,
-				Status:  "Internal Server Error",
-				Message: "Lỗi máy chủ - detail: ",
-			})
+		// switch {
+		// case errors.Is(err, apperrors.ErrUnauthorized):
+		// 	logger.Warn("Unauthorized access", zap.String("trace_id", traceID), zap.String("path", ctx.Request.URL.Path),)
+		// 	ctx.JSON(http.StatusUnauthorized, response.ErrorResponse{
+		// 		Code:    http.StatusUnauthorized,
+		// 		Status:  "Unauthorized",
+		// 		Message: "Không có quyền truy cập - detail: " + err.Error(),
+		// 	})
+		// case errors.Is(err, apperrors.ErrForbidden):
+		// 	logger.Warn("Forbidden access", zap.String("trace_id", traceID), zap.String("path", ctx.Request.URL.Path))
+		// 	ctx.JSON(http.StatusForbidden, response.ErrorResponse{
+		// 		Code:    http.StatusForbidden,
+		// 		Status:  "Forbidden",
+		// 		Message: "Hành động bị cấm - detail: " + err.Error(),
+		// 	})
+		// case errors.Is(err, apperrors.ErrNotFound):
+		// 	logger.Warn("Not Found", zap.String("trace_id", traceID), zap.String("path", ctx.Request.URL.Path))
+		// 	ctx.JSON(http.StatusNotFound, response.ErrorResponse{
+		// 		Code:    http.StatusNotFound,
+		// 		Status:  "Not Found",
+		// 		Message: "Không tìm thấy tài nguyên - detail: " + err.Error(),
+		// 	})
+		// case errors.Is(err, apperrors.ErrInvalidFormat):
+		// 	logger.Warn("Invalid Format", zap.String("trace_id", traceID), zap.String("path", ctx.Request.URL.Path))
+		// 	ctx.JSON(http.StatusBadRequest, response.ErrorResponse{
+		// 		Code:    http.StatusBadRequest,
+		// 		Status:  "Bad Request",
+		// 		Message: "Định dạng không hợp lệ - detail: " + err.Error(),
+		// 	})
+		// case errors.Is(err, apperrors.ErrPhoneDuplicate):
+		// 	ctx.JSON(http.StatusBadRequest, response.ErrorResponse{
+		// 		Code:    http.StatusBadRequest,
+		// 		Status:  "Bad Request",
+		// 		Message: "Số điện thoại đã tồn tại - detail: " + err.Error(),
+		// 	})
+		// default:
+		// 	logger.Warn("Forbidden access", 
+		// 		zap.String("trace_id", traceID), 
+		// 		zap.String("method", ctx.Request.Method),
+		// 		zap.String("path", ctx.Request.URL.Path),
+		// 		zap.String("error_message", err.Error()),
+		// 		zap.Error(err),
+		// 	)
+		// 	ctx.JSON(http.StatusInternalServerError, response.ErrorResponse{
+		// 		Code:    http.StatusInternalServerError,
+		// 		Status:  "Internal Server Error",
+		// 		Message: "Lỗi máy chủ - detail: ",
+		// 	})
+		// }
 
-		}
+		logger.Error("Unhandled error type - missing AppError wrap in code",
+			zap.String("trace_id", traceID),
+			zap.String("method", ctx.Request.Method),
+			zap.String("path", ctx.Request.URL.Path),
+			zap.String("error_message", err.Error()),
+			zap.Error(err),
+		)
+		ctx.JSON(http.StatusInternalServerError, response.ErrorResponse{
+			Code:    http.StatusInternalServerError,
+			Status:  "Internal Server Error",
+			Message: "Lỗi máy chủ - detail: " + err.Error(),
+		})
 	}
 }

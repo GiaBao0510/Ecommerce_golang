@@ -30,7 +30,8 @@ var (
 	ErrUserNotFound = errors.New("User not found")
 
 	// 409 - Conflict
-	ErrConflict = errors.New("Conflict")
+	ErrConflict  = errors.New("Conflict")
+	ErrDuplicate = errors.New("Duplicate value")
 
 	// 500 - Internal Server Error
 	ErrInternalServer  = errors.New("Internal server error")
@@ -91,19 +92,28 @@ func NewInvalidValueError(field string) *AppError {
 
 func NewPhoneDuplicateError() *AppError {
 	return &AppError{
-		Code:    http.StatusBadRequest,
+		Code:    http.StatusConflict,
 		Message: "Số điện thoại đã tồn tại",
 		ErrKey:  ErrPhoneDuplicate,
-		Status:  "Bad Request",
+		Status:  "Conflict",
 	}
 }
 
 func NewEmailDuplicateError() *AppError {
 	return &AppError{
-		Code:    http.StatusBadRequest,
+		Code:    http.StatusConflict,
 		Message: "Email đã tồn tại",
 		ErrKey:  ErrEmailDuplicate,
-		Status:  "Bad Request",
+		Status:  "Conflict",
+	}
+}
+
+func NewDuplicateError(field, value string) *AppError {
+	return &AppError{
+		Code:    http.StatusConflict,
+		Message: "Lỗi trùng lặp dữ liệu cho trường " + field + ": " + value,
+		ErrKey:  ErrDuplicate,
+		Status:  "Conflict",
 	}
 }
 
@@ -215,6 +225,15 @@ func NewDatabaseTimeoutError(err error) *AppError {
 	return &AppError{
 		Code:    http.StatusInternalServerError,
 		Message: "Kết nối cơ sở dữ liệu bị timeout",
+		ErrKey:  err,
+		Status:  "Internal Server Error",
+	}
+}
+
+func NewDatabaseConnectionError(err error) *AppError {
+	return &AppError {
+		Code:    http.StatusInternalServerError,
+		Message: "Lỗi kết nối cơ sở dữ liệu",
 		ErrKey:  err,
 		Status:  "Internal Server Error",
 	}

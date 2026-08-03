@@ -16,31 +16,47 @@ var (
 			Help: "Tổng số HTTP request theo method, path, status",
 		},
 		[]string{"method", "path", "status"},
-    )
+	)
 
 	// httpRequestDuration là metric đo thời gian xử lý request HTTP, phân loại theo method và path
 	httpRequestDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name: "http_request_duration_seconds",
-			Help: "Thời gian xử lý request",
+			Name:    "http_request_duration_seconds",
+			Help:    "Thời gian xử lý request",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method","path"},
+		[]string{"method", "path"},
 	)
 )
 
-func init(){
-	prometheus.MustRegister(httpRequestsTotal, httpRequestDuration)
+// Hàm init() được gọi tự động khi package được import, dùng để đăng ký các metric với Prometheus
+func init() {
+
+	// Tại đây sử dụng prometheus.Register để đăng ký các metric với Prometheus.
+	// Nếu metric đã được đăng ký trước đó, sẽ bỏ qua lỗi AlreadyRegisteredError.
+	if err := prometheus.Register(httpRequestsTotal); err != nil {
+		if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
+			panic(err)
+		}
+	}
+
+	// Đăng ký metric httpRequestDuration với Prometheus.
+	// Nếu đã đăng ký trước đó thì bỏ qua lỗi AlreadyRegisteredError
+	if err := prometheus.Register(httpRequestDuration); err != nil {
+		if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
+			panic(err)
+		}
+	}
 }
 
 // MetricsMiddleware là middleware để thu thập các metric về request HTTP
-func MetricsMiddleware() gin.HandlerFunc{
-	return func(c *gin.Context){
-		start := time.Now() // Bắt đầu đo thời gian
+func MetricsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
 
-		c.Next() // Tiếp tục xử lý request
-
+		start := time.Now()                     // Bắt đầu đo thời gian
+		c.Next()                                // Tiếp tục xử lý request
 		duration := time.Since(start).Seconds() // Tính toán thời gian xử lý request
+
 		path := c.FullPath() // Lấy path của request
 		if path == "" {
 			path = "unknown"

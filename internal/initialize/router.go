@@ -5,6 +5,7 @@ import (
 	"github.com/GiaBao0510/Ecommerce_golang/internal/middleware"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/routers"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func InitRouter() *gin.Engine {
@@ -27,33 +28,41 @@ func InitRouter() *gin.Engine {
 
 	r = gin.New() // Sử dụng gin.New() để tạo một instance Gin mới mà không có middleware mặc định, giúp giảm overhead và tăng hiệu suất trong môi trường sản xuất
 
-	// ---Bước 2: Đăng ký middleware chung------------------------------------------------------
-	// Middleware chung cho tất cả các route, ví dụ như CORS, Logging, Recovery, v.v.
-	// ------------------------------------------------------------------------------------------
+	/* ---Bước 2: Đăng ký middleware chung------------------------------------------------------
+		THỨ TỰ ĐĂNG KÝ RẤT QUAN TRỌNG — middleware chạy TRƯỚC bọc quanh middleware
+	chạy SAU (giống như vỏ hành). Lý do thứ tự dưới đây:
+	
+	1. RealIP     : không phụ thuộc middleware nào khác, cần chạy sớm vì
+	Logger cần đọc RealIPKey từ context.
+
+	2. TraceID: Sinh UUID duy nhất cho mỗi request
+	→ Lưu vào context để tất cả middleware/handler SAU có thể dùng
+	→ Nếu đặt sau Logger, Logger sẽ không có trace_id để ghi
+
+	3. Traing: span nên bọc quanh CÀNG NHIỀU middleware phía sau
+	càng tốt để đo được toàn bộ thời gian xử lý.
+
+	4.  Recovery — Bắt panic, ngăn app crash
+	→ Nếu handler nào bị panic (lỗi không mong đợi), Recovery bắt lại
+	→ Trả về 500 thay vì để server tắt
+	→ PHẢI đăng ký để đảm bảo an toàn cho production
+
+	5.  Logger — ghi access log — đặt sau Recovery để nếu có panic
+	→ Ghi access log: method, path, status, latency, trace_id
+	→ Ghi vào storages/logs/access.log
+	→ Dùng Access logger (không phải Error logger)
+
+	6. tương tự Logger, cần status code cuối cùng.
+
+	
+	------------------------------------------------------------------------------------------ */
 	r.Use(
-		// Limiter
-
-		// [1] TraceID — PHẢI chạy ĐẦU TIÊN
-		// → Sinh UUID duy nhất cho mỗi request
-		// → Lưu vào context để tất cả middleware/handler SAU có thể dùng
-		// → Nếu đặt sau Logger, Logger sẽ không có trace_id để ghi
+		middleware.RealIPMiddleware(),
 		middleware.TraceID_Middleware(),
-
-		// [2] HTTP Logger — PHẢI sau TraceID
-		// → Ghi access log: method, path, status, latency, trace_id
-		// → Ghi vào storages/logs/access.log
-		// → Dùng Access logger (không phải Error logger)
+		middleware.TracingMiddleware(),
+		middleware.RecoveryMiddleware(),
 		middleware.HttpLoggerMiddleware(global.Logger.Access),
-
-		// [3] Recovery — Bắt panic, ngăn app crash
-		// → Nếu handler nào bị panic (lỗi không mong đợi), Recovery bắt lại
-		// → Trả về 500 thay vì để server tắt
-		// → PHẢI đăng ký để đảm bảo an toàn cho production
-		gin.Recovery(), // Middleware Recovery giúp phục hồi sau panic, tránh crash server và ghi log lỗi
-		//middleware.AuthenMiddleware(),
-		// cors
-		// Authen
-		// Permission
+		middleware.MetricsMiddleware(),
 
 		// [4] CORS — Cho phép cross-origin requests (frontend khác domain)
 		// → Chưa implement, sẽ thêm sau
@@ -71,6 +80,16 @@ func InitRouter() *gin.Engine {
 		// middleware.AuthenMiddleware(),
 	)
 
+	/* ==================================================
+	// Metric Endpoint — /metrics
+	Middleware MetricsMiddleware() đã thu thập dữ liệu vào registry.
+	// Thêm route "/metrics" để Prometheus server có endpoint để scrape định kỳ.
+	// Đặt ngoài MainGroup (không tiền tố /v1/api) theo convention chuẩn của
+	// Prometheus; không cần qua Auth/RateLimit vì đây là traffic nội bộ
+	// (Prometheus server), nên whitelist IP nội bộ ở tầng network/firewall.
+	==================================================== */
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+
 	// ================================================================
 	// ROUTES
 	// ================================================================
@@ -86,11 +105,21 @@ func InitRouter() *gin.Engine {
 	UserGroup := MainGroup.Group("/user")
 	ManagerGroup := MainGroup.Group("/manager")
 
+	// Định nghĩa route cho vai trò user
 	userRouter.InitProductRouter(UserGroup)
-	userRouter.InitUserRouter(UserGroup)
+	userRouter.InitUserRouter(
+		UserGroup.Group("/user"),
+		global.DB,
+		global.Logger.Error,
+	)
 
+	// Định nghĩa route cho vai trò admin
 	managerRouter.InitAdminRouter(ManagerGroup.Group("/admin"))
-	managerRouter.InitUserRouter(ManagerGroup.Group("/user"))
+	managerRouter.InitUserRouter(
+		ManagerGroup.Group("/user"),
+		global.DB,
+		global.Logger.Error,
+	)
 	managerRouter.InitStatusRouter(
 		ManagerGroup.Group("/status"),
 		global.DB,

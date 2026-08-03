@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"runtime/debug"
 
@@ -10,16 +9,31 @@ import (
 	"go.uber.org/zap"
 )
 
-// Recovery bắt mọi panic xảy ra từ các middleware/handler phía sau
-// Tránh crash toàn bộ server và chỉ vì request lỗi
+// RecoveryMiddleware bắt mọi panic xảy ra từ các middleware/handler phía sau,
+// tránh crash toàn bộ server chỉ vì 1 request lỗi. Log panic đầy đủ stack
+// trace vào global.Logger.Error (structured, đi vào file log + rotation),
+// thay vì chỉ in ra stderr như gin.Recovery() mặc định.
 func RecoveryMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		defer func() {
-			if err := recover(); err != nil {
-				global.Logger.Error.Error(fmt.Sprintf("[Panic recovered]: %v\n%s\n", err, debug.Stack), zap.Any("error", err))
+			if rec := recover(); rec != nil {
+				traceID := GetTraceID(c) // Lấy trace_id từ context để log
+
+
+				global.Logger.Error.Error(
+					"Panic recovered in middleware",
+					zap.String("trace_id", traceID),
+					zap.String("method", c.Request.Method),
+					zap.String("path", c.Request.URL.Path),
+					zap.Any("panic", rec),
+					zap.String("stack_trace", string(debug.Stack())),
+				)
+
 				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-					"error": "Internal Server Error",
+					"code":   http.StatusInternalServerError,
+					"status": "Internal Server Error",
+					"message": "Lỗi không mong muốn xảy ra. Vui lòng thử lại sau.",
 				})
 			}
 		}()

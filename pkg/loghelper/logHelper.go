@@ -19,8 +19,8 @@ func NewDBLogger(logger *zap.Logger, repoName string) *DBLogger {
 
 // Ghi log lỗi với thông tin chi tiết
 // ERROR: Repository: GetByID failed, layer: repository, operation: GetStatusByID, id: 123, error: sql: no rows in result set
-func (d *DBLogger) LogError (operation string, err error, extrafields ...zap.Field) {
-	fields := []zap.Field {
+func (d *DBLogger) LogError(operation string, err error, extrafields ...zap.Field) {
+	fields := []zap.Field{
 		zap.String("repo", d.repoName),
 		zap.String("layer", "repository"),
 		zap.String("operation", operation),
@@ -30,8 +30,8 @@ func (d *DBLogger) LogError (operation string, err error, extrafields ...zap.Fie
 }
 
 // Ghi log cảnh báo với thông tin chi tiết
-func (d *DBLogger) LogWarning (operation string, msg string, extraFields ...zap.Field) {
-	fields := []zap.Field {
+func (d *DBLogger) LogWarning(operation string, msg string, extraFields ...zap.Field) {
+	fields := []zap.Field{
 		zap.String("repo", d.repoName),
 		zap.String("layer", "repository"),
 		zap.String("operation", operation),
@@ -39,3 +39,12 @@ func (d *DBLogger) LogWarning (operation string, msg string, extraFields ...zap.
 	d.logger.Warn(msg, append(fields, extraFields...)...)
 }
 
+// Ghi log thông tin với thông tin chi tiết
+func (d *DBLogger) LogInfo(operation string, msg string, extraFields ...zap.Field) {
+	fields := []zap.Field{
+		zap.String("repo", d.repoName),
+		zap.String("layer", "repository"),
+		zap.String("operation", operation),
+	}
+	d.logger.Info(msg, append(fields, extraFields...)...)
+}

@@ -10,7 +10,7 @@ import (
 )
 
 /*
-	HttpLoggerMiddleware là hàm custom middleware để ghi log cho mỗi HTTP request.
+HttpLoggerMiddleware là hàm custom middleware để ghi log cho mỗi HTTP request.
 
 Thì ở đây nó sẽ ghi log:
   - Từ lúc vào - request (method, path, query, body)
@@ -39,9 +39,9 @@ func HttpLoggerMiddleware(logger *zap.Logger) gin.HandlerFunc {
 		// ---- SAU KHI XỬ LÝ REQUEST ----
 
 		latency := time.Since(startTime)                       // Tính thời gian xử lý
-		requestID := GetRequestID(ctx)                         // Lấy request_id từ context (được set bởi RequestIDMiddleware)
+		traceID := GetTraceID(ctx)                             // Lấy request_id từ context (được set bởi RequestIDMiddleware)
 		statusCode := ctx.Writer.Status()                      // Lấy status code trả về cho client
-		realIP := util.GetSringFromContextVlue(ctx, RealIPKey) // Lấy real_ip từ context (được set bởi RealIPMiddleware)
+		realIP := util.GetStringFromContextValue(ctx, RealIPKey) // Lấy real_ip từ context (được set bởi RealIPMiddleware)
 		if realIP == "" {
 			realIP = ctx.ClientIP() // Nếu không có real_ip trong context thì lấy từ ctx.ClientIP()
 		}
@@ -57,7 +57,7 @@ func HttpLoggerMiddleware(logger *zap.Logger) gin.HandlerFunc {
 		// Tổng hợp các field log chung cho mọi request
 		// -------------------------------------------------------
 		fields := []zap.Field{
-			zap.String("request_id", requestID),               // ID duy nhất của request
+			zap.String("trace_id", traceID),                   // ID duy nhất của request
 			zap.String("real IP", realIP),                     // Real IP của client (nếu có)
 			zap.String("method", ctx.Request.Method),          // GET / POST / PUT / DELETE
 			zap.String("path", ctx.FullPath()),                // /v1/api/statuses/:id

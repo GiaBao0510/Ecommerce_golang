@@ -7,6 +7,7 @@ type Config struct {
 	Redis      RedisConfig      `mapstructure:"redis"`
 	Server     ServerConfig     `mapstructure:"server"`
 	Cors       CORS_Config      `mapstructure:"cors"`
+	MailJet    MailJetConfig    `mapstructure:"mailjet"`
 }
 
 // Cấu trúc con cho phần cấu hình server (port, host, mode)
@@ -54,6 +55,15 @@ type RedisConfig struct {
 	ReadTimeout     string `mapstructure:"readTimeout"`
 	WriteTimeout    string `mapstructure:"writeTimeout"`
 	PoolSize        int    `mapstructure:"poolSize"`
+}
+
+// Cấu truccs kết nối mailinject
+type MailJetConfig struct {
+	API_key    string `mapstructure:"api_key"`
+	Secret_key string `mapstructure:"secret_key"`
+	From_mail  string `mapstructure:"from_mail"`
+	From_name  string `mapstructure:"from_name"`
+	App_url    string `mapstructure:"app_url"`
 }
 
 // Cấu trúc CORS

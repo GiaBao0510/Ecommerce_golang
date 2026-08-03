@@ -1,6 +1,7 @@
 package util
 
 import (
+	"math/rand/v2"
 	"fmt"
 	"time"
 
@@ -25,7 +26,7 @@ func VerifyName(name string) error {
 }
 
 // Hàm helpers để lấy string từ context, nếu không có thì trả về giá trị mặc định
-func GetSringFromContextVlue(ctx *gin.Context, key string) string {
+func GetStringFromContextValue(ctx *gin.Context, key string) string {
 	value, exists := ctx.Get(key)
 	if !exists {
 		return ""
@@ -35,4 +36,14 @@ func GetSringFromContextVlue(ctx *gin.Context, key string) string {
 		return ""
 	}
 	return s
+}
+
+// Hàm tạo chuỗi số nguyên có độ dài là 6 ký tự
+func GenerateRandomNumber() string {
+	var b [6]byte
+	for i := range b {
+		b[i] = byte(rand.IntN(10)) + '0'
+	}
+
+	return string(b[:])
 }

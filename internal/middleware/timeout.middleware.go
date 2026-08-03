@@ -8,8 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// timeoutWriter bọc gin.ResponseWriter, chặn mọi ghi dữ liệu SAU KHI request
+
+
 // Timeout giới hạn thời gian tối đa xử lý một request,
 // tránh một request "treo" chiếm tài nguyên vô thời hạn
+// Đây là kiểu middleware đơn giản dựa trên goroutine + select -
+// cách này KHÔNG dùng được goroutine xử lý hanler khi timeout xảy ra
 func TimeOutMiddleware(duration time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		

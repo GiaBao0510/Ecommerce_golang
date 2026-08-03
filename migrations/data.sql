@@ -48,7 +48,7 @@ create table STATUS (
 );
 
 /* Table: "USER"                                                */
-create table "USER" (
+create table "user" (
    UUID VARCHAR(50) PRIMARY KEY,
    ID_STATUS INT NULL,
    USER_NAME VARCHAR(100) NOT NULL,

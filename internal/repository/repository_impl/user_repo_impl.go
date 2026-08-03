@@ -11,6 +11,7 @@ import (
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -28,7 +29,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id string) (*models.Users,
 	rows, err := r.db.GetUserByID(ctx, id)
 	if err != nil {
 		r.dblog.LogError("GetByID", err, zap.String("id", id))
-		return nil, apperrors.NewNotFoundError("Lỗi không tìm thấy người dùng với ID: " + id)
+		return nil, MapDBErrorWithContext(err, "Không tìm thấy người dùng với ID: "+id)
 	}
 
 	result := mapper.ToUserModel(rows)
@@ -39,7 +40,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 	rows, err := r.db.GetUserByEmail(ctx, email)
 	if err != nil {
 		r.dblog.LogError("GetUserByEmail", err, zap.String("email", email))
-		return nil, apperrors.NewNotFoundError("Lỗi không tìm thấy người dùng với email: " + email)
+		return nil, MapDBErrorWithContext(err, "Không tìm thấy người dùng với email: "+email)
 	}
 
 	result := mapper.ToUserModel(rows)
@@ -51,7 +52,7 @@ func (r *UserRepository) GetUserByPhone(ctx context.Context, phone sql.NullStrin
 	rows, err := r.db.GetUserByPhone(ctx, phone)
 	if err != nil {
 		r.dblog.LogError("GetUserByPhone", err, zap.String("phone", phone.String))
-		return nil, apperrors.NewNotFoundError("Lỗi không tìm thấy người dùng với điện thoại: " + phone.String)
+		return nil, MapDBErrorWithContext(err, "Không tìm thấy người dùng với điện thoại: "+phone.String)
 	}
 
 	result := mapper.ToUserModel(rows)
@@ -62,7 +63,7 @@ func (r *UserRepository) GetUID_PasswordHashByEmail(ctx context.Context, email s
 	row, err := r.db.GetUID_PasswordHashByEmail(ctx, email)
 	if err != nil {
 		r.dblog.LogError("GetUID_PasswordHashByEmail", err, zap.String("email", email))
-		return nil, apperrors.NewNotFoundError("Lỗi không tìm thấy người dùng với email: " + email)
+		return nil, MapDBErrorWithContext(err, "Không tìm thấy người dùng với email: "+email)
 	}
 
 	result := dto.UserResponseBase{
@@ -76,7 +77,7 @@ func (r *UserRepository) GetUID_PasswordHashByPhone(ctx context.Context, phone s
 	row, err := r.db.GetUID_PasswordHashByPhone(ctx, phone)
 	if err != nil {
 		r.dblog.LogError("GetUID_PasswordHashByPhone", err, zap.String("phone", phone.String))
-		return nil, apperrors.NewNotFoundError("Lỗi không tìm thấy người dùng với điện thoại: " + phone.String)
+		return nil, MapDBErrorWithContext(err, "Không tìm thấy người dùng với điện thoại: "+phone.String)
 	}
 
 	result := dto.UserResponseBase{
@@ -90,12 +91,12 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]models.Users, error) {
 	query, err := r.db.GetAllUsers(ctx)
 	if err != nil {
 		r.dblog.LogError("GetAll", err)
-		return nil, err
+		return nil, MapDBErrorWithContext(err, "Lỗi khi lấy danh sách người dùng")
 	}
 
 	if len(query) == 0 {
 		r.dblog.LogWarning("GetAll", "No users found")
-		return nil, apperrors.NewNotFoundError("Không tìm thấy người dùng nào")
+		return nil, MapDBErrorWithContext(apperrors.NewNotFoundError("Không tìm thấy người dùng nào"), "Không tìm thấy người dùng nào")
 	}
 
 	var users []models.Users
@@ -107,10 +108,17 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]models.Users, error) {
 }
 
 func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequest) (int, error) {
+	
+	// Nhận các giá trị từ obj và chuẩn bị các tham số cho truy vấn SQL
 	params := database.CreateUserParams{
+		Uuid: uuid.NewString(),	// Tạo UUID mới cho người dùng
+		IDStatus: sql.NullInt32{
+			Int32: obj.Id_status,
+			Valid: obj.Id_status != 0,
+		},
 		UserName: obj.User_name,
-		DateOfBirth: sql.NullTime{
-			Time:  obj.Birth_date,
+		BirthDate: sql.NullTime{
+			Time:  obj.Birth_date.Time,
 			Valid: !obj.Birth_date.IsZero(),
 		},
 		Email: obj.Email,
@@ -132,7 +140,7 @@ func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequ
 	// Gọi phương thức CreateUser từ database.Queries để thực hiện việc tạo mới
 	if err := r.db.CreateUser(ctx, params); err != nil {
 		r.dblog.LogError("Create", err, zap.String("name", obj.User_name))
-		return 0, apperrors.NewInternalServerError(err)
+		return 0, MapDBErrorWithContext(err, "Lỗi khi tạo người dùng mới")
 	}
 
 	return 0, nil
@@ -145,8 +153,8 @@ func (r *UserRepository) Update_Put(ctx context.Context, id string, obj *models.
 			Valid: obj.Id_status != 0,
 		},
 		UserName: obj.User_name,
-		DateOfBirth: sql.NullTime{
-			Time:  obj.Birth_date,
+		BirthDate: sql.NullTime{
+			Time:  obj.Birth_date.Time,
 			Valid: !obj.Birth_date.IsZero(),
 		},
 		Email: obj.Email,
@@ -158,67 +166,99 @@ func (r *UserRepository) Update_Put(ctx context.Context, id string, obj *models.
 			String: obj.Address,
 			Valid:  obj.Address != "",
 		},
+		Uuid: id,
 	}
 
 	result, err := r.db.UpdateUser_PUT(ctx, params)
 	if err != nil {
 		r.dblog.LogError("UpdateUser_PUT", err, zap.String("id", id))
-		return apperrors.NewInternalServerError(err)
+		return MapDBErrorWithContext(err, "Lỗi khi cập nhật người dùng với ID: "+id)
 	}
 
 	// Kiểm tra số lượng bản ghi bị ảnh hưởng
 	affected, err := result.RowsAffected()
 	if err != nil {
 		r.dblog.LogError("RowsAffected", err, zap.String("id", id))
-		return apperrors.NewInternalServerError(err)
+		return MapDBErrorWithContext(err, "Lỗi khi kiểm tra số lượng bản ghi bị ảnh hưởng cho người dùng với ID: "+id)
 	}
 
 	if affected == 0 {
 		r.dblog.LogWarning("UpdateUser_PUT", "No rows affected", zap.String("id", id))
-		return apperrors.NewNotFoundError("Không tìm thấy người dùng với ID: " + id)
+		return MapDBErrorWithContext(apperrors.NewNotFoundError("Không tìm thấy người dùng với ID: " + id), "Không tìm thấy người dùng với ID: " + id)
 	}
 
 	return nil
 }
 
 func (r *UserRepository) Update_Patch(ctx context.Context, id string, obj *models.UpdateUsersPatchRequest) error {
-	params := database.UpdateUser_PATCHParams{
-		IDStatus: sql.NullInt32{
+	var idStatus sql.NullInt32
+	if obj.Id_status != nil {
+		idStatus = sql.NullInt32{
 			Int32: *obj.Id_status,
-			Valid: obj.Id_status != nil && *obj.Id_status != 0,
-		},
-		UserName: *obj.User_name,
-		DateOfBirth: sql.NullTime{
-			Time:  *obj.Birth_date,
-			Valid: obj.Birth_date != nil && !(*obj.Birth_date).IsZero(),
-		},
-		Email: *obj.Email,
-		PhoneNum: sql.NullString{
+			Valid: *obj.Id_status != 0,
+		}
+	}
+
+	var userName string
+	if obj.User_name != nil {
+		userName = *obj.User_name
+	}
+
+	var birthDate sql.NullTime
+	if obj.Birth_date != nil {
+		birthDate = sql.NullTime{
+			Time:  obj.Birth_date.Time,
+			Valid: !obj.Birth_date.IsZero(),
+		}
+	}
+
+	var email string
+	if obj.Email != nil {
+		email = *obj.Email
+	}
+
+	var phoneNum sql.NullString
+	if obj.Phone_num != nil {
+		phoneNum = sql.NullString{
 			String: *obj.Phone_num,
-			Valid:  obj.Phone_num != nil && *obj.Phone_num != "",
-		},
-		Address: sql.NullString{
+			Valid:  *obj.Phone_num != "",
+		}
+	}
+
+	var address sql.NullString
+	if obj.Address != nil {
+		address = sql.NullString{
 			String: *obj.Address,
-			Valid:  obj.Address != nil && *obj.Address != "",
-		},
+			Valid:  *obj.Address != "",
+		}
+	}
+
+	params := database.UpdateUser_PATCHParams{
+		IDStatus:    idStatus,
+		UserName:    userName,
+		BirthDate: birthDate,
+		Email:       email,
+		PhoneNum:    phoneNum,
+		Address:     address,
+		Uuid: id,
 	}
 
 	result, err := r.db.UpdateUser_PATCH(ctx, params)
 	if err != nil {
 		r.dblog.LogError("UpdateUser_PATCH", err, zap.String("id", id))
-		return apperrors.NewInternalServerError(err)
+		return MapDBErrorWithContext(err, "Lỗi khi cập nhật người dùng với ID: "+id)
 	}
 
 	// Kiểm tra số lượng bản ghi bị ảnh hưởng
 	affected, err := result.RowsAffected()
 	if err != nil {
 		r.dblog.LogError("RowsAffected", err, zap.String("id", id))
-		return apperrors.NewInternalServerError(err)
+		return MapDBErrorWithContext(err, "Lỗi khi kiểm tra số lượng bản ghi bị ảnh hưởng cho người dùng với ID: "+id)
 	}
 
 	if affected == 0 {
 		r.dblog.LogWarning("UpdateUser_PATCH", "No rows affected", zap.String("id", id))
-		return apperrors.NewNotFoundError("Không tìm thấy người dùng với ID: " + id)
+		return MapDBErrorWithContext(apperrors.NewNotFoundError("Không tìm thấy người dùng với ID: " + id), "Không tìm thấy người dùng với ID: " + id)
 	}
 
 	return nil
@@ -282,7 +322,7 @@ func (r *UserRepository) Delete(ctx context.Context, id string) error {
 	result, err := r.db.DeleteUser(ctx, id)
 	if err != nil {
 		r.dblog.LogError("DeleteUser", err, zap.String("id", id))
-		return apperrors.NewInternalServerError(err)
+		return MapDBErrorWithContext(err, "Lỗi khi xóa người dùng với ID: "+id)
 	}
 
 	if err := CheckRowsAffected(
@@ -302,11 +342,11 @@ func (r *UserRepository) VerifyUserEmail(ctx context.Context, id string) error {
 	result, err := r.db.VerifyEmail(ctx, id)
 	if err != nil {
 		r.dblog.LogError("VerifyUserEmail", err, zap.String("id", id))
-		return apperrors.NewInternalServerError(err)
+		return MapDBErrorWithContext(err, "Lỗi khi xác thực email người dùng với ID: "+id)
 	}
 
 	if err := CheckRowsAffected(
-		result, 
+		result,
 		"VerifyUserEmail",
 		"Không tìm thấy người dùng với ID: "+id,
 		r.dblog,
@@ -314,7 +354,7 @@ func (r *UserRepository) VerifyUserEmail(ctx context.Context, id string) error {
 	); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -322,11 +362,11 @@ func (r *UserRepository) VerifyUserPhone(ctx context.Context, id string) error {
 	result, err := r.db.VerifyPhone(ctx, id)
 	if err != nil {
 		r.dblog.LogError("VerifyUserPhone", err, zap.String("id", id))
-		return apperrors.NewInternalServerError(err)
+		return MapDBErrorWithContext(err, "Lỗi khi xác thực số điện thoại người dùng với ID: "+id)
 	}
 
 	if err := CheckRowsAffected(
-		result, 
+		result,
 		"VerifyUserPhone",
 		"Không tìm thấy người dùng với ID: "+id,
 		r.dblog,
@@ -334,6 +374,6 @@ func (r *UserRepository) VerifyUserPhone(ctx context.Context, id string) error {
 	); err != nil {
 		return err
 	}
-	
+
 	return nil
 }

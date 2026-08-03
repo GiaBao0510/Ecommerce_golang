@@ -6,6 +6,7 @@ import (
 
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"go.uber.org/zap"
 )
@@ -52,6 +53,19 @@ func (s *UserService) GetByID(ctx context.Context, id string) (*models.Users, er
 }
 
 func (s *UserService) Create(ctx context.Context, obj *models.CreateUsersRequest) (int, error) {
+	// Băm mật khẩu trước khi lưu vào cơ sở dữ liệu
+	bcryptUtil := util.NewBcrypt(util.Bcrypt{
+		Password: obj.Password_hash,
+		Cost:     14, // Bạn có thể điều chỉnh cost nếu muốn
+	})
+
+	passwordHash, err := bcryptUtil.HashPassword()
+	if err != nil {
+		s.logger.Error("HashPassword", zap.String("name", obj.User_name))
+		return 0, apperrors.NewInternalServerError(err)
+	}
+
+	obj.Password_hash = passwordHash // Đặt lại mật khẩu đã băm vào obj để lưu vào cơ sở dữ liệu
 
 	return s.UserRepo.Create(ctx, obj)
 }
@@ -133,29 +147,4 @@ func (s *UserService) UpdateUserAvatar_PATCH(ctx context.Context, id string, ava
 	}
 	
 	return s.UserRepo.UpdateUserAvatar_PATCH(ctx, id, avatarURL)
-}
-
-// Xác minh đầu vào
-func ValidateUserInput(serviceName, reason string, logger *zap.Logger, user *models.Users) error {
-
-	if user.Email == "" {
-		logger.Warn(serviceName + " - validation failed",
-			zap.String("layer", "service"),
-			zap.String("reason", reason),)
-		return apperrors.NewBadRequestError("Email không được để trống")
-	}
-	if user.Phone_num == "" {
-		logger.Warn(serviceName + " - validation failed",
-			zap.String("layer", "service"),
-			zap.String("reason", reason),)
-		return apperrors.NewBadRequestError("Số điện thoại không được để trống")
-	}
-	if user.Address == "" {
-		logger.Warn(serviceName + " - validation failed",
-			zap.String("layer", "service"),
-			zap.String("reason", reason),)
-		return apperrors.NewBadRequestError("Địa chỉ không được để trống")
-	}
-
-	return nil
 }

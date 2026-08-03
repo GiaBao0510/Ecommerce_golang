@@ -9,7 +9,6 @@ package wire
 import (
 	"github.com/GiaBao0510/Ecommerce_golang/internal/controller"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
-	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository/repository_impl"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
 	"go.uber.org/zap"
@@ -55,9 +54,9 @@ func InitStatusRouterHandler(db *database.Queries, logger *zap.Logger) (*control
 
 // Injectors from user.wire.go:
 
-func InitUserRouterHandler() (*controller.UserController, error) {
-	iUserRepository := repository.NewUserRepository()
-	iUserService := service.NewUserService(iUserRepository)
-	userController := controller.NewUserController(iUserService)
+func InitUserRouterHandler(db *database.Queries, logger *zap.Logger) (*controller.UserController, error) {
+	iUserRepository := repositoryimpl.NewUserRepository(db, logger)
+	iUserService := service.NewUserService(iUserRepository, logger)
+	userController := controller.NewUserController(iUserService, logger)
 	return userController, nil
 }

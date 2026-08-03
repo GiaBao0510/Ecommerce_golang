@@ -91,46 +91,46 @@ WHERE action_id = $1 AND role_id = $2;
 
 /*_______________ Bảng User 4 ___________________*/
 -- name: CreateUser :exec
-INSERT INTO "USER"(id_status, user_name,date_of_birth, email, phone_num, address, password_hash, avatar_url)
-VALUES(2, $1, $2, $3, $4, $5, $6, $7);
+INSERT INTO "user"(uuid, id_status, user_name, birth_date, email, phone_num, address, password_hash, avatar_url)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);
 
 -- name: UserEmailExists :one
-SELECT EXISTS(SELECT 1 FROM "USER" WHERE email = $1);
+SELECT EXISTS(SELECT 1 FROM "user" WHERE email = $1);
 
 -- name: UserPhoneExists :one
-SELECT EXISTS(SELECT 1 FROM "USER" WHERE phone_num = $1);
+SELECT EXISTS(SELECT 1 FROM "user" WHERE phone_num = $1);
 
 -- name: GetUID_PasswordHashByEmail :one
-SELECT uuid, password_hash FROM "USER" WHERE email = $1;
+SELECT uuid, password_hash FROM "user" WHERE email = $1;
 
 -- name: GetUID_PasswordHashByPhone :one
-SELECT uuid, password_hash FROM "USER" WHERE phone_num = $1;
+SELECT uuid, password_hash FROM "user" WHERE phone_num = $1;
 
 -- name: GetAllUsers :many
-SELECT * FROM "USER";
+SELECT * FROM "user";
 
 -- name: GetUserByID :one
-SELECT * FROM "USER" WHERE uuid = $1;
+SELECT * FROM "user" WHERE uuid = $1;
 
 -- name: GetUserByEmail :one
-SELECT * FROM "USER" WHERE email = $1;
+SELECT * FROM "user" WHERE email = $1;
 
 -- name: GetUserByPhone :one
-SELECT * FROM "USER" WHERE phone_num = $1;
+SELECT * FROM "user" WHERE phone_num = $1;
 
 -- name: UpdateUser_PUT :execresult
-UPDATE "USER" 
+UPDATE "user" 
 	SET id_status = $1, 
 		user_name = $2, 
-		date_of_birth = $3, 
+		birth_date = $3, 
 		email = $4, phone_num = $5, address = $6 
 	WHERE uuid = $7;
 
 -- name: UpdateUser_PATCH :execresult
-UPDATE "USER" 
+UPDATE "user" 
 	SET id_status = COALESCE($1, id_status), 
 		user_name = COALESCE($2, user_name), 
-		date_of_birth = COALESCE($3, date_of_birth), 
+		birth_date = COALESCE($3, birth_date), 
 		email = COALESCE($4, email), 
 		phone_num = COALESCE($5, phone_num), 
 		address = COALESCE($6, address),
@@ -138,29 +138,29 @@ UPDATE "USER"
 	WHERE uuid = $7;
 
 -- name: UpdateUserPassword_PATCH :execresult
-UPDATE "USER"
+UPDATE "user"
 	SET password_hash = $1,
 		updated_at = NOW()
 	WHERE uuid = $2;
 
 -- name: UpdateUserAvatar_PATCH :execresult
-UPDATE "USER"
+UPDATE "user"
 	SET avatar_url = $1,
 		updated_at = NOW()
 	WHERE uuid = $2;
 
 -- name: DeleteUser :execresult
-DELETE FROM "USER" WHERE uuid = $1;
+DELETE FROM "user" WHERE uuid = $1;
 
 -- name: VerifyEmail :execresult
-UPDATE "USER"
+UPDATE "user"
 	SET is_email_verified = TRUE,
 		updated_at = NOW()
 	WHERE uuid = $1;
 
 -- name: VerifyPhone :execresult
-UPDATE "USER"
-	SET is_phone_verified = TRUE,
+UPDATE "user"
+	SET is_phonenum_verified = TRUE,
 		updated_at = NOW()
 	WHERE uuid = $1;
 
@@ -170,14 +170,14 @@ INSERT INTO user_role(uuid, role_id) VALUES($1, $2);
 
 -- name: GetUserByRoleID :many
 SELECT u.uuid, u.user_name, u.email, u.phone_num, u.address
-FROM "USER" u 
+FROM "user" u 
 	JOIN user_role ur ON u.uuid = ur.uuid 
 	JOIN role r ON r.role_id = ur.role_id
 	WHERE r.role_id = $1;
 
 -- name: GetRolesByUserID :many
 SELECT r.role_id, r.role_name, r.description
-FROM "USER" u 
+FROM "user" u 
 	JOIN user_role ur ON u.uuid = ur.uuid 
 	JOIN role r ON r.role_id = ur.role_id
 	WHERE u.uuid = $1;

@@ -81,7 +81,19 @@ type Notification struct {
 	DeletedAt   sql.NullTime
 }
 
-type ORDER struct {
+type OauthAccount struct {
+	ID           int64
+	Uuid         string
+	Provider     string
+	ProviderID   string
+	AccessToken  sql.NullString
+	RefreshToken sql.NullString
+	ExpiredAt    sql.NullTime
+	CreatedAt    time.Time
+	UpdatedAt    sql.NullTime
+}
+
+type Order struct {
 	IDOrder       string
 	IDStatus      int32
 	Uuid          string
@@ -94,18 +106,6 @@ type ORDER struct {
 	CanceledAt    sql.NullTime
 	CompletedAt   sql.NullTime
 	DeliveryAt    sql.NullTime
-}
-
-type OauthAccount struct {
-	ID           int64
-	Uuid         string
-	Provider     string
-	ProviderID   string
-	AccessToken  sql.NullString
-	RefreshToken sql.NullString
-	ExpiredAt    sql.NullTime
-	CreatedAt    time.Time
-	UpdatedAt    sql.NullTime
 }
 
 type OrderCoupon struct {
@@ -235,21 +235,21 @@ type SubCategory struct {
 	DeletedAt   sql.NullTime
 }
 
-type USER struct {
-	Uuid            string
-	IDStatus        sql.NullInt32
-	UserName        string
-	DateOfBirth     sql.NullTime
-	Email           string
-	PhoneNum        sql.NullString
-	IsEmailVerified sql.NullBool
-	IsPhoneVerified sql.NullBool
-	Address         sql.NullString
-	PasswordHash    string
-	AvatarUrl       sql.NullString
-	CreatedAt       sql.NullTime
-	UpdatedAt       sql.NullTime
-	DeletedAt       sql.NullTime
+type User struct {
+	Uuid               string
+	IDStatus           sql.NullInt32
+	UserName           string
+	BirthDate          sql.NullTime
+	Email              string
+	PhoneNum           sql.NullString
+	IsEmailVerified    sql.NullBool
+	IsPhonenumVerified sql.NullBool
+	Address            sql.NullString
+	PasswordHash       string
+	AvatarUrl          sql.NullString
+	CreatedAt          sql.NullTime
+	UpdatedAt          sql.NullTime
+	DeletedAt          sql.NullTime
 }
 
 type UserActivityLog struct {
