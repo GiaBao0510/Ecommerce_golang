@@ -7,7 +7,7 @@
 package wire
 
 import (
-	"github.com/GiaBao0510/Ecommerce_golang/internal/controller"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/controller/http"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository/repository_impl"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
@@ -16,47 +16,47 @@ import (
 
 // Injectors from permission.wire.go:
 
-func InitPermissionRouterHandler(db *database.Queries, logger *zap.Logger) (*controller.PermissionController, error) {
+func InitPermissionRouterHandler(db *database.Queries, logger *zap.Logger) (*http.PermissionController, error) {
 	iPermissionRepository := repositoryimpl.NewPermissionRepository(db, logger)
 	iPermissionService := service.NewPermissionService(iPermissionRepository, logger)
-	permissionController := controller.NewPermissionController(iPermissionService, logger)
+	permissionController := http.NewPermissionController(iPermissionService, logger)
 	return permissionController, nil
 }
 
 // Injectors from role_permission.wire.go:
 
 // KHởi tạo tiêm phụ thuộc cho RolesController
-func InitRolePermissionRouterHandler(db *database.Queries, logger *zap.Logger) (*controller.RolePermissionController, error) {
+func InitRolePermissionRouterHandler(db *database.Queries, logger *zap.Logger) (*http.RolePermissionController, error) {
 	iRolePermissionRepository := repositoryimpl.NewRolePermissionRepositoryImpl(db, logger)
 	iRolePermissionService := service.NewRolePermissionService(iRolePermissionRepository, logger)
-	rolePermissionController := controller.NewRolePermissionController(iRolePermissionService, logger)
+	rolePermissionController := http.NewRolePermissionController(iRolePermissionService, logger)
 	return rolePermissionController, nil
 }
 
 // Injectors from roles.wire.go:
 
 // Khởi tạo tiêm phụ thuộc cho RolesController
-func InitRolesRouterHandler(db *database.Queries, logger *zap.Logger) (*controller.RolesController, error) {
+func InitRolesRouterHandler(db *database.Queries, logger *zap.Logger) (*http.RolesController, error) {
 	iRolesRepository := repositoryimpl.NewRolesRepository(db, logger)
 	iRolesService := service.NewRolesService(iRolesRepository, logger)
-	rolesController := controller.NewRolesController(iRolesService, logger)
+	rolesController := http.NewRolesController(iRolesService, logger)
 	return rolesController, nil
 }
 
 // Injectors from status.wire.go:
 
-func InitStatusRouterHandler(db *database.Queries, logger *zap.Logger) (*controller.StatusController, error) {
+func InitStatusRouterHandler(db *database.Queries, logger *zap.Logger) (*http.StatusController, error) {
 	iStatusRepository := repositoryimpl.NewStatusRepository(db, logger)
 	iStatusService := service.NewStatusService(iStatusRepository, logger)
-	statusController := controller.NewStatusController(iStatusService, logger)
+	statusController := http.NewStatusController(iStatusService, logger)
 	return statusController, nil
 }
 
 // Injectors from user.wire.go:
 
-func InitUserRouterHandler(db *database.Queries, logger *zap.Logger) (*controller.UserController, error) {
+func InitUserRouterHandler(db *database.Queries, logger *zap.Logger) (*http.UserController, error) {
 	iUserRepository := repositoryimpl.NewUserRepository(db, logger)
 	iUserService := service.NewUserService(iUserRepository, logger)
-	userController := controller.NewUserController(iUserService, logger)
+	userController := http.NewUserController(iUserService, logger)
 	return userController, nil
 }
