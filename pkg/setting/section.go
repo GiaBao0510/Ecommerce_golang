@@ -2,12 +2,17 @@ package setting
 
 // Cấu trúc cấu hình (config) chính của ứng dụng, được ánh xạ từ file YAML.
 type Config struct {
-	PostgreSQL PostgreSQLConfig `mapstructure:"postgres"`
-	Logger     LoggerSetting    `mapstructure:"log"`
-	Redis      RedisConfig      `mapstructure:"redis"`
-	Server     ServerConfig     `mapstructure:"server"`
-	Cors       CORS_Config      `mapstructure:"cors"`
-	MailJet    MailJetConfig    `mapstructure:"mailjet"`
+	PostgreSQL     PostgreSQLConfig     `mapstructure:"postgres"`
+	Logger         LoggerSetting        `mapstructure:"log"`
+	Redis          RedisConfig          `mapstructure:"redis"`
+	Server         ServerConfig         `mapstructure:"server"`
+	Cors           CORS_Config          `mapstructure:"cors"`
+	Authentication AuthenticationConfig `mapstructure:"authentication"`
+}
+
+// Cấu hình cho Authentication, bao gồm các thông tin liên quan khác.
+type AuthenticationConfig struct {
+	MailJet MailJetConfig `mapstructure:"mailjet"`
 }
 
 // Cấu trúc con cho phần cấu hình server (port, host, mode)

@@ -23,6 +23,7 @@ func (r *RedisRepositoryImpl) Set(ctx context.Context, key, value string, expira
 	err := global.Redis.Set(ctx, key, value, expiration).Err()
 	if err != nil {
 		r.log.LogError("Lôi khi set key-value vào Redis.", err, zap.String("key", key))
+		return err
 	}
 
 	r.log.LogInfo("Set key-value", "Thực hiện thành công.",zap.String("key", key), zap.String("value", value), zap.Duration("expiration", expiration))

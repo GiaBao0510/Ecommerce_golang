@@ -112,6 +112,11 @@ func InitRouter() *gin.Engine {
 		global.DB,
 		global.Logger.Error,
 	)
+	userRouter.InitEmailRouter(
+		UserGroup.Group("/email"),
+		global.DB,
+		global.Logger.Error,
+	)
 
 	// Định nghĩa route cho vai trò admin
 	managerRouter.InitAdminRouter(ManagerGroup.Group("/admin"))

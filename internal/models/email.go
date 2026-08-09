@@ -16,8 +16,8 @@ type EmailTemplate struct {
 }
 
 type EmailData struct {
-	To        string            `json:"to"`
-	Name      string            `json:"name"`
+	ToEmail   string            `json:"to"`
+	ToName    string            `json:"name"`
 	Subject   string            `json:"subject"`
 	HTMLBody  string            `json:"html_body"`
 	TextBody  string            `json:"text_body"`

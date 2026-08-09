@@ -73,6 +73,18 @@ type CreateUsersRequest struct {
 	Avatar_url    string   `json:"avatar_url" binding:"omitempty,url"`
 }
 
+type RegisterRequest struct {
+	Uuid          string   // Thuộc tính này sẽ được thư viện uuid tự động tạo ra, nên không cần binding
+	Id_status     int32    `json:"id_status" binding:"required"`
+	User_name     string   `json:"user_name" binding:"required,min=2,max=100"`
+	Birth_date    DateOnly `json:"birth_date"`
+	Email         string   `json:"email" binding:"required,email"`
+	Phone_num     string   `json:"phone_num" binding:"required"`
+	Address       string   `json:"address" binding:"required"`
+	Password_hash string   `json:"password_hash" binding:"required"`
+	Avatar_url    string   `json:"avatar_url" binding:"omitempty,url"`
+}
+
 type UpdateUsersPutRequest struct {
 	Id_status  int32    `json:"id_status" binding:"required"`
 	User_name  string   `json:"user_name" binding:"required,min=2,max=100"`

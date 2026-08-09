@@ -1,4 +1,4 @@
-package controller
+package http
 
 import (
 	"net/http"
@@ -79,7 +79,7 @@ func (s *StatusController) CreateStatus(c *gin.Context) error {
 // PUT /statuses/:id
 func (s *StatusController) Update_Put(c *gin.Context) error {
 	
-	var param dto.ID_Param
+	var param dto.ID_Param 
 	if err := c.ShouldBindUri(&param); err != nil {
 		return HandleValidationError(err)
 	}

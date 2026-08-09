@@ -1,7 +1,7 @@
 package user
 
 import (
-	"github.com/GiaBao0510/Ecommerce_golang/internal/controller"
+	controller "github.com/GiaBao0510/Ecommerce_golang/internal/controller/http"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/wire"
 	"github.com/gin-gonic/gin"

@@ -1,4 +1,4 @@
-package controller
+package http
 
 import (
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"

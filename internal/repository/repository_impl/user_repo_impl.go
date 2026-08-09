@@ -108,10 +108,10 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]models.Users, error) {
 }
 
 func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequest) (int, error) {
-	
+
 	// Nhận các giá trị từ obj và chuẩn bị các tham số cho truy vấn SQL
 	params := database.CreateUserParams{
-		Uuid: uuid.NewString(),	// Tạo UUID mới cho người dùng
+		Uuid: uuid.NewString(), // Tạo UUID mới cho người dùng
 		IDStatus: sql.NullInt32{
 			Int32: obj.Id_status,
 			Valid: obj.Id_status != 0,
@@ -184,7 +184,7 @@ func (r *UserRepository) Update_Put(ctx context.Context, id string, obj *models.
 
 	if affected == 0 {
 		r.dblog.LogWarning("UpdateUser_PUT", "No rows affected", zap.String("id", id))
-		return MapDBErrorWithContext(apperrors.NewNotFoundError("Không tìm thấy người dùng với ID: " + id), "Không tìm thấy người dùng với ID: " + id)
+		return MapDBErrorWithContext(apperrors.NewNotFoundError("Không tìm thấy người dùng với ID: "+id), "Không tìm thấy người dùng với ID: "+id)
 	}
 
 	return nil
@@ -234,13 +234,13 @@ func (r *UserRepository) Update_Patch(ctx context.Context, id string, obj *model
 	}
 
 	params := database.UpdateUser_PATCHParams{
-		IDStatus:    idStatus,
-		UserName:    userName,
+		IDStatus:  idStatus,
+		UserName:  userName,
 		BirthDate: birthDate,
-		Email:       email,
-		PhoneNum:    phoneNum,
-		Address:     address,
-		Uuid: id,
+		Email:     email,
+		PhoneNum:  phoneNum,
+		Address:   address,
+		Uuid:      id,
 	}
 
 	result, err := r.db.UpdateUser_PATCH(ctx, params)
@@ -258,7 +258,7 @@ func (r *UserRepository) Update_Patch(ctx context.Context, id string, obj *model
 
 	if affected == 0 {
 		r.dblog.LogWarning("UpdateUser_PATCH", "No rows affected", zap.String("id", id))
-		return MapDBErrorWithContext(apperrors.NewNotFoundError("Không tìm thấy người dùng với ID: " + id), "Không tìm thấy người dùng với ID: " + id)
+		return MapDBErrorWithContext(apperrors.NewNotFoundError("Không tìm thấy người dùng với ID: "+id), "Không tìm thấy người dùng với ID: "+id)
 	}
 
 	return nil
@@ -338,42 +338,89 @@ func (r *UserRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (r *UserRepository) VerifyUserEmail(ctx context.Context, id string) error {
-	result, err := r.db.VerifyEmail(ctx, id)
+func (r *UserRepository) VerifyUserEmail(ctx context.Context, email string) error {
+	result, err := r.db.VerifyEmail(ctx, email)
 	if err != nil {
-		r.dblog.LogError("VerifyUserEmail", err, zap.String("id", id))
-		return MapDBErrorWithContext(err, "Lỗi khi xác thực email người dùng với ID: "+id)
+		r.dblog.LogError("VerifyUserEmail", err, zap.String("email", email))
+		return MapDBErrorWithContext(err, "Lỗi khi xác thực email người dùng với email: "+email)
 	}
 
 	if err := CheckRowsAffected(
 		result,
 		"VerifyUserEmail",
-		"Không tìm thấy người dùng với ID: "+id,
+		"Không tìm thấy người dùng với email: "+email,
 		r.dblog,
-		zap.String("id", id),
+		zap.String("email", email),
 	); err != nil {
 		return err
 	}
 
+	r.dblog.LogInfo("VerifyUserEmail", "Email người dùng đã được xác thực thành công", zap.String("email", email))
+
 	return nil
 }
 
-func (r *UserRepository) VerifyUserPhone(ctx context.Context, id string) error {
-	result, err := r.db.VerifyPhone(ctx, id)
+func (r *UserRepository) VerifyUserPhone(ctx context.Context, phone string) error {
+	result, err := r.db.VerifyPhone(ctx, sql.NullString{String: phone, Valid: true})
 	if err != nil {
-		r.dblog.LogError("VerifyUserPhone", err, zap.String("id", id))
-		return MapDBErrorWithContext(err, "Lỗi khi xác thực số điện thoại người dùng với ID: "+id)
+		r.dblog.LogError("VerifyUserPhone", err, zap.String("phone", phone))
+		return MapDBErrorWithContext(err, "Lỗi khi xác thực số điện thoại người dùng với số điện thoại: "+phone)
 	}
 
 	if err := CheckRowsAffected(
 		result,
 		"VerifyUserPhone",
-		"Không tìm thấy người dùng với ID: "+id,
+		"Không tìm thấy người dùng với số điện thoại: "+phone,
 		r.dblog,
-		zap.String("id", id),
+		zap.String("phone", phone),
 	); err != nil {
 		return err
 	}
 
+	r.dblog.LogInfo("VerifyUserPhone", "Số điện thoại người dùng đã được xác thực thành công", zap.String("phone", phone))
+
 	return nil
+}
+
+func (r *UserRepository) CheckUserEmailExists_HasNotBeenVerified(ctx context.Context, email string) (bool, error) {
+	result, err := r.db.UserEmailExists_HasNotBeenVerified(ctx, email)
+
+	if err != nil {
+		r.dblog.LogError("CheckUserEmailExists_HasNotBeenVerified", err, zap.String("email", email))
+		return false, MapDBErrorWithContext(err, "Lỗi khi kiểm tra trạng thái xác thực email người dùng với email: "+email)
+	}
+
+	return result, nil
+}
+
+func (r *UserRepository) CheckUserPhoneExists_HasNotBeenVerified(ctx context.Context, phone string) (bool, error) {
+	result, err := r.db.UserPhoneExists_HasNotBeenVerified(ctx, sql.NullString{String: phone, Valid: true})
+
+	if err != nil {
+		r.dblog.LogError("CheckUserPhoneExists_HasNotBeenVerified", err, zap.String("phone", phone))
+		return false, MapDBErrorWithContext(err, "Lỗi khi kiểm tra trạng thái xác thực số điện thoại người dùng với số điện thoại: "+phone)
+	}
+
+	return result, nil
+}
+
+func (r *UserRepository) UserEmailExists(ctx context.Context, email string) (bool, error) {
+	result, err := r.db.UserEmailExists(ctx, email)
+	if err != nil {
+		r.dblog.LogError("UserEmailExists", err, zap.String("email", email))
+		return false, MapDBErrorWithContext(err, "Lỗi khi kiểm tra sự tồn tại của email người dùng với email: "+email)
+	}
+
+	return result, nil
+}
+
+func (r *UserRepository) UserPhoneExists(ctx context.Context, phone string) (bool, error) {
+	phoneNull := sql.NullString{String: phone, Valid: true}
+	result, err := r.db.UserPhoneExists(ctx, phoneNull)
+	if err != nil {
+		r.dblog.LogError("UserPhoneExists", err, zap.String("phone", phone))
+		return false, MapDBErrorWithContext(err, "Lỗi khi kiểm tra sự tồn tại của số điện thoại người dùng với số điện thoại: "+phone)
+	}
+
+	return result, nil
 }

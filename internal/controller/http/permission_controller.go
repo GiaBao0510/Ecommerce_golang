@@ -1,4 +1,4 @@
-package controller
+package http
 
 import (
 	"net/http"
@@ -20,11 +20,6 @@ type PermissionController struct {
 // hàm khởi tạo
 func NewPermissionController(permissionSvc service.IPermissionService, logger *zap.Logger) *PermissionController {
 	return &PermissionController{permissionSvc: permissionSvc, logger: logger}
-}
-
-// Build nhận logger từ controller instance
-func (ctr *PermissionController) Build(handler AppHandler) gin.HandlerFunc {
-	return Build(handler, ctr.logger)
 }
 
 // -------- Xử lý các request liên quan đến CRUD của Permission ở đây ----------
@@ -91,7 +86,7 @@ func (ctr *PermissionController) Update_Put(c *gin.Context) error {
 	}
 
 	// Thực hiện cập nhật permission thông qua service
-	if err := ctr.permissionSvc.Update_Put(c,id_int, &input); err != nil {
+	if err := ctr.permissionSvc.Update_Put(c, id_int, &input); err != nil {
 		return apperrors.NewBadRequestError("Failed to update permission: " + err.Error())
 	}
 
@@ -114,7 +109,7 @@ func (ctr *PermissionController) Update_Patch(c *gin.Context) error {
 	}
 
 	// Thực hiện cập nhật permission thông qua service
-	if err := ctr.permissionSvc.Update_Patch(c,id_int, &input); err != nil {
+	if err := ctr.permissionSvc.Update_Patch(c, id_int, &input); err != nil {
 		return apperrors.NewBadRequestError("Failed to update permission: " + err.Error())
 	}
 

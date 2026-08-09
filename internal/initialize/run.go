@@ -14,7 +14,7 @@ func Run() {
 	InitRedis()
 
 	// Hiển thị cấu hình đã load để kiểm tra
-	//DisplayConfig()
+	DisplayConfig()
 
 	r := InitRouter()
 	r.Run(":8080")
@@ -51,4 +51,11 @@ func DisplayConfig() {
 	fmt.Println("Server Port: ", global.Config.Server.Port)
 	fmt.Println("Server Host: ", global.Config.Server.Host)
 	fmt.Println("Server Mode: ", global.Config.Server.Mode)
+
+	fmt.Println("\t ==== MailJet: ===== ")
+	fmt.Println("MailJet API Key: ", global.Config.Authentication.MailJet.API_key)
+	fmt.Println("MailJet Secret Key: ", global.Config.Authentication.MailJet.Secret_key)
+	fmt.Println("MailJet From Mail: ", global.Config.Authentication.MailJet.From_mail)
+	fmt.Println("MailJet From Name: ", global.Config.Authentication.MailJet.From_name)
+	fmt.Println("MailJet App URL: ", global.Config.Authentication.MailJet.App_url)
 }

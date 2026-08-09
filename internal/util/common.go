@@ -38,11 +38,11 @@ func GetStringFromContextValue(ctx *gin.Context, key string) string {
 	return s
 }
 
-// Hàm tạo chuỗi số nguyên có độ dài là 6 ký tự
-func GenerateRandomNumber() string {
-	var b [6]byte
-	for i := range b {
-		b[i] = byte(rand.IntN(10)) + '0'
+// Hàm tạo chuỗi số nguyên có độ dài là n ký tự
+func GenerateRandomNumber(n int) string {
+	var b []byte
+	for i := 0; i < n; i++ {
+		b = append(b, byte(rand.IntN(10)) + '0')
 	}
 
 	return string(b[:])

@@ -7,10 +7,15 @@
 package wire
 
 import (
+	"github.com/GiaBao0510/Ecommerce_golang/global"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/controller/http"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/controller/http/email"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository/repository_impl"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/service/usecase/user_usercase"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
+	"github.com/mailjet/mailjet-apiv3-go"
 	"go.uber.org/zap"
 )
 
@@ -59,4 +64,30 @@ func InitUserRouterHandler(db *database.Queries, logger *zap.Logger) (*http.User
 	iUserService := service.NewUserService(iUserRepository, logger)
 	userController := http.NewUserController(iUserService, logger)
 	return userController, nil
+}
+
+// Injectors from verify.wire.go:
+
+func InitVerifyRouterHandler(db *database.Queries, logger *zap.Logger) (email.EmailControllerInterface, error) {
+	iUserRepository := repositoryimpl.NewUserRepository(db, logger)
+	client := NewMailJectClient()
+	dbLogger := NewDBLogger(logger)
+	iEmailRepository := repositoryimpl.NewEmailRepositoryImpl(client, dbLogger)
+	iRedisRepository := repositoryimpl.NewRedisRepositoryImpl(dbLogger)
+	verifyUserUsecase := userusercase.NewVerifyUserUsecase(iUserRepository, iEmailRepository, iRedisRepository, dbLogger)
+	emailControllerInterface := email.NewEmailController(verifyUserUsecase, dbLogger)
+	return emailControllerInterface, nil
+}
+
+// verify.wire.go:
+
+func NewDBLogger(logger *zap.Logger) *loghelper.DBLogger {
+	return loghelper.NewDBLogger(logger, "VerifyFlow")
+}
+
+func NewMailJectClient() *mailjet.Client {
+	return mailjet.NewMailjetClient(global.Config.
+		Authentication.MailJet.API_key, global.Config.
+		Authentication.MailJet.Secret_key,
+	)
 }
