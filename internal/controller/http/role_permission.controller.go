@@ -49,7 +49,7 @@ func (c *RolePermissionController) GetRolesByPermissionID(ctx *gin.Context) erro
 
 	result, err := c.rp.GetRolesByPermissionID(ctx, id_int)
 	if err != nil {
-		return err
+		return err 
 	}
 	
 	response.Success_Response(ctx, 200, "Roles retrieved successfully", result)
