@@ -6,7 +6,7 @@ import (
 
 	"github.com/GiaBao0510/Ecommerce_golang/internal/dto"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
-	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
+	service "github.com/GiaBao0510/Ecommerce_golang/internal/service/user"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/response"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

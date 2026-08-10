@@ -1,4 +1,4 @@
-package userusercase
+package authen
 
 import (
 	"context"
@@ -65,8 +65,8 @@ func (u *VerifyUserUsecase) SendVerificationEmail(ctx context.Context, email str
 	otp := util.GenerateRandomNumber(6) // Tạo mã OTP gồm 6 chữ số
 
 	// 4.2 Lưu mã OTP vào Redis với thời gian hết hạn (5 phút)
-	if err := u.redisRepo.Set(ctx, "otp:"+ email, otp, 5 * time.Minute ); err != nil {
-		u.logger.LogError("Error[VerifyEmail]: Lỗi khi lưu OTP vào Redis", err , zap.Error(err), zap.String("email", email))
+	if err := u.redisRepo.Set(ctx, "otp:"+email, otp, 5*time.Minute); err != nil {
+		u.logger.LogError("Error[VerifyEmail]: Lỗi khi lưu OTP vào Redis", err, zap.Error(err), zap.String("email", email))
 		return err
 	}
 
@@ -75,16 +75,16 @@ func (u *VerifyUserUsecase) SendVerificationEmail(ctx context.Context, email str
 
 	// 4.4 Tạo data lưu thông tin
 	emailData := models.EmailData{
-		ToEmail: email,
-		ToName: "Client",
-		Subject: "Xác thực email của bạn",
+		ToEmail:  email,
+		ToName:   "Client",
+		Subject:  "Xác thực email của bạn",
 		HTMLBody: body,
 		TextBody: "Xác thực email của bạn với mã OTP: " + otp,
 	}
 
 	// 4.5 Gửi email xác thực đến người dùng
 	if err := u.emailRepo.SendEmail(ctx, emailData); err != nil {
-		u.logger.LogError("Error[VerifyEmail]: Lỗi khi gửi email xác thực", err , zap.Error(err), zap.String("email", email))
+		u.logger.LogError("Error[VerifyEmail]: Lỗi khi gửi email xác thực", err, zap.Error(err), zap.String("email", email))
 		return err
 	}
 
@@ -96,9 +96,9 @@ func (u *VerifyUserUsecase) SendVerificationEmail(ctx context.Context, email str
 func (u *VerifyUserUsecase) VerifyEmail(ctx context.Context, email, otp string) error {
 
 	// 1. Lấy mã OTP từ Redis
-	storedOtp, err := u.redisRepo.Get(ctx, "otp:" + email)
+	storedOtp, err := u.redisRepo.Get(ctx, "otp:"+email)
 	if err != nil {
-		u.logger.LogError("Error[VerifyEmail]: Lỗi khi lấy OTP từ Redis", err , zap.Error(err), zap.String("email", email))
+		u.logger.LogError("Error[VerifyEmail]: Lỗi khi lấy OTP từ Redis", err, zap.Error(err), zap.String("email", email))
 		return err
 	}
 
@@ -110,24 +110,24 @@ func (u *VerifyUserUsecase) VerifyEmail(ctx context.Context, email, otp string) 
 
 	// 3. Cập nhật trong cơ sở dữ liệu để đánh dấu email là đã xác thực
 	if err := u.userRepo.VerifyUserEmail(ctx, email); err != nil {
-		u.logger.LogError("Error[VerifyEmail]: Lỗi khi cập nhật trạng thái xác thực email trong cơ sở dữ liệu", err , zap.Error(err), zap.String("email", email))
+		u.logger.LogError("Error[VerifyEmail]: Lỗi khi cập nhật trạng thái xác thực email trong cơ sở dữ liệu", err, zap.Error(err), zap.String("email", email))
 		return err
 	}
 
 	// 4. Xóa mã OTP khỏi Redis sau khi xác thực thành công. Tại đây, nếu xóa thất bại, chúng ta chỉ log lỗi mà không trả về lỗi, vì xác thực đã thành công.
-	if err := u.redisRepo.Delete(ctx, "otp:" + email); err != nil {
-		u.logger.LogError("Error[VerifyEmail]: Lỗi khi xóa OTP khỏi Redis", err , zap.Error(err), zap.String("email", email))
+	if err := u.redisRepo.Delete(ctx, "otp:"+email); err != nil {
+		u.logger.LogError("Error[VerifyEmail]: Lỗi khi xóa OTP khỏi Redis", err, zap.Error(err), zap.String("email", email))
 	}
 
 	return nil
 }
 
 // Thực hiện xác thực mã OTP qua email cho người dùng
-func(u *VerifyUserUsecase) VerifyOTP_viaEmail(ctx context.Context, email, otp string) error {
+func (u *VerifyUserUsecase) VerifyOTP_viaEmail(ctx context.Context, email, otp string) error {
 	// 1. Lấy mã OTP từ Redis
-	storedOtp, err := u.redisRepo.Get(ctx, "otp:" + email)
+	storedOtp, err := u.redisRepo.Get(ctx, "otp:"+email)
 	if err != nil {
-		u.logger.LogError("Error[VerifyEmail]: Lỗi khi lấy OTP từ Redis", err , zap.Error(err), zap.String("email", email))
+		u.logger.LogError("Error[VerifyEmail]: Lỗi khi lấy OTP từ Redis", err, zap.Error(err), zap.String("email", email))
 		return err
 	}
 
@@ -138,8 +138,8 @@ func(u *VerifyUserUsecase) VerifyOTP_viaEmail(ctx context.Context, email, otp st
 	}
 
 	// 3. Xóa mã OTP khỏi Redis sau khi xác thực thành công. Tại đây, nếu xóa thất bại, chúng ta chỉ log lỗi mà không trả về lỗi, vì xác thực đã thành công.
-	if err := u.redisRepo.Delete(ctx, "otp:" + email); err != nil {
-		u.logger.LogError("Error[VerifyEmail]: Lỗi khi xóa OTP khỏi Redis", err , zap.Error(err), zap.String("email", email))
+	if err := u.redisRepo.Delete(ctx, "otp:"+email); err != nil {
+		u.logger.LogError("Error[VerifyEmail]: Lỗi khi xóa OTP khỏi Redis", err, zap.Error(err), zap.String("email", email))
 	}
 
 	return nil

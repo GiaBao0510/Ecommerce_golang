@@ -1,7 +1,7 @@
 package email
 
 import (
-	service "github.com/GiaBao0510/Ecommerce_golang/internal/service/usecase/user_usercase"
+	service "github.com/GiaBao0510/Ecommerce_golang/internal/service/authen"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 )
 

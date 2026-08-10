@@ -1,4 +1,4 @@
-package service
+package user
 
 import (
 	"context"
@@ -6,8 +6,10 @@ import (
 
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
+	servicesupport "github.com/GiaBao0510/Ecommerce_golang/internal/service/service_support"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"go.uber.org/zap"
 )
 
@@ -35,14 +37,14 @@ type IUserService interface {
 
 type UserService struct {
 	UserRepo repository.IUserRepository
-	logger *zap.Logger
+	slog *loghelper.ServiceLogger
 }
 
 // Constructor for UserService
 func NewUserService(UserRepo repository.IUserRepository, logger *zap.Logger ) IUserService {
 	return &UserService{
 		UserRepo: UserRepo,
-		logger: logger,
+		slog: loghelper.NewServiceLogger(logger, "UserService"),
 	}
 }
 
@@ -61,7 +63,7 @@ func (s *UserService) Create(ctx context.Context, obj *models.CreateUsersRequest
 
 	passwordHash, err := bcryptUtil.HashPassword()
 	if err != nil {
-		s.logger.Error("HashPassword", zap.String("name", obj.User_name))
+		s.slog.LogError("Create", err, zap.String("reason", "failed to hash password"))
 		return 0, apperrors.NewInternalServerError(err)
 	}
 
@@ -72,10 +74,7 @@ func (s *UserService) Create(ctx context.Context, obj *models.CreateUsersRequest
 
 func (s *UserService) Update_Put(ctx context.Context, id string, obj *models.UpdateUsersPutRequest) error {
 	
-	if id == "" {
-		s.logger.Warn("Service: Update user - validation failed",
-			zap.String("layer", "service"),
-			zap.String("reason", "id is empty"),)
+	if servicesupport.RequireNonEmptyString(id, "User ID", "update_put", s.slog) != nil {
 		return apperrors.NewBadRequestError("ID không được để trống")
 	}
 
@@ -84,10 +83,7 @@ func (s *UserService) Update_Put(ctx context.Context, id string, obj *models.Upd
 
 func (s *UserService) Update_Patch(ctx context.Context, id string, obj *models.UpdateUsersPatchRequest) error {
 	
-	if id == "" {
-		s.logger.Warn("Service: Update user - validation failed",
-			zap.String("layer", "service"),
-			zap.String("reason", "id is empty"),)
+	if servicesupport.RequireNonEmptyString(id, "User ID", "update_patch", s.slog) != nil {
 		return apperrors.NewBadRequestError("ID không được để trống")
 	}
 
@@ -96,10 +92,7 @@ func (s *UserService) Update_Patch(ctx context.Context, id string, obj *models.U
 
 func (s *UserService) Delete(ctx context.Context, id string) error {
 	
-	if id == "" {
-		s.logger.Warn("Service: Update user - validation failed",
-			zap.String("layer", "service"),
-			zap.String("reason", "id is empty"),)
+	if servicesupport.RequireNonEmptyString(id, "User ID", "delete", s.slog) != nil {
 		return apperrors.NewBadRequestError("ID không được để trống")
 	}
 	
@@ -114,10 +107,7 @@ func (s *UserService) GetAll(ctx context.Context) ([]models.Users, error) {
 // Search operations
 func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*models.Users, error) {
 	
-	if email == "" {
-		s.logger.Warn("Service: GetUserByEmail - validation failed",
-			zap.String("layer", "service"),
-			zap.String("reason", "email is empty"),)
+	if servicesupport.RequireNonEmptyString(email, "Email", "get_user_by_email", s.slog) != nil {
 		return nil, apperrors.NewBadRequestError("Email không được để trống")
 	}
 	
@@ -126,11 +116,8 @@ func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*models
 
 func (s *UserService) GetUserByPhone(ctx context.Context, phone sql.NullString) (*models.Users, error) {
 	
-	if !phone.Valid {
-		s.logger.Warn("Service: GetUserByPhone - validation failed",
-			zap.String("layer", "service"),
-			zap.String("reason", "phone is invalid"),)
-		return nil, apperrors.NewBadRequestError("Số điện thoại không hợp lệ")
+	if servicesupport.RequireNonEmptyString(phone.String, "Phone", "get_user_by_phone", s.slog) != nil {
+		return nil, apperrors.NewBadRequestError("Số điện thoại không được để trống")
 	}
 	
 	return s.UserRepo.GetUserByPhone(ctx, phone)
@@ -139,10 +126,7 @@ func (s *UserService) GetUserByPhone(ctx context.Context, phone sql.NullString) 
 // Update other operations
 func (s *UserService) UpdateUserAvatar_PATCH(ctx context.Context, id string, avatarURL string) error {
 	
-	if id == "" {
-		s.logger.Warn("Service: UpdateUserAvatar_PATCH - validation failed",
-			zap.String("layer", "service"),
-			zap.String("reason", "id is empty"),)
+	if servicesupport.RequireNonEmptyString(id, "User ID", "update_user_avatar", s.slog) != nil {
 		return apperrors.NewBadRequestError("ID không được để trống")
 	}
 	
