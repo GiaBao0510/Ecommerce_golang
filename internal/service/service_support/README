@@ -1,0 +1,11 @@
+Cấu trúc phần này :
+```
+service_support/              👈 Package mới - Helper cho tầng Service
+    │   ├── transaction.go            # 1. Transaction Manager (Unit of Work)
+    │   ├── errors.go                 # 2. Domain Error Wrapper
+    │   ├── context.go                # 3. Context Extractor
+    │   ├── pagination.go             # 4. Pagination Sanitizer
+    │   ├── event_dispatcher.go       # 5. Event Dispatcher
+    │   ├── event_dispatcher_test.go  # Unit test mẫu
+    │   └── README.md                 # Document
+```

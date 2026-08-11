@@ -13,7 +13,8 @@ import (
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository/repository_impl"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
-	"github.com/GiaBao0510/Ecommerce_golang/internal/service/usecase/user_usercase"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/service/authen"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/service/user"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"github.com/mailjet/mailjet-apiv3-go"
 	"go.uber.org/zap"
@@ -61,9 +62,18 @@ func InitStatusRouterHandler(db *database.Queries, logger *zap.Logger) (*http.St
 
 func InitUserRouterHandler(db *database.Queries, logger *zap.Logger) (*http.UserController, error) {
 	iUserRepository := repositoryimpl.NewUserRepository(db, logger)
-	iUserService := service.NewUserService(iUserRepository, logger)
+	iUserService := user.NewUserService(iUserRepository, logger)
 	userController := http.NewUserController(iUserService, logger)
 	return userController, nil
+}
+
+// Injectors from user_role.wire.go:
+
+func InitUserRoleRouterHandler(db *database.Queries, logger *zap.Logger) (*http.UserRoleController, error) {
+	iUserRoleRepository := repositoryimpl.NewUserRoleRepository(db, logger)
+	iUserRoleService := user.NewUserRoleService(iUserRoleRepository, logger)
+	userRoleController := http.NewUserRoleController(iUserRoleService, logger)
+	return userRoleController, nil
 }
 
 // Injectors from verify.wire.go:
@@ -74,7 +84,7 @@ func InitVerifyRouterHandler(db *database.Queries, logger *zap.Logger) (email.Em
 	dbLogger := NewDBLogger(logger)
 	iEmailRepository := repositoryimpl.NewEmailRepositoryImpl(client, dbLogger)
 	iRedisRepository := repositoryimpl.NewRedisRepositoryImpl(dbLogger)
-	verifyUserUsecase := userusercase.NewVerifyUserUsecase(iUserRepository, iEmailRepository, iRedisRepository, dbLogger)
+	verifyUserUsecase := authen.NewVerifyUserUsecase(iUserRepository, iEmailRepository, iRedisRepository, dbLogger)
 	emailControllerInterface := email.NewEmailController(verifyUserUsecase, dbLogger)
 	return emailControllerInterface, nil
 }

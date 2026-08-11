@@ -8,7 +8,7 @@ import (
 	controller "github.com/GiaBao0510/Ecommerce_golang/internal/controller/http/email"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
 	repositoryimpl "github.com/GiaBao0510/Ecommerce_golang/internal/repository/repository_impl"
-	service "github.com/GiaBao0510/Ecommerce_golang/internal/service/usecase/user_usercase"
+	service "github.com/GiaBao0510/Ecommerce_golang/internal/service/authen"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"github.com/google/wire"
 	"github.com/mailjet/mailjet-apiv3-go"

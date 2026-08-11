@@ -141,6 +141,10 @@ func InitRouter() *gin.Engine {
 		ManagerGroup.Group("/role_permission"),
 		global.DB,
 		global.Logger.Error)
+	managerRouter.InitUserRoleRouter(
+		ManagerGroup.Group("/user_role"),
+		global.DB,
+		global.Logger.Error)
 
 	return r
 }

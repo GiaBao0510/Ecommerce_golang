@@ -52,8 +52,8 @@ func (c *UserRoleController) Update(ctx *gin.Context) error {
 }
 
 func (c *UserRoleController) Delete(ctx *gin.Context) error {
-	uuid := ctx.Param("uuid")
-	roleIDStr := ctx.Param("role_id")
+	uuid := ctx.Query("uuid")
+	roleIDStr := ctx.Query("role_id")
 
 	roleID, err := util.ValidationPositiveInt("Role ID", roleIDStr)
 	if err != nil {

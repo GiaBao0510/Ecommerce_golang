@@ -10,10 +10,10 @@ import (
 )
 
 func WithTransaction(
-	ctx context.Context, 	// Context dùng để quản lý vòng đời của transaction và truyền thông tin liên quan đến request
-	db *sql.DB, 			// Cơ sở dữ liệu SQL để bắt đầu transaction
-	q *database.Queries, 	// Instance của Queries để thực hiện các lệnh SQL trong transaction
-	logger *zap.Logger, 	// Logger để ghi log thông tin liên quan đến transaction
+	ctx context.Context, // Context dùng để quản lý vòng đời của transaction và truyền thông tin liên quan đến request
+	db *sql.DB, // Cơ sở dữ liệu SQL để bắt đầu transaction
+	q *database.Queries, // Instance của Queries để thực hiện các lệnh SQL trong transaction
+	logger *zap.Logger, // Logger để ghi log thông tin liên quan đến transaction
 	fn func(q *database.Queries) error, // Hàm callback chứa các lệnh SQL cần thực hiện trong transaction
 ) error {
 
