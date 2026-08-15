@@ -1,7 +1,7 @@
 /*_______________ Bảng User 4 ___________________*/
 -- name: CreateUser :exec
 INSERT INTO "user"(uuid, id_status, user_name, birth_date, email, phone_num, address, password_hash, avatar_url)
-VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) ;
 
 -- name: GetUID_PasswordHashByEmail :one
 SELECT uuid, password_hash FROM "user" WHERE email = $1;

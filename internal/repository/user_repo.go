@@ -13,7 +13,7 @@ type IUserRepository interface {
 
 	// CRUD
 	GetByID(ctx context.Context, id string) (*models.Users, error)
-	Create(ctx context.Context, obj *models.CreateUsersRequest) (int, error)
+	Create(ctx context.Context, obj *models.CreateUsersRequest) (string, error)
 	Update_Put(ctx context.Context, id string, obj *models.UpdateUsersPutRequest) error
 	Update_Patch(ctx context.Context, id string, obj *models.UpdateUsersPatchRequest) error
 	Delete(ctx context.Context, id string) error

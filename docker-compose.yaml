@@ -1,5 +1,3 @@
-version: '3.9'
-
 # ============================================
 # Cấu hình logging dùng chung cho các service
 # ============================================
@@ -8,8 +6,9 @@ x-logging: &default-logging
   options:
     max-size: "10m"
     max-file: "3"
-
 services:
+
+  # PostgreSQL: cơ sở dữ liệu quan hệ
   postgresql:
     image: postgres:15
     container_name: postgres.ecommerce
@@ -19,32 +18,101 @@ services:
       POSTGRES_PASSWORD: admin123
       POSTGRES_DB: e-commerce
     ports:
-      # Host 5423 -> Container 5432
-      - "5423:5432"
+      # Host 5432 -> Container 5432
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data  # Lưu dữ liệu DB bền vững
       - ./init:/docker-entrypoint-initdb.d      # Chạy file SQL khởi tạo khi container tạo lần đầu
     networks:
       - ecommerce_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d e-commerce -h localhost -p 5432"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
     logging: *default-logging
 
+  # Redis: cơ sở dữ liệu key-value
   redis:
     image: redis:7
     container_name: redis.ecommerce
     restart: unless-stopped
     ports:
-      # Host 6381 -> Container 6379
-      - "6381:6379"
+      # Host 6379 -> Container 6379
+      - "6379:6379"
     command: ["redis-server", "--requirepass", "admin123", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
     networks:
       - ecommerce_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "admin123", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    logging: *default-logging
+
+  # RedisInsight: Hiển thị dữ liệu Redis bằng giao diện web
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight.ecommerce
+    ports:
+      - "5540:5540"
+    restart: unless-stopped
+    depends_on:
+      - redis
+    volumes:
+      - redisinsight_data:/data
+    logging: *default-logging
+  
+  # Grafana: nền tảng giám sát và trực quan hóa dữ liệu
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: grafana.ecommerce
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin      # thiết lập user admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin  # thiết lập password admin
+    depends_on:
+      - loki
+    volumes:
+      - grafana-data:/var/lib/grafana  # Lưu trữ dữ liệu Grafana trên ổ đĩa local của máy host
+    
+  # Loki: lưu trữ log từ các container và ứng dụng
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki.ecommerce
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-data:/loki  # Lưu trữ dữ liệu Loki trên ổ đĩa local của máy host
+    logging: *default-logging 
+  
+  # Promtail: thu thập log từ các container và gửi đến Loki
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail.ecommerce
+    restart: unless-stopped
+    volumes:
+      - ./storages/logs:/var/log  # Thu thập log từ host
+      - ./configs/promtail.config.yml:/etc/promtail/config.yml  # Cấu hình Promtail
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
     logging: *default-logging
 
 volumes:
   postgres_data:
   redis_data:
+  loki-data:
+  grafana-data:
+  redisinsight_data:
 
 # Network dùng chung để các container gọi nhau qua service name
 networks:

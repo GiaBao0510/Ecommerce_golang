@@ -17,7 +17,7 @@ import (
 type IUserService interface {
 	// CRUD
 	GetByID(ctx context.Context, id string) (*models.Users, error)
-	Create(ctx context.Context, obj *models.CreateUsersRequest) (int, error)
+	Create(ctx context.Context, obj *models.CreateUsersRequest) (string, error)
 	Update_Put(ctx context.Context, id string, obj *models.UpdateUsersPutRequest) error
 	Update_Patch(ctx context.Context, id string, obj *models.UpdateUsersPatchRequest) error
 	Delete(ctx context.Context, id string) error
@@ -54,7 +54,7 @@ func (s *UserService) GetByID(ctx context.Context, id string) (*models.Users, er
 	return s.UserRepo.GetByID(ctx, id)
 }
 
-func (s *UserService) Create(ctx context.Context, obj *models.CreateUsersRequest) (int, error) {
+func (s *UserService) Create(ctx context.Context, obj *models.CreateUsersRequest) (string, error) {
 	// Băm mật khẩu trước khi lưu vào cơ sở dữ liệu
 	bcryptUtil := util.NewBcrypt(util.Bcrypt{
 		Password: obj.Password_hash,
@@ -64,7 +64,7 @@ func (s *UserService) Create(ctx context.Context, obj *models.CreateUsersRequest
 	passwordHash, err := bcryptUtil.HashPassword()
 	if err != nil {
 		s.slog.LogError("Create", err, zap.String("reason", "failed to hash password"))
-		return 0, apperrors.NewInternalServerError(err)
+		return "", apperrors.NewInternalServerError(err)
 	}
 
 	obj.Password_hash = passwordHash // Đặt lại mật khẩu đã băm vào obj để lưu vào cơ sở dữ liệu

@@ -107,7 +107,7 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]models.Users, error) {
 	return users, nil
 }
 
-func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequest) (int, error) {
+func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequest) (string, error) {
 
 	// Nhận các giá trị từ obj và chuẩn bị các tham số cho truy vấn SQL
 	params := database.CreateUserParams{
@@ -140,10 +140,10 @@ func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequ
 	// Gọi phương thức CreateUser từ database.Queries để thực hiện việc tạo mới
 	if err := r.db.CreateUser(ctx, params); err != nil {
 		r.dblog.LogError("Create", err, zap.String("name", obj.User_name))
-		return 0, MapDBErrorWithContext(err, "Lỗi khi tạo người dùng mới")
+		return "", MapDBErrorWithContext(err, "Lỗi khi tạo người dùng mới")
 	}
 
-	return 0, nil
+	return params.Uuid, nil
 }
 
 func (r *UserRepository) Update_Put(ctx context.Context, id string, obj *models.UpdateUsersPutRequest) error {
