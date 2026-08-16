@@ -128,25 +128,7 @@ func (u *VerifyUserUsecase) VerifyPhone(ctx context.Context, phone, otp string) 
 
 // Thực hiện xác thực mã OTP qua email cho người dùng
 func (u *VerifyUserUsecase) VerifyOTP_viaEmail(ctx context.Context, email, otp string) error {
-	// 1. Lấy mã OTP từ Redis
-	storedOtp, err := u.redisRepo.Get(ctx, "otp:"+email)
-	if err != nil {
-		u.logger.LogError("Error[VerifyEmail]: Lỗi khi lấy OTP từ Redis", err, zap.Error(err), zap.String("email", email))
-		return err
-	}
-
-	// 2. Xác minh mã OTP
-	if storedOtp != otp {
-		u.logger.LogWarning("VerifyEmail", "Mã OTP không hợp lệ", zap.String("email", email), zap.String("provided_otp", otp))
-		return apperrors.NewBadRequestError("Mã OTP không hợp lệ")
-	}
-
-	// 3. Xóa mã OTP khỏi Redis sau khi xác thực thành công. Tại đây, nếu xóa thất bại, chúng ta chỉ log lỗi mà không trả về lỗi, vì xác thực đã thành công.
-	if err := u.redisRepo.Delete(ctx, "otp:"+email); err != nil {
-		u.logger.LogError("Error[VerifyEmail]: Lỗi khi xóa OTP khỏi Redis", err, zap.Error(err), zap.String("email", email))
-	}
-
-	return nil
+	return u.VerifyEmail(ctx, email, otp)
 }
 
 // Thực hiện thay đổi mật khẩu người dùng bằng email và mã OTP

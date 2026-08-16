@@ -1,46 +1,44 @@
 package authen
 
 import (
-	//"context"
-
-	//"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"context"
 	"database/sql"
+
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	servicesupport "github.com/GiaBao0510/Ecommerce_golang/internal/service/service_support"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"go.uber.org/zap"
 )
 
 type RegisterUseCase struct {
-	userRepo repository.IUserRepository
+	userRepo     repository.IUserRepository
 	userRoleRepo repository.IUserRoleRepository
-	redisRepo repository.IRedisRepository
-	db *sql.DB
-	slog *loghelper.ServiceLogger
-	zapLogger *zap.Logger
+	redisRepo    repository.IRedisRepository
+	db           *sql.DB
+	slog         *loghelper.ServiceLogger
+	zapLogger    *zap.Logger
 }
 
-func NewRegisterUseCase (
+func NewRegisterUseCase(
 	db *sql.DB,
 	logger *zap.Logger,
 	userRepo repository.IUserRepository,
 	userRoleRepo repository.IUserRoleRepository,
 	redisRepo repository.IRedisRepository,
-	
 ) *RegisterUseCase {
 	return &RegisterUseCase{
-		userRepo: userRepo,
-		redisRepo: redisRepo,
+		userRepo:     userRepo,
+		redisRepo:    redisRepo,
 		userRoleRepo: userRoleRepo,
-		db: db,
-		zapLogger: logger,
-		slog: loghelper.NewServiceLogger(logger, "RegisterUseCase"),
+		db:           db,
+		zapLogger:    logger,
+		slog:         loghelper.NewServiceLogger(logger, "RegisterUseCase"),
 	}
 }
 
-func (r *RegisterUseCase) RegisterUser(ctx context.Context, input models.CreateUsersRequest) error{
+func (r *RegisterUseCase) RegisterUser(ctx context.Context, input models.CreateUsersRequest) error {
 
 	// Check kiểm tra email có bị trùng lặp không
 	checkDulicateEmail, err := r.userRepo.UserEmailExists(ctx, input.Email)
@@ -54,7 +52,7 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input models.CreateU
 			"Email already exists in the database",
 			zap.String("email", input.Email),
 		)
-		return nil
+		return apperrors.NewEmailDuplicateError()
 	}
 
 	// check kiểm tra số điện thoại có bị trùng lặp không
@@ -66,10 +64,10 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input models.CreateU
 	if checkDulicatePhoneNum {
 		r.slog.LogWarning(
 			"Checking duplicate phone number failed",
-			"Số điện thoại đã tồn tại trong cơ sở dữ liệu", 
+			"Số điện thoại đã tồn tại trong cơ sở dữ liệu",
 			zap.String("phone_num", input.Phone_num),
 		)
-		return nil
+		return apperrors.NewPhoneDuplicateError()
 	}
 
 	// Các thao tác trong transaction
@@ -88,7 +86,7 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input models.CreateU
 
 		if _, err := userRoleRepoTx.Create(ctx, &models.UserRole{
 			Id_role: 2,
-			Uuid: uid,
+			Uuid:    uid,
 		}); err != nil {
 			return err //Rollback
 		}
@@ -97,7 +95,7 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input models.CreateU
 	})
 
 	if err != nil {
-		r.slog.LogError("RegisterUser: Quá trình đăng ký người dùng thất bại", err, zap.String("email", input.Email ))
+		r.slog.LogError("RegisterUser: Quá trình đăng ký người dùng thất bại", err, zap.String("email", input.Email))
 		return err
 	}
 
