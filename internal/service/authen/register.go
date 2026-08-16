@@ -5,44 +5,51 @@ import (
 
 	//"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"context"
-
+	"database/sql"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
+	servicesupport "github.com/GiaBao0510/Ecommerce_golang/internal/service/service_support"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"go.uber.org/zap"
 )
 
-type RegisterUseCasee struct {
+type RegisterUseCase struct {
 	userRepo repository.IUserRepository
 	userRoleRepo repository.IUserRoleRepository
 	redisRepo repository.IRedisRepository
-	logger *loghelper.DBLogger
+	db *sql.DB
+	slog *loghelper.ServiceLogger
+	zapLogger *zap.Logger
 }
 
-func NewRegisterUseCasee (
+func NewRegisterUseCase (
+	db *sql.DB,
+	logger *zap.Logger,
 	userRepo repository.IUserRepository,
 	userRoleRepo repository.IUserRoleRepository,
 	redisRepo repository.IRedisRepository,
-	logger *loghelper.DBLogger,
-) *RegisterUseCasee {
-	return &RegisterUseCasee{
+	
+) *RegisterUseCase {
+	return &RegisterUseCase{
 		userRepo: userRepo,
 		redisRepo: redisRepo,
 		userRoleRepo: userRoleRepo,
-		logger: logger,
+		db: db,
+		zapLogger: logger,
+		slog: loghelper.NewServiceLogger(logger, "RegisterUseCase"),
 	}
 }
 
-func (r *RegisterUseCasee) RegisterUser(ctx context.Context, input models.CreateUsersRequest) error{
+func (r *RegisterUseCase) RegisterUser(ctx context.Context, input models.CreateUsersRequest) error{
 
 	// Check kiểm tra email có bị trùng lặp không
 	checkDulicateEmail, err := r.userRepo.UserEmailExists(ctx, input.Email)
 	if err != nil {
-		r.logger.LogError("Quá trình kiểm tra email trùng lặp", err)
+		r.slog.LogError("Quá trình kiểm tra email trùng lặp", err)
 		return err
 	}
 	if checkDulicateEmail {
-		r.logger.LogWarning(
+		r.slog.LogWarning(
 			"Checking duplicate email failed",
 			"Email already exists in the database",
 			zap.String("email", input.Email),
@@ -53,11 +60,11 @@ func (r *RegisterUseCasee) RegisterUser(ctx context.Context, input models.Create
 	// check kiểm tra số điện thoại có bị trùng lặp không
 	checkDulicatePhoneNum, err := r.userRepo.UserPhoneExists(ctx, input.Phone_num)
 	if err != nil {
-		r.logger.LogError("[Error] Quá trình kiểm tra số điện thoại trùng lặp", err)
+		r.slog.LogError("[Error] Quá trình kiểm tra số điện thoại trùng lặp", err)
 		return err
 	}
 	if checkDulicatePhoneNum {
-		r.logger.LogWarning(
+		r.slog.LogWarning(
 			"Checking duplicate phone number failed",
 			"Số điện thoại đã tồn tại trong cơ sở dữ liệu", 
 			zap.String("phone_num", input.Phone_num),
@@ -65,43 +72,39 @@ func (r *RegisterUseCasee) RegisterUser(ctx context.Context, input models.Create
 		return nil
 	}
 
-	// Tạo thông tin tài khoản người dùng mới
-	result1, err := r.userRepo.Create(ctx, &input)
+	// Các thao tác trong transaction
+	var newUUID string
+
+	err = servicesupport.RunInTx(ctx, r.db, r.zapLogger, func(tx *sql.Tx) error {
+
+		userRepoTx := r.userRepo.WithTx(tx)
+		userRoleRepoTx := r.userRoleRepo.WithTx(tx)
+
+		uid, err := userRepoTx.Create(ctx, &input)
+		if err != nil {
+			return err //Rollback
+		}
+		newUUID = uid
+
+		if _, err := userRoleRepoTx.Create(ctx, &models.UserRole{
+			Id_role: 2,
+			Uuid: uid,
+		}); err != nil {
+			return err //Rollback
+		}
+
+		return nil //Commit
+	})
+
 	if err != nil {
-		r.logger.LogError("Quá trình tạo thông tin tài khoản người dùng mới", err)
+		r.slog.LogError("RegisterUser: Quá trình đăng ký người dùng thất bại", err, zap.String("email", input.Email ))
 		return err
 	}
 
-	if result1 == "" {
-		r.logger.LogWarning(
-			"create new user account failed",
-			"Không thể tạo thông tin tài khoản người dùng mới", 
-			zap.String("email", input.Email), 
-			zap.String("phone_num", input.Phone_num),
-		)
-		return nil
-	}
-
-	// Tạo thông tin user với role
-	result2, err := r.userRoleRepo.Create(ctx, &models.UserRole{Id_role: int32(2), Uuid: result1})
-	if err != nil {
-		r.logger.LogError("Quá trình tạo thông tin user với role", err)
-		return err
-	}
-	if result2 != 0 {
-		r.logger.LogWarning(
-			"create user role failed",
-			"Không thể tạo thông tin user với role", 
-			zap.String("uuid", result1), 
-			zap.Int32("role_id", 2),
-		)
-		return nil
-	}
-
-	r.logger.LogInfo("User registration successful", "",
+	r.slog.LogInfo("User registration successful", "",
 		zap.String("email", input.Email),
 		zap.String("phone_num", input.Phone_num),
-		zap.String("uuid", result1),
+		zap.String("uuid", newUUID),
 	)
 	return nil
 }

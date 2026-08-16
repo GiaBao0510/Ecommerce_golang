@@ -2,6 +2,7 @@ package repositoryimpl
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
@@ -128,4 +129,11 @@ func (r *UserRoleRepository) GetRolesByUserID(ctx context.Context, userID string
 	}
 
 	return result, nil
+}
+
+func (r *UserRoleRepository) WithTx(tx *sql.Tx) repository.IUserRoleRepository{
+	return &UserRoleRepository{
+		db: r.db.WithTx(tx),
+		dblog: r.dblog,
+	}
 }

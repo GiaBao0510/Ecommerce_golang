@@ -122,6 +122,10 @@ func (u *VerifyUserUsecase) VerifyEmail(ctx context.Context, email, otp string) 
 	return nil
 }
 
+func (u *VerifyUserUsecase) VerifyPhone(ctx context.Context, phone, otp string) error {
+	return nil
+}
+
 // Thực hiện xác thực mã OTP qua email cho người dùng
 func (u *VerifyUserUsecase) VerifyOTP_viaEmail(ctx context.Context, email, otp string) error {
 	// 1. Lấy mã OTP từ Redis
@@ -142,5 +146,10 @@ func (u *VerifyUserUsecase) VerifyOTP_viaEmail(ctx context.Context, email, otp s
 		u.logger.LogError("Error[VerifyEmail]: Lỗi khi xóa OTP khỏi Redis", err, zap.Error(err), zap.String("email", email))
 	}
 
+	return nil
+}
+
+// Thực hiện thay đổi mật khẩu người dùng bằng email và mã OTP
+func (u *VerifyUserUsecase) ChangePassword(ctx context.Context, uid string, newPassword string) error {
 	return nil
 }

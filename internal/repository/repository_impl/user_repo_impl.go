@@ -22,7 +22,10 @@ type UserRepository struct {
 
 // triển khai
 func NewUserRepository(db *database.Queries, logger *zap.Logger) repository.IUserRepository {
-	return &UserRepository{db: db, dblog: loghelper.NewDBLogger(logger, "UserRepository")}
+	return &UserRepository{
+		db: db, 
+		dblog: loghelper.NewDBLogger(logger, "UserRepository"),
+	}
 }
 
 func (r *UserRepository) GetByID(ctx context.Context, id string) (*models.Users, error) {
@@ -423,4 +426,11 @@ func (r *UserRepository) UserPhoneExists(ctx context.Context, phone string) (boo
 	}
 
 	return result, nil
+}
+
+func (r *UserRepository) WithTx(tx *sql.Tx) repository.IUserRepository {
+	return &UserRepository{
+		db: r.db.WithTx(tx),
+		dblog: r.dblog,
+	}
 }

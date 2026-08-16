@@ -42,4 +42,8 @@ type IUserRepository interface {
 	// Check duplicate email and phone
 	UserEmailExists(ctx context.Context, email string) (bool, error) // Kiểm tra xem email người dùng đã tồn tại
 	UserPhoneExists(ctx context.Context, phone string) (bool, error)
+
+
+	// WithTx: Thực hiện các thao tác trong một giao dịch
+	WithTx(tx *sql.Tx) IUserRepository
 }
