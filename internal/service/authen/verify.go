@@ -25,8 +25,8 @@ func NewVerifyUserUsecase(
 	emailRepo repository.IEmailRepository,
 	redisRepo repository.IRedisRepository,
 	logger *loghelper.DBLogger,
-) VerifyUserUsecase {
-	return VerifyUserUsecase{
+) *VerifyUserUsecase {
+	return &VerifyUserUsecase{
 		userRepo:  userRepo,
 		redisRepo: redisRepo,
 		logger:    logger,

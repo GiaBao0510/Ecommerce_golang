@@ -102,3 +102,8 @@ type UpdateUsersPatchRequest struct {
 	Phone_num  *string   `json:"phone_num" binding:"omitempty,required"`
 	Address    *string   `json:"address" binding:"omitempty,required"`
 }
+
+type LoginRequest struct {
+	Account  string `json:"account" binding:"required"` // Có thể là email hoặc số điện thoại
+	Passoword string `json:"password" binding:"required"`
+}

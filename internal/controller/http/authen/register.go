@@ -2,7 +2,6 @@ package authen
 
 import (
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	service "github.com/GiaBao0510/Ecommerce_golang/internal/service/authen"
@@ -12,11 +11,10 @@ import (
 
 type RegisterController struct {
 	svc    service.IAuthService
-	logger *zap.Logger
 }
 
-func NewRegisterController(svc service.IAuthService, logger *zap.Logger) *RegisterController {
-	return &RegisterController{svc: svc, logger: logger}
+func NewRegisterController(svc service.IAuthService, ) *RegisterController {
+	return &RegisterController{svc: svc}
 }
 
 func (L *RegisterController) Register(ctx *gin.Context) error {

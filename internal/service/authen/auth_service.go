@@ -10,25 +10,25 @@ type IAuthService interface {
 	ChangePassword(ctx context.Context, uid string, newPassword string) error
 	VerifyEmail(ctx context.Context, email, otp string) error
 	VerifyPhone(ctx context.Context, phone, otp string) error
-	Register(ctx context.Context,obj models.CreateUsersRequest) error
+	Register(ctx context.Context, obj models.CreateUsersRequest) error
 	Login(ctx context.Context, email string, password string) (string, error)
 }
 
 // Triển khai Interface IAuthService
 type AuthService struct {
-	registerUseCase RegisterUseCase
-	loginUseCase LoginUseCase
-	verifyUserUseCase VerifyUserUsecase
+	registerUseCase   *RegisterUseCase
+	loginUseCase      *LoginUseCase
+	verifyUserUseCase *VerifyUserUsecase
 }
 
 func NewAuthService(
-	registerUseCase RegisterUseCase,
-	loginUseCase LoginUseCase,
-	verifyUserUseCase VerifyUserUsecase,
+	registerUseCase *RegisterUseCase,
+	loginUseCase *LoginUseCase,
+	verifyUserUseCase *VerifyUserUsecase,
 ) IAuthService {
 	return &AuthService{
-		registerUseCase: registerUseCase,
-		loginUseCase: loginUseCase,
+		registerUseCase:   registerUseCase,
+		loginUseCase:      loginUseCase,
 		verifyUserUseCase: verifyUserUseCase,
 	}
 }
