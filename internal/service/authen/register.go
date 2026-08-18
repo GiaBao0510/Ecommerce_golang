@@ -6,9 +6,11 @@ import (
 	//"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"context"
 	"database/sql"
+
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	servicesupport "github.com/GiaBao0510/Ecommerce_golang/internal/service/service_support"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"go.uber.org/zap"
 )
@@ -54,7 +56,7 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input models.CreateU
 			"Email already exists in the database",
 			zap.String("email", input.Email),
 		)
-		return nil
+		return apperrors.NewEmailDuplicateError()
 	}
 
 	// check kiểm tra số điện thoại có bị trùng lặp không
@@ -69,7 +71,7 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input models.CreateU
 			"Số điện thoại đã tồn tại trong cơ sở dữ liệu", 
 			zap.String("phone_num", input.Phone_num),
 		)
-		return nil
+		return apperrors.NewPhoneDuplicateError()
 	}
 
 	// Các thao tác trong transaction

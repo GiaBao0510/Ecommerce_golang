@@ -25,7 +25,7 @@ func ValidationLength(fieldName, value string, min, max int) error {
 }
 
 // hàm này dùng để kiểm tra xem một chuỗi có khớp với một biểu thức chính quy (regex) hay không. Nếu không khớp, nó sẽ trả về một lỗi BadRequestError với thông báo rằng trường đó không hợp lệ.
-func ValidationRegex(fieldname, value string, reg *regexp.Regexp) error{
+func ValidationRegex(fieldname, value string, reg *regexp.Regexp) error {
 	if !reg.MatchString(value) {
 		return apperrors.NewBadRequestError(fieldname + " không hợp lệ")
 	}
@@ -34,7 +34,7 @@ func ValidationRegex(fieldname, value string, reg *regexp.Regexp) error{
 
 // Hàm kiểm tra xem một chuỗi có phải là một số nguyên dương hay không. Nếu không, nó sẽ trả về một lỗi BadRequestError với thông báo rằng trường đó phải là một số nguyên dương.
 func ValidationPositiveInt(fieldName, value string) (int32, error) {
-	v ,err := strconv.Atoi(value)
+	v, err := strconv.Atoi(value)
 	if err != nil || v <= 0 {
 		return 0, apperrors.NewBadRequestError(fieldName + " phải là một số nguyên dương")
 	}
@@ -45,9 +45,25 @@ func ValidationPositiveInt(fieldName, value string) (int32, error) {
 // Validation UUID
 func ValidationUUID(fieldName, value string) error {
 	uid, err := uuid.Parse(value)
-	if err != nil || uid == uuid.Nil { 
+	if err != nil || uid == uuid.Nil {
 		return apperrors.NewBadRequestError(fieldName + " không hợp lệ")
 	}
 
 	return nil
+}
+
+func DetectType(str string) string {
+	// Email
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
+	if emailRegex.MatchString(str) {
+		return "email"
+	}
+
+	// Số điện thoại: ví dụ 0901234567 hoặc +84901234567
+	phoneRegex := regexp.MustCompile(`^(0|\+84)[0-9]{9,10}$`)
+	if phoneRegex.MatchString(str) {
+		return "phone"
+	}
+
+	return "other"
 }

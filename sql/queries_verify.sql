@@ -23,3 +23,15 @@ UPDATE "user"
 	SET is_phonenum_verified = TRUE,
 		updated_at = NOW()
 	WHERE phone_num = $1;
+
+-- name: LoginUserByEmail :one
+SELECT u.email, ur.role_id, u.password_hash, u.id_status
+FROM "user" u 
+INNER JOIN user_role ur ON u.uuid = ur.uuid
+WHERE email = $1;
+
+-- name: LoginUserByPhone :one
+SELECT u.email, ur.role_id, u.password_hash, u.id_status
+FROM "user" u 
+INNER JOIN user_role ur ON u.uuid = ur.uuid
+WHERE phone_num = $1;

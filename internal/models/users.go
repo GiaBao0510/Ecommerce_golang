@@ -104,6 +104,13 @@ type UpdateUsersPatchRequest struct {
 }
 
 type LoginRequest struct {
-	Account  string `json:"account" binding:"required"` // Có thể là email hoặc số điện thoại
+	Account   string `json:"account" binding:"required"` // Có thể là email hoặc số điện thoại
 	Passoword string `json:"password" binding:"required"`
+}
+
+type LoginInfo struct {
+	Email         string `json:"email"`
+	Role_id       int32  `json:"role_id"`
+	Password_hash string `json:"password_hash"`
+	Id_status     int32  `json:"id_status"`
 }
