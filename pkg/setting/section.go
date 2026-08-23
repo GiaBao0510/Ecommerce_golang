@@ -13,6 +13,7 @@ type Config struct {
 // Cấu hình cho Authentication, bao gồm các thông tin liên quan khác.
 type AuthenticationConfig struct {
 	MailJet MailJetConfig `mapstructure:"mailjet"`
+	JWT     JWTConfig     `mapstructure:"jwt"`
 }
 
 // Cấu trúc con cho phần cấu hình server (port, host, mode)
@@ -78,4 +79,12 @@ type CORS_Config struct {
 	Allowed_headers   []string `mapstructure:"allowed_headers"`
 	Allow_credentials bool     `mapstructure:"allow_credentials"`
 	Max_age           int      `mapstructure:"max_age"`
+}
+
+type JWTConfig struct {
+	Secret                       string `mapstructure:"secret"`
+	Issuer                       string `mapstructure:"issuer"`
+	Audience                     string `mapstructure:"audience"`
+	AccessTokenExpirationMinutes int    `mapstructure:"AccessTokenExpirationMinutes"`
+	RefreshTokenExpirationDays   int    `mapstructure:"RefreshTokenExpirationDays"`
 }

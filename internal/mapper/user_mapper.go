@@ -41,3 +41,14 @@ func ToRoleByUserModel(ru database.Role) models.RoleByUser {
 		Description: ru.Description.String,
 	}
 }
+
+func ToUserVerificationInformationModel(uvi database.UserVerificationInformationViaEmailRow) models.UserVerificationInformation {
+	return models.UserVerificationInformation{
+		Uuid:                 uvi.Uuid,
+		User_name:            uvi.UserName,
+		Email: uvi.Email,
+		Role_id: uvi.RoleID,
+		Password_hash: uvi.PasswordHash,
+		Id_status: uvi.IDStatus.Int32,
+	}
+}

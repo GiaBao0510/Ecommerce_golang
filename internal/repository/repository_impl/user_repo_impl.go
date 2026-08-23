@@ -428,6 +428,36 @@ func (r *UserRepository) UserPhoneExists(ctx context.Context, phone string) (boo
 	return result, nil
 }
 
+func (r *UserRepository) UserVerificationInformationViaEmail(ctx context.Context, email string) (*models.UserVerificationInformation, error) {
+	row, err := r.db.UserVerificationInformationViaEmail(ctx, email)
+	if err != nil {
+		r.dblog.LogError("UserVerificationInformationViaEmail", err, zap.String("email", email))
+		return nil, MapDBErrorWithContext(err, "Lỗi khi lấy thông tin xác thực người dùng với email: "+email)
+	}
+
+	result := mapper.ToUserVerificationInformationModel(row)
+	return &result, nil
+}
+
+func (r *UserRepository) UserVerificationInformationViaPhone(ctx context.Context, phone string) (*models.UserVerificationInformation, error) {
+	row, err := r.db.UserVerificationInformationViaPhone(ctx, sql.NullString{String: phone, Valid: true})
+	if err != nil {
+		r.dblog.LogError("UserVerificationInformationViaPhone", err, zap.String("phone", phone))
+		return nil, MapDBErrorWithContext(err, "Lỗi khi lấy thông tin xác thực người dùng với số điện thoại: "+phone)
+	}
+
+	result := models.UserVerificationInformation{
+		Uuid: row.Uuid,
+		User_name: row.UserName,
+		Email: row.Email,
+		Role_id: row.RoleID,
+		Password_hash: row.PasswordHash,
+		Id_status: row.IDStatus.Int32,
+	}
+	
+	return &result, nil
+}
+
 func (r *UserRepository) WithTx(tx *sql.Tx) repository.IUserRepository {
 	return &UserRepository{
 		db: r.db.WithTx(tx),

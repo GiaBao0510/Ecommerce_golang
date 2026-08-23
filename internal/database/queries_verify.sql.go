@@ -56,6 +56,66 @@ func (q *Queries) UserPhoneExists_HasNotBeenVerified(ctx context.Context, phoneN
 	return exists, err
 }
 
+const userVerificationInformationViaEmail = `-- name: UserVerificationInformationViaEmail :one
+SELECT u.uuid, u.user_name, u.email, ur.role_id, u.password_hash, u.id_status
+FROM "user" u 
+INNER JOIN user_role ur ON u.uuid = ur.uuid
+WHERE email = $1
+`
+
+type UserVerificationInformationViaEmailRow struct {
+	Uuid         string
+	UserName     string
+	Email        string
+	RoleID       int32
+	PasswordHash string
+	IDStatus     sql.NullInt32
+}
+
+func (q *Queries) UserVerificationInformationViaEmail(ctx context.Context, email string) (UserVerificationInformationViaEmailRow, error) {
+	row := q.db.QueryRowContext(ctx, userVerificationInformationViaEmail, email)
+	var i UserVerificationInformationViaEmailRow
+	err := row.Scan(
+		&i.Uuid,
+		&i.UserName,
+		&i.Email,
+		&i.RoleID,
+		&i.PasswordHash,
+		&i.IDStatus,
+	)
+	return i, err
+}
+
+const userVerificationInformationViaPhone = `-- name: UserVerificationInformationViaPhone :one
+SELECT u.uuid, u.user_name, u.email, ur.role_id, u.password_hash, u.id_status
+FROM "user" u 
+INNER JOIN user_role ur ON u.uuid = ur.uuid
+WHERE phone_num = $1
+`
+
+type UserVerificationInformationViaPhoneRow struct {
+	Uuid         string
+	UserName     string
+	Email        string
+	RoleID       int32
+	PasswordHash string
+	IDStatus     sql.NullInt32
+}
+
+func (q *Queries) UserVerificationInformationViaPhone(ctx context.Context, phoneNum sql.NullString) (UserVerificationInformationViaPhoneRow, error) {
+	row := q.db.QueryRowContext(ctx, userVerificationInformationViaPhone, phoneNum)
+	var i UserVerificationInformationViaPhoneRow
+	err := row.Scan(
+		&i.Uuid,
+		&i.UserName,
+		&i.Email,
+		&i.RoleID,
+		&i.PasswordHash,
+		&i.IDStatus,
+	)
+	return i, err
+}
+
 const verifyEmail = `-- name: VerifyEmail :execresult
 UPDATE "user"
 	SET is_email_verified = TRUE,

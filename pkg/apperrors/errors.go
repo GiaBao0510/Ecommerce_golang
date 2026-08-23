@@ -118,10 +118,10 @@ func NewDuplicateError(field, value string) *AppError {
 }
 
 // -------- 401 Unauthorized --------
-func NewUnauthorizedError() *AppError {
+func NewUnauthorizedError(msg string) *AppError {
 	return &AppError{
 		Code:    http.StatusUnauthorized,
-		Message: "Yêu cầu xác thực",
+		Message: msg,
 		ErrKey:  ErrUnauthorized,
 		Status:  "Unauthorized",
 	}
@@ -155,10 +155,10 @@ func NewTokenMissingError() *AppError {
 }
 
 // -------- 403 Forbidden --------
-func NewForbiddenError() *AppError {
+func NewForbiddenError(msg string) *AppError {
 	return &AppError{
 		Code:    http.StatusForbidden,
-		Message: "Không có quyền truy cập",
+		Message: msg,
 		ErrKey:  ErrForbidden,
 		Status:  "Forbidden",
 	}
@@ -231,7 +231,7 @@ func NewDatabaseTimeoutError(err error) *AppError {
 }
 
 func NewDatabaseConnectionError(err error) *AppError {
-	return &AppError {
+	return &AppError{
 		Code:    http.StatusInternalServerError,
 		Message: "Lỗi kết nối cơ sở dữ liệu",
 		ErrKey:  err,

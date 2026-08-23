@@ -108,7 +108,14 @@ type LoginRequest struct {
 	Passoword string `json:"password" binding:"required"`
 }
 
-type LoginInfo struct {
+type LoginResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+type UserVerificationInformation struct {
+	Uuid          string `json:"uuid"`
+	User_name     string `json:"user_name"`
 	Email         string `json:"email"`
 	Role_id       int32  `json:"role_id"`
 	Password_hash string `json:"password_hash"`
