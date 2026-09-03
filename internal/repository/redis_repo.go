@@ -13,6 +13,7 @@ type IRedisRepository interface {
 	Delete(ctx context.Context, key string) error                               // Phương thức này cho phép xóa một key khỏi Redis. Nếu key không tồn tại, nó sẽ trả về lỗi.
 	Exists(ctx context.Context, key string) (bool, error)                       // Phương thức này kiểm tra xem một key có tồn tại trong Redis hay không. Nó trả về true nếu key tồn tại, ngược lại trả về false. Nếu có lỗi trong quá trình kiểm tra, nó sẽ trả về lỗi đó.
 	Expire(ctx context.Context, key string, expiration time.Duration) error     // Phương thức này cho phép đặt thời gian hết hạn (expiration) cho một key trong Redis. Nếu expiration là 0, key sẽ tồn tại mãi mãi. Nếu key không tồn tại, nó sẽ trả về lỗi.
+	GetTTL(ctx context.Context, key string) (time.Duration, error)              // Phương thức này trả về thời gian còn lại trước khi một key hết hạn trong Redis. Nếu key không tồn tại, nó sẽ trả về lỗi.
 
 	// Key - value (type )
 }

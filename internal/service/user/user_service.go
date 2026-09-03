@@ -7,10 +7,10 @@ import (
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	servicesupport "github.com/GiaBao0510/Ecommerce_golang/internal/service/service_support"
-	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Tạo interface IUserService để định nghĩa các phương thức mà UserService sẽ triển khai
@@ -55,21 +55,16 @@ func (s *UserService) GetByID(ctx context.Context, id string) (*models.Users, er
 }
 
 func (s *UserService) Create(ctx context.Context, obj *models.CreateUsersRequest) (string, error) {
-	// Băm mật khẩu trước khi lưu vào cơ sở dữ liệu
-	bcryptUtil := util.NewBcrypt(util.Bcrypt{
-		Password: obj.Password_hash,
-		Cost:     14, // Bạn có thể điều chỉnh cost nếu muốn
-	})
-
-	passwordHash, err := bcryptUtil.HashPassword()
+		
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(obj.Password_hash), bcrypt.DefaultCost)
 	if err != nil {
-		s.slog.LogError("Create", err, zap.String("reason", "failed to hash password"))
+		s.slog.LogError("Create", err, zap.Error(err))
 		return "", apperrors.NewInternalServerError(err)
 	}
 
-	obj.Password_hash = passwordHash // Đặt lại mật khẩu đã băm vào obj để lưu vào cơ sở dữ liệu
+	obj.Password_hash = string(hashedPassword)
 
-	return s.UserRepo.Create(ctx, obj)
+	return s.UserRepo.Create(ctx, obj) 
 }
 
 func (s *UserService) Update_Put(ctx context.Context, id string, obj *models.UpdateUsersPutRequest) error {

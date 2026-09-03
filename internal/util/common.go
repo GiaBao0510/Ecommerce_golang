@@ -47,3 +47,15 @@ func GenerateRandomNumber(n int) string {
 
 	return string(b[:])
 }
+
+// Hàm tạo ra một chuỗi ngẫu nhiên có độ dài n ký tự
+func GenerateRandomString(n int) string {
+
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.IntN(len(letters))]
+	}
+	return string(b)
+}

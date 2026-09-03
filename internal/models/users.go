@@ -121,3 +121,9 @@ type UserVerificationInformation struct {
 	Password_hash string `json:"password_hash"`
 	Id_status     int32  `json:"id_status"`
 }
+
+// LogoutRequest struct represents the request payload for logging out a user. It contains the user's UUID and the refresh token that needs to be invalidated.
+type LogoutRequest struct {
+	JTI          string `json:"jti" binding:"required"`           // Thuộc tính này sẽ được lấy từ access token, nên không cần binding
+	RefreshToken string `json:"refresh_token" binding:"required"` // Cần nhận token để vô hiệu hóa refresh token
+}

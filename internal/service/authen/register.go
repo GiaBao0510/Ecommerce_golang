@@ -42,7 +42,7 @@ func NewRegisterUseCase (
 	}
 }
 
-func (r *RegisterUseCase) RegisterUser(ctx context.Context, input models.CreateUsersRequest) error{
+func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.CreateUsersRequest) error{
 
 	// Check kiểm tra email có bị trùng lặp không
 	checkDulicateEmail, err := r.userRepo.UserEmailExists(ctx, input.Email)
@@ -76,13 +76,13 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input models.CreateU
 
 	// Các thao tác trong transaction
 	var newUUID string
-
+ 
 	err = servicesupport.RunInTx(ctx, r.db, r.zapLogger, func(tx *sql.Tx) error {
 
 		userRepoTx := r.userRepo.WithTx(tx)
 		userRoleRepoTx := r.userRoleRepo.WithTx(tx)
 
-		uid, err := userRepoTx.Create(ctx, &input)
+		uid, err := userRepoTx.Create(ctx, input)
 		if err != nil {
 			return err //Rollback
 		}

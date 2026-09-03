@@ -7,18 +7,42 @@
 package wire
 
 import (
+	"database/sql"
 	"github.com/GiaBao0510/Ecommerce_golang/global"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/controller/http"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/controller/http/authen"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/controller/http/email"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository/repository_impl"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
-	"github.com/GiaBao0510/Ecommerce_golang/internal/service/authen"
+	authen2 "github.com/GiaBao0510/Ecommerce_golang/internal/service/authen"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service/user"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"github.com/mailjet/mailjet-apiv3-go"
 	"go.uber.org/zap"
 )
+
+// Injectors from authen.wire.go:
+
+func InitializeAuthService(db *sql.DB, queries *database.Queries, logger *zap.Logger) (authen.IAuthenController, error) {
+	iUserRepository := repositoryimpl.NewUserRepository(queries, logger)
+	iUserRoleRepository := repositoryimpl.NewUserRoleRepository(queries, logger)
+	dbLogger := NewDBLogger(logger)
+	iRedisRepository := repositoryimpl.NewRedisRepositoryImpl(dbLogger)
+	registerUseCase := authen2.NewRegisterUseCase(db, logger, iUserRepository, iUserRoleRepository, iRedisRepository)
+	serviceLogger := NewServiceLogger(logger)
+	loginUseCase := authen2.NewLoginUseCase(iUserRepository, iRedisRepository, serviceLogger)
+	client := NewMailJectClient()
+	iEmailRepository := repositoryimpl.NewEmailRepositoryImpl(client, dbLogger)
+	verifyUserUsecase := authen2.NewVerifyUserUsecase(iUserRepository, iEmailRepository, iRedisRepository, dbLogger)
+	logoutUseCase := authen2.NewLogoutUseCase(iRedisRepository, serviceLogger)
+	iAuthService := authen2.NewAuthService(registerUseCase, loginUseCase, verifyUserUsecase, logoutUseCase)
+	loginController := authen.NewLoginController(iAuthService)
+	logoutController := authen.NewLogoutController(iAuthService)
+	registerController := authen.NewRegisterController(iAuthService)
+	iAuthenController := authen.NewAuthenController(loginController, logoutController, registerController)
+	return iAuthenController, nil
+}
 
 // Injectors from permission.wire.go:
 
@@ -84,9 +108,15 @@ func InitVerifyRouterHandler(db *database.Queries, logger *zap.Logger) (email.Em
 	dbLogger := NewDBLogger(logger)
 	iEmailRepository := repositoryimpl.NewEmailRepositoryImpl(client, dbLogger)
 	iRedisRepository := repositoryimpl.NewRedisRepositoryImpl(dbLogger)
-	verifyUserUsecase := authen.NewVerifyUserUsecase(iUserRepository, iEmailRepository, iRedisRepository, dbLogger)
-	emailControllerInterface := email.NewEmailController(verifyUserUsecase, dbLogger)
+	verifyUserUsecase := authen2.NewVerifyUserUsecase(iUserRepository, iEmailRepository, iRedisRepository, dbLogger)
+	emailControllerInterface := email.NewEmailController(verifyUserUsecase)
 	return emailControllerInterface, nil
+}
+
+// authen.wire.go:
+
+func NewServiceLogger(logger *zap.Logger) *loghelper.ServiceLogger {
+	return loghelper.NewServiceLogger(logger, "AuthFlow")
 }
 
 // verify.wire.go:

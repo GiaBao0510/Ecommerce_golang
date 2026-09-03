@@ -16,7 +16,7 @@ type UserController struct {
 	userService service.IUserService
 	logger      *zap.Logger
 }
-
+ 
 // hàm khởi tạo
 func NewUserController(userService service.IUserService, logger *zap.Logger) *UserController {
 	return &UserController{

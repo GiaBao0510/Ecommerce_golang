@@ -5,11 +5,11 @@ import (
 )
 
 type EmailController struct {
-	emailSVC service.VerifyUserUsecase
+	emailSVC *service.VerifyUserUsecase
 }
 
 func NewEmailController(
-	emailSVC service.VerifyUserUsecase,
+	emailSVC *service.VerifyUserUsecase,
 ) EmailControllerInterface {
 	return &EmailController{
 		emailSVC: emailSVC,

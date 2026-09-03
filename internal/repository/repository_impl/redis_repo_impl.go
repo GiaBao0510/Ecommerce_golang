@@ -74,3 +74,17 @@ func (r *RedisRepositoryImpl) Expire(ctx context.Context, key string, expiration
 	r.log.LogInfo("Expire key", "Thực hiện thành công.", zap.String("key", key), zap.Duration("expiration", expiration))
 	return nil
 }
+
+// Lấy thời gian còn lại trước khi một key hết hạn trong Redis. Nếu key không tồn tại, nó sẽ trả về lỗi.
+func (r *RedisRepositoryImpl) GetTTL(ctx context.Context, key string) (time.Duration, error)  {
+	
+	// Sử dụng phương thức TTL của Redis để lấy thời gian còn lại trước khi key hết hạn
+	duration, err := global.Redis.TTL(ctx, key).Result()
+	if err != nil {
+		r.log.LogError("Lỗi khi lấy thời gian còn lại trước khi key hết hạn trong Redis.", err, zap.String("key", key))
+		return 0, err
+	}
+
+	r.log.LogInfo("GetTTL key", "Thực hiện thành công.", zap.String("key", key), zap.Duration("ttl", duration))
+	return duration, nil
+}

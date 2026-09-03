@@ -2,7 +2,10 @@ package authen
 
 import (
 	"context"
+	"time"
 
+	_const "github.com/GiaBao0510/Ecommerce_golang/internal/const"
+	"github.com/GiaBao0510/Ecommerce_golang/global"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
@@ -18,11 +21,15 @@ type LoginUseCase struct {
 	slog      *loghelper.ServiceLogger
 }
 
-func NewLoginUseCase() *LoginUseCase {
-	return &LoginUseCase{}
+func NewLoginUseCase(userRepo  repository.IUserRepository, redisRepo repository.IRedisRepository, slog *loghelper.ServiceLogger) *LoginUseCase {
+	return &LoginUseCase{
+		userRepo:  userRepo,
+		redisRepo: redisRepo,
+		slog:      slog,
+	}
 }
 
-func (l *LoginUseCase) Login(ctx context.Context, loginRequest models.LoginRequest) (*models.LoginResponse, error) {
+func (l *LoginUseCase) Login(ctx context.Context, loginRequest *models.LoginRequest) (*models.LoginResponse, error) {
 
 	// Kiểm tra đầu vào là email hay số điện thoại
 	if util.DetectType(loginRequest.Account) == "email" {
@@ -36,7 +43,7 @@ func (l *LoginUseCase) Login(ctx context.Context, loginRequest models.LoginReque
 	return nil, apperrors.NewBadRequestError("Account không hợp lệ")
 }
 
-func (l *LoginUseCase) loginByEmail(ctx context.Context, loginRequest models.LoginRequest) (*models.LoginResponse, error) {
+func (l *LoginUseCase) loginByEmail(ctx context.Context, loginRequest *models.LoginRequest) (*models.LoginResponse, error) {
 	// Lấy thông tin người dùng bởi email
 	userVeriInfor, err := l.userRepo.UserVerificationInformationViaEmail(ctx, loginRequest.Account)
 	if err != nil {
@@ -44,10 +51,10 @@ func (l *LoginUseCase) loginByEmail(ctx context.Context, loginRequest models.Log
 		return nil, err
 	}
 
-	return l.verifyUserCredentials(ctx, userVeriInfor, loginRequest.Passoword)
+	return l.verifyUserCredentials(ctx, *userVeriInfor, loginRequest.Passoword)
 }
 
-func (l *LoginUseCase) loginByPhone(ctx context.Context, loginRequest models.LoginRequest) (*models.LoginResponse, error) {
+func (l *LoginUseCase) loginByPhone(ctx context.Context, loginRequest *models.LoginRequest) (*models.LoginResponse, error) {
 	// lấy thông tin người dùng bởi phone
 	userVeriInfor, err := l.userRepo.UserVerificationInformationViaPhone(ctx, loginRequest.Account)
 	if err != nil {
@@ -55,14 +62,14 @@ func (l *LoginUseCase) loginByPhone(ctx context.Context, loginRequest models.Log
 		return nil, err
 	}
 
-	return l.verifyUserCredentials(ctx, userVeriInfor, loginRequest.Passoword)
+	return l.verifyUserCredentials(ctx, *userVeriInfor, loginRequest.Passoword)
 }
 
 // Hàm kiểm tra thông tin xác thực của người dùng
 func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor models.UserVerificationInformation, password string) (*models.LoginResponse, error) {
 	// Kiểm tra xem mật khâủ đầu vào có khớp với mật khẩu đã băm không
 	if err := bcrypt.CompareHashAndPassword([]byte(userVeriInfor.Password_hash), []byte(password)); err != nil {
-		l.slog.LogWarning("Login", "Password is not match", zap.String("account", account))
+		l.slog.LogWarning("Login", "Password is not match", zap.String("account", userVeriInfor.Email))
 		return nil, apperrors.NewUnauthorizedError("Mật khẩu không hợp lệ")
 	}
 
@@ -72,5 +79,48 @@ func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor 
 		return nil, apperrors.NewForbiddenError("Người dùng không hoạt động")
 	}
 
+	// Lấy thêm thông tin IP của người dùng từ 
+
 	// Tạo access token và refresh token
+	accesstoken, err := util.GenerateAccessToken(userVeriInfor.Uuid, userVeriInfor.Email, int(userVeriInfor.Role_id))
+	if err != nil {
+		l.slog.LogError("Failed to generate access token", err, zap.Error(err))
+		return nil, err
+	}
+	jti, err := util.GetJTIFromClaims(accesstoken)
+	if err != nil {
+		l.slog.LogError("Failed to get JTI from access token", err, zap.Error(err))
+		return nil, err
+	}
+
+	// Tạo refresh token
+	refreshToken, err := util.GenerateRefreshToken()
+	if err != nil {
+		l.slog.LogError("Failed to generate refresh token", err, zap.Error(err))
+		return nil, err
+	}
+
+	// Mã hóa refresh token trước khi lưu vào Redis
+	hashedRefreshToken, err := bcrypt.GenerateFromPassword([]byte(refreshToken), bcrypt.DefaultCost)
+
+	// Lưu refresh token (đã bị mã hóa) vào whitelist thông qua Redis với thời hạn là 7 ngày [Cấu trúc lưu trữ: Key: WhiteList_RefreshToken:<hashed_refresh_token>; Value: <user_id>]
+	ttl := time.Duration(global.Config.Authentication.JWT.RefreshTokenExpirationDays) * 24 * time.Hour
+	if err := l.redisRepo.Set(ctx, _const.WhiteListRefreshToken+":"+string(hashedRefreshToken), userVeriInfor.Uuid, ttl); err != nil {
+		l.slog.LogError("Failed to store refresh token in Redis", err, zap.Error(err))
+		return nil, err
+	}
+
+	// Lưu access token vào whitelist thông qua Redis với thời hạn là 15 phút
+	ttl = time.Duration(global.Config.Authentication.JWT.AccessTokenExpirationMinutes) * time.Minute
+	// Lưu access token vào whitelist thông qua Redis với thời hạn là 15 phút [Cấu trúc lưu trữ: Key: WhiteList_AccessToken:<jti>; Value: <user_id>]
+	if err := l.redisRepo.Set(ctx, _const.WhiteListAccessToken+":"+jti, userVeriInfor.Uuid, ttl); err != nil {	
+		l.slog.LogError("Failed to store access token in Redis", err, zap.Error(err))
+		return nil, err
+	}
+
+	// Trả về access token và refresh token
+	return &models.LoginResponse{
+		AccessToken:  accesstoken,
+		RefreshToken: refreshToken,
+	}, nil
 }

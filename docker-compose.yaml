@@ -107,12 +107,98 @@ services:
       - loki
     logging: *default-logging
 
+  kafka:          # Tên dịch vụ trong Docker Compose
+    image: apache/kafka:3.8.1   # Tải image Kafka bản 3.8.1 từ Docker Hub
+    container_name: my-kafka    # Đặt tên cố định cho container để dễ quản lý
+    restart: unless-stopped  # Tự động khởi động lại container nếu nó dừng bất ngờ, trừ khi bạn dừng thủ công
+
+    ports:
+      - "9092:9092"   # Ánh xạ cổng: <cổng máy host>:<cổng trong container>
+                      # Client bên ngoài sẽ kết nối vào cổng 9092 của máy bạn
+
+    environment:
+      # --- CẤU HÌNH ĐỊNH DANH NODE ---
+      KAFKA_NODE_ID: 1                        # ID duy nhất của node Kafka này trong cụm (Cluster)
+      KAFKA_PROCESS_ROLES: broker,controller  # Node này vừa làm Broker (chứa dữ liệu)
+                                              # vừa làm Controller (điều phối cụm)
+
+      # --- CẤU HÌNH KRAFT (THAY THẾ ZOOKEEPER) ---
+      # Danh sách các node tham gia bầu cử Controller, theo định dạng: <node_id>@<hostname>:<port>
+      # Hostname "kafka" ở đây chính là tên dịch vụ trong Docker Compose (tự resolve được)
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      # --- CẤU HÌNH KẾT NỐI (NETWORKING) ---
+      # Các địa chỉ và cổng mà Kafka sẽ lắng nghe kết nối từ bên trong container
+      KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_INTERNAL://:19092,CONTROLLER://:9093
+
+      # Địa chỉ Kafka quảng bá ra ngoài để Client biết cách kết nối đến
+      # Dùng "localhost" vì Client chạy trên cùng máy host
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:19092
+
+      # Chỉ định tên listener nào được dùng cho giao tiếp nội bộ giữa các Controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL   # Broker để giao tiếp nội bộ với nhau
+
+      # Ánh xạ tên listener với kiểu bảo mật tương ứng
+      # PLAINTEXT = không mã hóa, phù hợp cho môi trường học tập
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+
+      # --- THÔNG SỐ CỤM (CLUSTER) ---
+      CLUSTER_ID: "my-kafka-cluster-1"              # ID định danh cho toàn bộ cụm Kafka
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1     # Số bản sao dữ liệu cho topic nội bộ
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1  # Đặt là 1 vì chỉ có 1 node
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1        # Số replica tối thiểu phải đồng bộ
+
+    volumes:
+      - kafka_data:/var/lib/kafka/data  # Gắn volume để dữ liệu không bị mất khi container khởi động lại
+
+    healthcheck:
+      # Lệnh kiểm tra xem Kafka đã thực sự "sống" và sẵn sàng phục vụ chưa
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1",
+        ]
+      interval: 10s  # Cứ 10 giây kiểm tra một lần
+      timeout: 5s    # Quá 5 giây không phản hồi thì coi như lần đó thất bại
+      retries: 10    # Thử lại tối đa 10 lần trước khi báo trạng thái "Unhealthy"
+
+    logging: *default-logging  # Tái sử dụng cấu hình log đã khai báo ở trên
+
+# ============================================================================
+# SERVICE 2: REDPANDA CONSOLE (GIAO DIỆN QUẢN LÝ KAFKA)
+# Cung cấp dashboard web để xem Topics, Messages, Consumer Groups...
+# mà không cần gõ lệnh trong terminal
+# Truy cập tại: http://localhost:9091
+# ============================================================================
+  redpanda-console:
+    image: redpandadata/console:latest
+    container_name: redpanda-console
+    ports:
+      - "9091:8080"
+    environment:
+      KAFKA_BROKERS: kafka:19092
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+    healthcheck:
+      # Kiểm tra endpoint sức khỏe của Redpanda Console
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/status || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+    logging: *default-logging
+
 volumes:
   postgres_data:
   redis_data:
   loki-data:
   grafana-data:
   redisinsight_data:
+  kafka_data:
+    driver: local
 
 # Network dùng chung để các container gọi nhau qua service name
 networks:

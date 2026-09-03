@@ -7,7 +7,7 @@ type AuthenController struct {
 	logoutCtrl   *LogoutController
 	registerCtrl *RegisterController
 }
-
+ 
 // Hàm khởi tạo
 func NewAuthenController(
 	loginCtrl *LoginController,

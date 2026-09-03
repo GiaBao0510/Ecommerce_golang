@@ -108,7 +108,7 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]models.Users, error) {
 	}
 
 	return users, nil
-}
+} 
 
 func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequest) (string, error) {
 
