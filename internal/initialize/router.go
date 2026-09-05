@@ -31,7 +31,7 @@ func InitRouter() *gin.Engine {
 	/* ---Bước 2: Đăng ký middleware chung------------------------------------------------------
 		THỨ TỰ ĐĂNG KÝ RẤT QUAN TRỌNG — middleware chạy TRƯỚC bọc quanh middleware
 	chạy SAU (giống như vỏ hành). Lý do thứ tự dưới đây:
-	
+
 	1. RealIP     : không phụ thuộc middleware nào khác, cần chạy sớm vì
 	Logger cần đọc RealIPKey từ context.
 
@@ -54,15 +54,15 @@ func InitRouter() *gin.Engine {
 
 	6. tương tự Logger, cần status code cuối cùng.
 
-	
+
 	------------------------------------------------------------------------------------------ */
 	r.Use(
-		middleware.RealIPMiddleware(),							// Đầu tiên, lấy IP thực của client từ header X-Real-IP hoặc X-Forwarded-For
-		middleware.TraceID_Middleware(),						// Sinh trace_id duy nhất cho mỗi request, lưu vào context để các middleware/handler sau có thể sử dụng
-		middleware.TracingMiddleware(),							// Bọc quanh các middleware sau để đo thời gian xử lý toàn bộ request
-		middleware.RecoveryMiddleware(),						// Bắt panic, ngăn app crash, trả về 500 thay vì để server tắt
-		middleware.HttpLoggerMiddleware(global.Logger.Access),	// Ghi access log: method, path, status, latency, trace_id vào storages/logs/access.log
-		middleware.MetricsMiddleware(),							//
+		middleware.RealIPMiddleware(),                         // Đầu tiên, lấy IP thực của client từ header X-Real-IP hoặc X-Forwarded-For
+		middleware.TraceID_Middleware(),                       // Sinh trace_id duy nhất cho mỗi request, lưu vào context để các middleware/handler sau có thể sử dụng
+		middleware.TracingMiddleware(),                        // Bọc quanh các middleware sau để đo thời gian xử lý toàn bộ request
+		middleware.RecoveryMiddleware(),                       // Bắt panic, ngăn app crash, trả về 500 thay vì để server tắt
+		middleware.HttpLoggerMiddleware(global.Logger.Access), // Ghi access log: method, path, status, latency, trace_id vào storages/logs/access.log
+		middleware.MetricsMiddleware(),                        //
 
 		// [4] CORS — Cho phép cross-origin requests (frontend khác domain)
 		// → Chưa implement, sẽ thêm sau
@@ -95,6 +95,7 @@ func InitRouter() *gin.Engine {
 	// ================================================================
 	managerRouter := routers.RouterGroupApp.Manager
 	userRouter := routers.RouterGroupApp.User
+	commonRouter := routers.RouterGroupApp.Common
 
 	MainGroup := r.Group("/v1/api")
 	{
@@ -104,6 +105,15 @@ func InitRouter() *gin.Engine {
 	// Định nghĩa route cho từng vai trò
 	UserGroup := MainGroup.Group("/user")
 	ManagerGroup := MainGroup.Group("/manager")
+	PublicGroup := MainGroup.Group("/common")
+
+	// Định nghĩa route thường dùng cho việc xác thực
+	commonRouter.InitAuthenRouter(
+		PublicGroup.Group("/authen"),
+		global.PostgreSQL,
+		global.DB,
+		global.Logger.Error,
+	)
 
 	// Định nghĩa route cho vai trò user
 	userRouter.InitProductRouter(UserGroup)

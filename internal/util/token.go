@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 	"time"
+	"crypto/sha256"
+	"encoding/hex"
 
 	"github.com/GiaBao0510/Ecommerce_golang/global"
 	"github.com/google/uuid"
@@ -51,19 +53,37 @@ func GenerateRefreshToken() (string, error){
 
 // ParseToken: Hàm này sẽ parse Bearer token từ header Authorization và trả về header và payload , ngược lại trả về rỗng
 func ParseToken(authHeader string) (string, string) {
-	
+	const prefix = "Bearer "
+
 	// Kiểm tra xem header có bắt đầu bằng "Bearer " hay không
-	if strings.HasPrefix(authHeader, "Bearer ") {
-		token := strings.TrimPrefix(authHeader, "Bearer")	// Loại bỏ "Bearer " khỏi header
-		parts := strings.Split(token, ".") // Tách token thành 3 phần: header, payload, signature
+	// if strings.HasPrefix(authHeader, "Bearer ") {
+	// 	token := strings.TrimPrefix(authHeader, "Bearer")	// Loại bỏ "Bearer " khỏi header
+	// 	parts := strings.Split(token, ".") // Tách token thành 3 phần: header, payload, signature
 		
-		// Nếu token có 2 phần (header và payload), trả về header và payload, ngược lại trả về token và rỗng
-		if len(parts) == 2 {
-			return parts[0], parts[1]
-		}
-		return token, ""
+	// 	// Nếu token có 2 phần (header và payload), trả về header và payload, ngược lại trả về token và rỗng
+	// 	if len(parts) == 2 {
+	// 		return parts[0], parts[1]
+	// 	}
+	// 	return token, ""
+	// }
+	// return "", ""
+
+	// Kiểm tra xem header có bắt đầu bằng "Bearer
+	if !strings.HasPrefix(authHeader, prefix) {
+		return authHeader, ""
 	}
-	return "", ""
+
+	// Loại bỏ "Bearer " khỏi header
+	token := strings.TrimPrefix(authHeader, prefix)
+
+
+	// Tách token thành 3 phần: header, payload, signature
+	parts := strings.Split(token,".")
+	if len(parts) == 3 {
+		return parts[0], parts[1]
+	}
+	
+	return token, ""
 }
 
 // ParseTokenWithClaims: Hàm này sẽ parse JWT token và trả về claims, ngược lại trả về rỗng
@@ -173,3 +193,8 @@ func GetTokenExpirationFromClaims(tokenStr string) (int64, error) {
 	return int64(expiration), nil
 }
 
+// hàm này dùng để băm Token, băm một cách cố định thông qua SHA256
+func HashToken(token string) string {
+	sum := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(sum[:])
+}

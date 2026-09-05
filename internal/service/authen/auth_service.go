@@ -24,16 +24,16 @@ type AuthService struct {
 }
 
 func NewAuthService(
-	registerUseCase 	*RegisterUseCase,
-	loginUseCase 		*LoginUseCase,
-	verifyUserUseCase 	*VerifyUserUsecase,
-	logoutUseCase 		*LogoutUseCase,
+	registerUseCase *RegisterUseCase,
+	loginUseCase *LoginUseCase,
+	verifyUserUseCase *VerifyUserUsecase,
+	logoutUseCase *LogoutUseCase,
 ) IAuthService {
 	return &AuthService{
-		registerUseCase:   	registerUseCase,
-		loginUseCase:      	loginUseCase,
-		verifyUserUseCase: 	verifyUserUseCase,
-		logoutUseCase: 		logoutUseCase,
+		registerUseCase:   registerUseCase,
+		loginUseCase:      loginUseCase,
+		verifyUserUseCase: verifyUserUseCase,
+		logoutUseCase:     logoutUseCase,
 	}
 }
 
@@ -53,5 +53,5 @@ func (s *AuthService) Login(ctx context.Context, loginRequest *models.LoginReque
 	return s.loginUseCase.Login(ctx, loginRequest)
 }
 func (s *AuthService) Logout(ctx context.Context, logoutReq *models.LogoutRequest) error {
-	return s.Logout(ctx, logoutReq)
+	return s.logoutUseCase.Logout(ctx, logoutReq)
 }

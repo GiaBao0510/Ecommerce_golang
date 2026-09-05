@@ -5,6 +5,7 @@ import (
 
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
 	"go.uber.org/zap"
 
 	_const "github.com/GiaBao0510/Ecommerce_golang/internal/const"
@@ -26,13 +27,23 @@ func NewLogoutUseCase(redisRepo repository.IRedisRepository, slog *loghelper.Ser
 
 func (l *LogoutUseCase) Logout(ctx context.Context, logoutRequest *models.LogoutRequest) error {
 	
+	// Lấy JTI (JWT ID) từ access token
+	jti, err := util.GetJTIFromClaims(logoutRequest.AccessToken)
+	if err != nil {
+		l.slog.LogError("Failed to get JTI from access token", err, zap.Error(err))
+		return err
+	}
+
+	// Băm refresh token để đảm bảo tính bảo mật
+	hashedRefreshToken := util.HashToken(logoutRequest.RefreshToken)
+
 	// Lấy thời gian hết hạn của access token và refresh token từ Redis
-	expirationTimeAccessToken, err := l.redisRepo.GetTTL(ctx, _const.WhiteListAccessToken+":"+logoutRequest.JTI)
+	expirationTimeAccessToken, err := l.redisRepo.GetTTL(ctx, _const.WhiteListAccessToken+":"+jti)
 	if err != nil {
 		l.slog.LogError("Failed to get TTL for access token from Redis", err, zap.Error(err))
 		return err
 	}
-	expirationTimeRefreshToken, err := l.redisRepo.GetTTL(ctx, _const.WhiteListRefreshToken+":"+logoutRequest.RefreshToken)
+	expirationTimeRefreshToken, err := l.redisRepo.GetTTL(ctx, _const.WhiteListRefreshToken+":"+hashedRefreshToken)
 	if err != nil {
 		l.slog.LogError("Failed to get TTL for refresh token from Redis", err, zap.Error(err))
 		return err
@@ -45,13 +56,13 @@ func (l *LogoutUseCase) Logout(ctx context.Context, logoutRequest *models.Logout
 	} 
 
 	// Kiểm tra xem token có tồn tại trong blacklist không
-	accessTokenBeenBlackListed, err := l.redisRepo.Exists(ctx, _const.BlackList+":"+logoutRequest.JTI)
+	accessTokenBeenBlackListed, err := l.redisRepo.Exists(ctx, _const.BlackList+":"+jti)
 	if err != nil {
 		l.slog.LogError("Failed to check if access token is blacklisted in Redis", err, zap.Error(err))
 		return err
 	}
 
-	refreshTokenBeenBlackListed, err := l.redisRepo.Exists(ctx, _const.BlackList+":"+logoutRequest.RefreshToken)
+	refreshTokenBeenBlackListed, err := l.redisRepo.Exists(ctx, _const.BlackList+":"+hashedRefreshToken)
 	if err != nil {
 		l.slog.LogError("Failed to check if refresh token is blacklisted in Redis", err, zap.Error(err))
 		return err
@@ -64,21 +75,21 @@ func (l *LogoutUseCase) Logout(ctx context.Context, logoutRequest *models.Logout
 	}
 	
 	// Xóa token khỏi whitelist
-	if err := l.redisRepo.Delete(ctx, _const.WhiteListAccessToken+":"+logoutRequest.JTI); err != nil {
+	if err := l.redisRepo.Delete(ctx, _const.WhiteListAccessToken+":"+jti); err != nil {
 		l.slog.LogError("Failed to delete access token from whitelist in Redis", err, zap.Error(err))
 		return err
 	} 
-	if err := l.redisRepo.Delete(ctx, _const.WhiteListRefreshToken+":"+logoutRequest.RefreshToken); err != nil {
+	if err := l.redisRepo.Delete(ctx, _const.WhiteListRefreshToken+":"+hashedRefreshToken); err != nil {
 		l.slog.LogError("Failed to delete refresh token from whitelist in Redis", err, zap.Error(err))
 		return err
 	}
 
 	// thêm token vào blacklist
-	if err := l.redisRepo.Set(ctx, _const.BlackList+":"+logoutRequest.JTI, "1", expirationTimeAccessToken); err != nil {
+	if err := l.redisRepo.Set(ctx, _const.BlackList+":"+jti, "1", expirationTimeAccessToken); err != nil {
 		l.slog.LogError("Failed to add access token to blacklist in Redis", err, zap.Error(err))
 		return err
 	}
-	if err := l.redisRepo.Set(ctx, _const.BlackList+":"+logoutRequest.RefreshToken, "1", expirationTimeRefreshToken); err != nil {
+	if err := l.redisRepo.Set(ctx, _const.BlackList+":"+hashedRefreshToken, "1", expirationTimeRefreshToken); err != nil {
 		l.slog.LogError("Failed to add refresh token to blacklist in Redis", err, zap.Error(err))
 		return err
 	}

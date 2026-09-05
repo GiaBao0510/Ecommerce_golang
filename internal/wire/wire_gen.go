@@ -24,7 +24,7 @@ import (
 
 // Injectors from authen.wire.go:
 
-func InitializeAuthService(db *sql.DB, queries *database.Queries, logger *zap.Logger) (authen.IAuthenController, error) {
+func InitAuthenRouterHandler(db *sql.DB, queries *database.Queries, logger *zap.Logger) (authen.IAuthenController, error) {
 	iUserRepository := repositoryimpl.NewUserRepository(queries, logger)
 	iUserRoleRepository := repositoryimpl.NewUserRoleRepository(queries, logger)
 	dbLogger := NewDBLogger(logger)

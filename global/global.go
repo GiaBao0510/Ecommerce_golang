@@ -16,4 +16,5 @@ var (
 	PostgreSQL *sql.DB
 	Redis *redis.Client
 	DB *database.Queries
+	//SqlDB *sql.DB
 )

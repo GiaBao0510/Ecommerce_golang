@@ -20,7 +20,7 @@ func (r *UserRouter) InitUserRouter(Router *gin.RouterGroup, db *database.Querie
 	}
 	// Public routes
 	// Router.GET("/register")
-	// Router.POST("/otp")
+	// Router.POST("/otp") 
 
 	// Private routes (cần xác thực)
 	Router.GET("", controller.Build(userController.GetAll, logger))

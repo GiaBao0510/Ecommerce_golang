@@ -9,7 +9,7 @@ import (
 )
 
 type RolesRouter struct{}
-
+ 
 func (r *RolesRouter) InitRolesRouter(Router *gin.RouterGroup, db *database.Queries, logger *zap.Logger) {
 	rolesController, err := wire.InitRolesRouterHandler(db, logger)
 	if err != nil {

@@ -4,20 +4,21 @@
 package wire
 
 import (
-	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
+	"database/sql"
+
 	controllerAuth "github.com/GiaBao0510/Ecommerce_golang/internal/controller/http/authen"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
 	repositoryimpl "github.com/GiaBao0510/Ecommerce_golang/internal/repository/repository_impl"
 	service "github.com/GiaBao0510/Ecommerce_golang/internal/service/authen"
-	"database/sql"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"github.com/google/wire"
 	"go.uber.org/zap"
-)
+) 
 
-func InitializeAuthService(
+func InitAuthenRouterHandler(
 	db *sql.DB,
 	queries *database.Queries,
-	logger *zap.Logger, 
+	logger *zap.Logger,
 ) (controllerAuth.IAuthenController, error) {
 	wire.Build(
 		NewDBLogger,
@@ -29,7 +30,7 @@ func InitializeAuthService(
 		repositoryimpl.NewUserRoleRepository,
 		repositoryimpl.NewRedisRepositoryImpl,
 		repositoryimpl.NewEmailRepositoryImpl,
-		
+
 		// Services Layer
 		service.NewVerifyUserUsecase,
 		service.NewRegisterUseCase,
@@ -50,4 +51,3 @@ func InitializeAuthService(
 func NewServiceLogger(logger *zap.Logger) *loghelper.ServiceLogger {
 	return loghelper.NewServiceLogger(logger, "AuthFlow")
 }
-

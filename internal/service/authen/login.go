@@ -101,13 +101,13 @@ func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor 
 	}
 
 	// Mã hóa refresh token trước khi lưu vào Redis
-	hashedRefreshToken, err := bcrypt.GenerateFromPassword([]byte(refreshToken), bcrypt.DefaultCost)
+	hashedRefreshToken := util.HashToken(refreshToken)
 
 	// Lưu refresh token (đã bị mã hóa) vào whitelist thông qua Redis với thời hạn là 7 ngày [Cấu trúc lưu trữ: Key: WhiteList_RefreshToken:<hashed_refresh_token>; Value: <user_id>]
 	ttl := time.Duration(global.Config.Authentication.JWT.RefreshTokenExpirationDays) * 24 * time.Hour
-	if err := l.redisRepo.Set(ctx, _const.WhiteListRefreshToken+":"+string(hashedRefreshToken), userVeriInfor.Uuid, ttl); err != nil {
+	if err := l.redisRepo.Set(ctx, _const.WhiteListRefreshToken + ":" + hashedRefreshToken, userVeriInfor.Uuid, ttl); err != nil {
 		l.slog.LogError("Failed to store refresh token in Redis", err, zap.Error(err))
-		return nil, err
+		return nil, apperrors.NewInternalServerError(err)
 	}
 
 	// Lưu access token vào whitelist thông qua Redis với thời hạn là 15 phút

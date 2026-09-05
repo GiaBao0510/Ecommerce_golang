@@ -13,6 +13,7 @@ import (
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type RegisterUseCase struct {
@@ -73,6 +74,14 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.Create
 		)
 		return apperrors.NewPhoneDuplicateError()
 	}
+
+	// Băm mật khẩu trước khi lưu vào cơ sở dữ liệu
+	hashPW, err := bcrypt.GenerateFromPassword([]byte(input.Password_hash), bcrypt.DefaultCost)
+	if err != nil {
+		r.slog.LogError("Failed to hash password", err, zap.Error(err))
+		return err
+	}
+	input.Password_hash = string(hashPW)
 
 	// Các thao tác trong transaction
 	var newUUID string
