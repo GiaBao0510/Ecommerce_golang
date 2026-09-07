@@ -37,11 +37,13 @@ func InitAuthenRouterHandler(
 		service.NewLoginUseCase,
 		service.NewLogoutUseCase,
 		service.NewAuthService,
+		service.NewRefreshTokenUseCase,
 
 		//Controller layer
 		controllerAuth.NewRegisterController,
 		controllerAuth.NewLoginController,
 		controllerAuth.NewLogoutController,
+		controllerAuth.NewRefreshTokenController,
 		controllerAuth.NewAuthenController,
 	)
 

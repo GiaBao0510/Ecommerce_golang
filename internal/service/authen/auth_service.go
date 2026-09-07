@@ -3,6 +3,7 @@ package authen
 import (
 	"context"
 
+	"github.com/GiaBao0510/Ecommerce_golang/internal/dto"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 )
 
@@ -13,6 +14,7 @@ type IAuthService interface {
 	Register(ctx context.Context, obj *models.CreateUsersRequest) error
 	Login(ctx context.Context, loginRequest *models.LoginRequest) (*models.LoginResponse, error)
 	Logout(ctx context.Context, logoutReq *models.LogoutRequest) error
+	RefreshToken(ctx context.Context, token *dto.Token) (*dto.Token, error)
 }
 
 // Triển khai Interface IAuthService
@@ -21,6 +23,7 @@ type AuthService struct {
 	loginUseCase      *LoginUseCase
 	verifyUserUseCase *VerifyUserUsecase
 	logoutUseCase     *LogoutUseCase
+	refreshTokenUseCase *RefreshTokenUseCase
 }
 
 func NewAuthService(
@@ -28,12 +31,14 @@ func NewAuthService(
 	loginUseCase *LoginUseCase,
 	verifyUserUseCase *VerifyUserUsecase,
 	logoutUseCase *LogoutUseCase,
+	refreshTokenUseCase *RefreshTokenUseCase,
 ) IAuthService {
 	return &AuthService{
 		registerUseCase:   registerUseCase,
 		loginUseCase:      loginUseCase,
 		verifyUserUseCase: verifyUserUseCase,
 		logoutUseCase:     logoutUseCase,
+		refreshTokenUseCase: refreshTokenUseCase,
 	}
 }
 
@@ -54,4 +59,7 @@ func (s *AuthService) Login(ctx context.Context, loginRequest *models.LoginReque
 }
 func (s *AuthService) Logout(ctx context.Context, logoutReq *models.LogoutRequest) error {
 	return s.logoutUseCase.Logout(ctx, logoutReq)
+}
+func (s *AuthService) RefreshToken(ctx context.Context, token *dto.Token) (*dto.Token, error) {
+	return s.refreshTokenUseCase.RefreshToken(ctx, token)
 }

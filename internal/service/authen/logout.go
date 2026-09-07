@@ -15,7 +15,7 @@ import (
 
 type LogoutUseCase struct {
 	redisRepo 	repository.IRedisRepository
-	slog 		*loghelper.ServiceLogger
+	slog 		  *loghelper.ServiceLogger
 }
 
 func NewLogoutUseCase(redisRepo repository.IRedisRepository, slog *loghelper.ServiceLogger) *LogoutUseCase{
@@ -25,20 +25,20 @@ func NewLogoutUseCase(redisRepo repository.IRedisRepository, slog *loghelper.Ser
 	}
 }
 
-func (l *LogoutUseCase) Logout(ctx context.Context, logoutRequest *models.LogoutRequest) error {
+func (l *LogoutUseCase) Logout(ctx context.Context, req *models.LogoutRequest) error {
 	
 	// Lấy JTI (JWT ID) từ access token
-	jti, err := util.GetJTIFromClaims(logoutRequest.AccessToken)
+	jti, err := util.GetJTIFromClaims(req.AccessToken)
 	if err != nil {
 		l.slog.LogError("Failed to get JTI from access token", err, zap.Error(err))
-		return err
+		return apperrors.NewUnauthorizedError("Access token không hợp lệ")
 	}
 
 	// Băm refresh token để đảm bảo tính bảo mật
-	hashedRefreshToken := util.HashToken(logoutRequest.RefreshToken)
+	hashedRefreshToken := util.HashToken(req.RefreshToken)
 
 	// Lấy thời gian hết hạn của access token và refresh token từ Redis
-	expirationTimeAccessToken, err := l.redisRepo.GetTTL(ctx, _const.WhiteListAccessToken+":"+jti)
+	expirationTimeAccessToken,_ := l.redisRepo.GetTTL(ctx, _const.WhiteListAccessToken+":"+jti)
 	if err != nil {
 		l.slog.LogError("Failed to get TTL for access token from Redis", err, zap.Error(err))
 		return err
@@ -48,12 +48,6 @@ func (l *LogoutUseCase) Logout(ctx context.Context, logoutRequest *models.Logout
 		l.slog.LogError("Failed to get TTL for refresh token from Redis", err, zap.Error(err))
 		return err
 	}
-
-	// Kiểm tra xem thời gian hết hạn của token có hợp lệ không
-	if expirationTimeAccessToken <= 0 || expirationTimeRefreshToken <= 0 {
-		l.slog.LogWarning("Check TTL", "Token has already expired or does not exist in Redis")
-		return apperrors.NewBadRequestError("Lỗi Token không hợp lệ") // Nếu token đã hết hạn hoặc không tồn
-	} 
 
 	// Kiểm tra xem token có tồn tại trong blacklist không
 	accessTokenBeenBlackListed, err := l.redisRepo.Exists(ctx, _const.BlackList+":"+jti)

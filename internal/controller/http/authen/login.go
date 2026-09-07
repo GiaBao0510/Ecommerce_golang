@@ -1,12 +1,15 @@
 package authen
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 
+	"github.com/GiaBao0510/Ecommerce_golang/global"
+	controller "github.com/GiaBao0510/Ecommerce_golang/internal/controller/http"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	service "github.com/GiaBao0510/Ecommerce_golang/internal/service/authen"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/response"
-	controller "github.com/GiaBao0510/Ecommerce_golang/internal/controller/http"
 )
 
 type LoginController struct{
@@ -32,6 +35,31 @@ func (L *LoginController) Login(ctx *gin.Context) error {
 		return err 
 	}
 
+	// thiết lập SameSite để giảm nguy cơ tấn công CSRF
+	ctx.SetSameSite(http.SameSiteLaxMode)
+
+	// Tạo cookie với token và thiết lập các thuộc tính bảo mật
+	ctx.SetCookie(
+		"access_token", 
+		result.AccessToken, 
+		global.Config.Authentication.JWT.AccessTokenExpirationMinutes * 60, 
+		"/",
+		"",
+		false, // Không chỉ gửi cookie qua HTTPS (vì đang phát triển trên localhost, nên đặt là false)
+		true,  // Chỉ cho phép cookie được truy cập bởi trình duyệt (không thể truy cập bằng JavaScript)
+	)
+
+	ctx.SetCookie(
+		"refresh_token", 
+		result.RefreshToken, 
+		global.Config.Authentication.JWT.RefreshTokenExpirationDays * 60 * 60 * 24, 
+		"/",
+		"",
+		false, // Không chỉ gửi cookie qua HTTPS (vì đang phát triển trên localhost, nên đặt là false)
+		true,  // Chỉ cho phép cookie được truy cập bởi trình duyệt (không thể truy cập bằng JavaScript)
+	)
+
+	// Gửi phản hồi
 	response.Success_Response(ctx, 200, "Login successful", result)
 	return nil
 }

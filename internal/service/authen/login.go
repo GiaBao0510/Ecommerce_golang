@@ -48,7 +48,7 @@ func (l *LoginUseCase) loginByEmail(ctx context.Context, loginRequest *models.Lo
 	userVeriInfor, err := l.userRepo.UserVerificationInformationViaEmail(ctx, loginRequest.Account)
 	if err != nil {
 		l.slog.LogError("Login", err, zap.Error(err))
-		return nil, err
+		return nil, apperrors.NewUnauthorizedError("Tài khoản hoặc mật khẩu không chính xác")
 	}
 
 	return l.verifyUserCredentials(ctx, *userVeriInfor, loginRequest.Passoword)
@@ -59,7 +59,7 @@ func (l *LoginUseCase) loginByPhone(ctx context.Context, loginRequest *models.Lo
 	userVeriInfor, err := l.userRepo.UserVerificationInformationViaPhone(ctx, loginRequest.Account)
 	if err != nil {
 		l.slog.LogError("Login", err, zap.Error(err))
-		return nil, err
+		return nil, apperrors.NewUnauthorizedError("Tài khoản hoặc mật khẩu không chính xác")
 	}
 
 	return l.verifyUserCredentials(ctx, *userVeriInfor, loginRequest.Passoword)
@@ -70,7 +70,7 @@ func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor 
 	// Kiểm tra xem mật khâủ đầu vào có khớp với mật khẩu đã băm không
 	if err := bcrypt.CompareHashAndPassword([]byte(userVeriInfor.Password_hash), []byte(password)); err != nil {
 		l.slog.LogWarning("Login", "Password is not match", zap.String("account", userVeriInfor.Email))
-		return nil, apperrors.NewUnauthorizedError("Mật khẩu không hợp lệ")
+		return nil, apperrors.NewUnauthorizedError("Tài khoản hoặc mật khẩu không chính xác")
 	}
 
 	// Kiểm tra xem trạng thái người dùng có hợp lệ không

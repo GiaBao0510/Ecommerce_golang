@@ -87,4 +87,5 @@ type JWTConfig struct {
 	Audience                     string `mapstructure:"audience"`
 	AccessTokenExpirationMinutes int    `mapstructure:"AccessTokenExpirationMinutes"`
 	RefreshTokenExpirationDays   int    `mapstructure:"RefreshTokenExpirationDays"`
+	EncrypKey                    string `mapstructure:"encrypKey"`
 }

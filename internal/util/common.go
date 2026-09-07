@@ -1,8 +1,10 @@
 package util
 
 import (
-	"math/rand/v2"
 	"fmt"
+	"math/big"
+	mathrand "math/rand"
+	"crypto/rand"
 	"time"
 
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
@@ -40,22 +42,30 @@ func GetStringFromContextValue(ctx *gin.Context, key string) string {
 
 // Hàm tạo chuỗi số nguyên có độ dài là n ký tự
 func GenerateRandomNumber(n int) string {
-	var b []byte
+	result := make([]byte, n)
+
 	for i := 0; i < n; i++ {
-		b = append(b, byte(rand.IntN(10)) + '0')
+		result[i] = byte(mathrand.Intn(10)) + '0'
 	}
 
-	return string(b[:])
+	return string(result)
 }
 
 // Hàm tạo ra một chuỗi ngẫu nhiên có độ dài n ký tự
-func GenerateRandomString(n int) string {
+func GenerateRandomString(n int) (string, error) {
 
-	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	const letters ="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	
-	b := make([]rune, n)
+	b := make([]byte, n)
 	for i := range b {
-		b[i] = letters[rand.IntN(len(letters))]
+
+		// rand.Int đọc từ crypto/rand.Reader (entropy của OS) — không thể dự đoán
+        idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+		if err != nil {
+			return "", err
+		}
+
+		b[i] = letters[idx.Int64()]
 	}
-	return string(b)
+	return string(b), nil
 }
