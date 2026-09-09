@@ -6,4 +6,5 @@ type IAuthenController interface {
 	Login(ctx *gin.Context) error
 	Logout(ctx *gin.Context) error
 	Register(ctx *gin.Context) error
+	RefreshToken(ctx *gin.Context) error
 }

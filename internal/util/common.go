@@ -52,7 +52,7 @@ func GenerateRandomNumber(n int) string {
 }
 
 // Hàm tạo ra một chuỗi ngẫu nhiên có độ dài n ký tự
-func GenerateRandomString(n int) (string, error) {
+func GenerateRandom(n int) ([]byte, error) {
 
 	const letters ="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	
@@ -62,10 +62,10 @@ func GenerateRandomString(n int) (string, error) {
 		// rand.Int đọc từ crypto/rand.Reader (entropy của OS) — không thể dự đoán
         idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
 		b[i] = letters[idx.Int64()]
 	}
-	return string(b), nil
+	return b, nil
 }

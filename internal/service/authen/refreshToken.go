@@ -2,9 +2,13 @@ package authen
 
 import (
 	"context"
+	"encoding/json"
 
+	_const "github.com/GiaBao0510/Ecommerce_golang/internal/const"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/dto"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 )
 
@@ -18,36 +22,47 @@ import (
 type RefreshTokenUseCase struct {
 	redis repository.IRedisRepository
 	slog *loghelper.ServiceLogger
-}
+	userRepo  repository.IUserRepository
+} 
 
 func NewRefreshTokenUseCase(
 	redis repository.IRedisRepository,
 	slog *loghelper.ServiceLogger,
+	userRepo repository.IUserRepository,
 ) *RefreshTokenUseCase {
 	return &RefreshTokenUseCase{
 		redis: redis,
 		slog: slog,
+		userRepo: userRepo,
 	}
 }
 
-func(r *RefreshTokenUseCase) RefreshToken(ctx context.Context, req *dto.Token) (*dto.Token, error){
+func(r *RefreshTokenUseCase) RefreshToken(ctx context.Context, token string) (*dto.Token, error){
 
-	// Bước 1: Các bước xác minh access token
-	// 1.1 Kiểm tra xem thuật toán JWT có hợp lệ hay không, nếu không hợp lệ thì trả về lỗi
+	// ----- Các bước kiểm tra token -----
+	// Kiểm tra xem refrestoken có tồn tại trong whitelist hay không, nếu có thì lấy uuid,nếu không tồn tại thì trả về lỗi
+	refreshToken, err := r.redis.Get(ctx, _const.WhiteListRefreshToken + token)
+	if err != nil {
+		return nil, apperrors.NewUnauthorizedError("Refresh token không hợp lệ hoặc đã hết hạn")
+	}
+
+	// Chuyển đổi refreshToken từ []byte sang struct RefreshToken
+	var refreshTokenData util.RefreshToken
+
+	if err := json.Unmarshal([]byte(refreshToken), &refreshTokenData); err != nil {
+		r.slog.LogError("Failed to unmarshal refresh token", err)
+		return nil, apperrors.NewInternalServerError(err)
+	}
+
+	// Lấy thông tin user(user_id, role, email) dựa vào email
+	userInfor, err := r.userRepo.UserVerificationInformationViaEmail(ctx, refreshTokenData.UserID)
 
 
-	// 1.2 Kiểm tra xem chữ ký của access token có hợp lệ hay không, nếu không hợp lệ thì trả về lỗi
-	// 1.3 Kiểm tra xem access token có bị hết hạn hay không, nếu hết hạn thì trả về lỗi
-	// 1.4 Kiểm tra xem access token có bị blacklist hay không, nếu bị blacklist thì trả về lỗi
+	// Tạo access token mới và refresh token mới 
+	
+	// xóa refresh token cũ khỏi whitelist và thêm refresh token cũ vào blacklist
 
-	// Bước 2: Các bước xác minh refresh token
-	// 2.1 Kiểm tra xem refresh token có tồn tại trong whitelist hay không, nếu không tồn tại thì trả về lỗi
-	// 2.2 Kiểm tra xem refresh token có bị hết hạn hay không, nếu hết hạn thì trả về lỗi
-	// 2.3 Kiểm tra xem refresh token có bị blacklist hay không, nếu bị blacklist thì trả về lỗi
-
-	// Bước 2: Xóa Access token cũ và refresh token cũ khỏi whitelist trong Redis
-	// Bước 3: Thêm refresh token cũ vào blacklist trong Redis
-	// Bước 4: Thêm access token mới và refresh token mới vào whitelist trong Redis
+	// Lưu access token mới và refresh token mới vào trong whitelist 
 
 	return nil, nil
 }

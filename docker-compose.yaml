@@ -65,6 +65,8 @@ services:
       - redis
     volumes:
       - redisinsight_data:/data
+    networks:
+      - ecommerce_net
     logging: *default-logging
   
   # Grafana: nền tảng giám sát và trực quan hóa dữ liệu

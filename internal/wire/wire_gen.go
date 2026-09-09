@@ -36,11 +36,13 @@ func InitAuthenRouterHandler(db *sql.DB, queries *database.Queries, logger *zap.
 	iEmailRepository := repositoryimpl.NewEmailRepositoryImpl(client, dbLogger)
 	verifyUserUsecase := authen2.NewVerifyUserUsecase(iUserRepository, iEmailRepository, iRedisRepository, dbLogger)
 	logoutUseCase := authen2.NewLogoutUseCase(iRedisRepository, serviceLogger)
-	iAuthService := authen2.NewAuthService(registerUseCase, loginUseCase, verifyUserUsecase, logoutUseCase)
+	refreshTokenUseCase := authen2.NewRefreshTokenUseCase(iRedisRepository, serviceLogger)
+	iAuthService := authen2.NewAuthService(registerUseCase, loginUseCase, verifyUserUsecase, logoutUseCase, refreshTokenUseCase)
 	loginController := authen.NewLoginController(iAuthService)
 	logoutController := authen.NewLogoutController(iAuthService)
 	registerController := authen.NewRegisterController(iAuthService)
-	iAuthenController := authen.NewAuthenController(loginController, logoutController, registerController)
+	refreshTokenController := authen.NewRefreshTokenController(iAuthService)
+	iAuthenController := authen.NewAuthenController(loginController, logoutController, registerController, refreshTokenController)
 	return iAuthenController, nil
 }
 

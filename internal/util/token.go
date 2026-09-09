@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/GiaBao0510/Ecommerce_golang/global"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"github.com/google/uuid"
 
 	"github.com/gofiber/fiber/v2"
@@ -19,6 +20,13 @@ type Payload struct {
 	UserID   string `json:"user_id"`
 	Email    string `json:"email"`
 	UserRole int    `json:"user_role"`
+}
+
+type RefreshToken struct {
+	UserID   string `json:"user_id"`
+	Token    string `json:"token"`
+	ExpireAt int64  `json:"expire_at"`
+	Revoked  bool   `json:"revoked"`
 }
 
 // Tạo AccessToken
@@ -36,17 +44,20 @@ func GenerateAccessToken(userID, email string, userRole int) (string, error) {
 		return "", err
 	}
 
-	//2. Lấy secret key & encrypt key từ config để làm secret key cho JWT.
+	//Lấy secret key & encrypt key từ config để làm secret key cho JWT.
 	secretKey := global.Config.Authentication.JWT.Secret
 	encryptKey := global.Config.Authentication.JWT.EncrypKey
 
 	//3. Thực hiện mã hóa dữ liệu payload bằng AES với encryptKey từ config
 	encryptedPayload, err := EncryptAES(rawData, []byte(encryptKey))
+	if err != nil {
+		return "", err
+	}
 
 	// 4. Tạo Claims cho token, bao gồm các thông tin cần thiết như user_id, email, user_role, issuer, token_type, iat, exp
 	claims := jwt.MapClaims{
 		"jwt_id":     uuid.NewString(), // Tạo một UUID ngẫu nhiên cho jwt_id
-		"data": 	 encryptedPayload, // Lưu payload đã được mã hóa vào claims
+		"data":       encryptedPayload, // Lưu payload đã được mã hóa vào claims
 		"iss":        global.Config.Authentication.JWT.Issuer,
 		"token_type": "access_token",
 		"iat":        jwt.NewNumericDate(time.Now()),
@@ -67,53 +78,52 @@ func GenerateAccessToken(userID, email string, userRole int) (string, error) {
 
 // Tạo refresh token, bằng cách tạo một chuỗi ngẫu nhiên có độ dài 64 ký tự
 // Lưu ý: refresh token không cần phải có claims, vì nó chỉ được sử dụng để lấy access token mới
-func GenerateRefreshToken() (string, error) {
+func GenerateRefreshToken(uuid string) (RefreshToken, error) {
 
-	// 1. Tạo chuỗi ngẫu nhiên có độ dài 64 ký tự
-	rawToken, err := GenerateRandomString(64)
+	// 1. Tạo chuỗi ngẫu nhiên có độ dài 32 ký tự
+	rawToken, err := GenerateRandom(32)
 	if err != nil {
-		return "", err
+		return RefreshToken{}, err
 	}
 
-	return rawToken, nil
+	//2. Mã hóa chuỗi token vừa tạo
+	token := HashToken(string(rawToken))
+
+	return RefreshToken{
+		UserID:   uuid,
+		Token:    token,
+		ExpireAt: time.Now().Add(time.Hour * 24 * time.Duration(global.Config.Authentication.JWT.RefreshTokenExpirationDays)).Unix(),
+		Revoked:  false,
+	}, nil
 }
 
-// ParseToken: Hàm này sẽ parse Bearer token từ header Authorization và trả về header và payload , ngược lại trả về rỗng
-func ParseToken(authHeader string) (string, string) {
-	const prefix = "Bearer "
+// ParseToken: Hàm này sẽ phân giải Bearer token từ header Authorization và trả về header và payload , ngược lại trả về rỗng
+func ParseToken(authHeader string) (*jwt.Token, jwt.MapClaims, error) {
 
-	// Kiểm tra xem header có bắt đầu bằng "Bearer " hay không
-	// if strings.HasPrefix(authHeader, "Bearer ") {
-	// 	token := strings.TrimPrefix(authHeader, "Bearer")	// Loại bỏ "Bearer " khỏi header
-	// 	parts := strings.Split(token, ".") // Tách token thành 3 phần: header, payload, signature
+	// Kiểm tra xem token có mã hóa đúng thuật toán trước đó không, và kiểm tra xem token đó có đúng với chữ ký đã ký không
+	token, err := jwt.Parse(authHeader, func(t *jwt.Token) (any, error) {
+		if t.Method != jwt.SigningMethodHS256 {
+			return nil, errors.New("invalid signing method")
+		}
+		return []byte(global.Config.Authentication.JWT.Secret), nil
+	})
 
-	// 	// Nếu token có 2 phần (header và payload), trả về header và payload, ngược lại trả về token và rỗng
-	// 	if len(parts) == 2 {
-	// 		return parts[0], parts[1]
-	// 	}
-	// 	return token, ""
-	// }
-	// return "", ""
-
-	// Kiểm tra xem header có bắt đầu bằng "Bearer
-	if !strings.HasPrefix(authHeader, prefix) {
-		return authHeader, ""
+	// Nếu có lỗi hoặc token không hợp lệ, trả về rỗng
+	if err != nil || !token.Valid {
+		return nil, nil, apperrors.NewInvalidTokenError("Error: Token không hợp lệ hoặc đã hết hạn")
 	}
 
-	// Loại bỏ "Bearer " khỏi header
-	token := strings.TrimPrefix(authHeader, prefix)
-
-	// Tách token thành 3 phần: header, payload, signature
-	parts := strings.Split(token, ".")
-	if len(parts) == 3 {
-		return parts[0], parts[1]
+	// Lấy claims từ token
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, nil, apperrors.NewInvalidTokenError("Error: Invalid token claims")
 	}
 
-	return token, ""
+	return token, claims, nil
 }
 
 // ParseTokenWithClaims: Hàm này sẽ parse JWT token và trả về claims, ngược lại trả về rỗng
-func ParseTokenWithClaims(tokenStr, secretKey string) (jwt.MapClaims, error) {
+func ParseTokenWithClaims(tokenStr string) (jwt.MapClaims, error) {
 
 	// Thực hiện parse token với secret key
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
@@ -122,7 +132,7 @@ func ParseTokenWithClaims(tokenStr, secretKey string) (jwt.MapClaims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("Invalid signing method")
 		}
-		return []byte(secretKey), nil
+		return []byte(global.Config.Authentication.JWT.Secret), nil
 	})
 
 	if err != nil {
@@ -149,7 +159,7 @@ func GetUserIDFromClaimsInHeader(ctx *fiber.Ctx, secretKey string) (string, erro
 	token = strings.TrimPrefix(token, "Bearer ")
 
 	// Parse token và lấy claims
-	claims, err := ParseTokenWithClaims(token, secretKey)
+	claims, err := ParseTokenWithClaims(token)
 	if err != nil {
 		return "", err
 	}
@@ -166,9 +176,8 @@ func GetUserIDFromClaimsInHeader(ctx *fiber.Ctx, secretKey string) (string, erro
 // Lấy UserID từ chuỗi JWT token
 func GetUserIDFromClaims(tokenStr string) (string, error) {
 
-	secretKey := global.Config.Authentication.JWT.Secret
 	// Parse token và lấy claims
-	claims, err := ParseTokenWithClaims(tokenStr, secretKey)
+	claims, err := ParseTokenWithClaims(tokenStr)
 	if err != nil {
 		return "", err
 	}
@@ -184,9 +193,9 @@ func GetUserIDFromClaims(tokenStr string) (string, error) {
 
 // Lấy JTI từ chuỗi JWT token
 func GetJTIFromClaims(tokenStr string) (string, error) {
-	secretKey := global.Config.Authentication.JWT.Secret
+
 	// Parse token và lấy claims
-	claims, err := ParseTokenWithClaims(tokenStr, secretKey)
+	claims, err := ParseTokenWithClaims(tokenStr)
 	if err != nil {
 		return "", err
 	}
@@ -204,8 +213,7 @@ func GetJTIFromClaims(tokenStr string) (string, error) {
 func GetTokenExpirationFromClaims(tokenStr string) (int64, error) {
 
 	// Parse token và lấy claims
-	secretKey := global.Config.Authentication.JWT.Secret
-	claims, err := ParseTokenWithClaims(tokenStr, secretKey)
+	claims, err := ParseTokenWithClaims(tokenStr)
 	if err != nil {
 		return 0, err
 	}
@@ -223,4 +231,35 @@ func GetTokenExpirationFromClaims(tokenStr string) (int64, error) {
 func HashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
+}
+
+// Hàm dùng để giải mã payload đã được mã hóa bằng AES từ chuỗi JWT token
+func DecryptPayloadFromToken(tokenStr string) (*Payload, error) {
+
+	// Parse token và lấy claims
+	_, claims, err := ParseToken(tokenStr)
+	if err != nil {
+		return nil, apperrors.NewInvalidTokenError("Error: Token không hợp lệ hoặc đã hết hạn")
+	}
+
+	// Lấy cụm "data" trong claims
+	encryptedData, ok := claims["data"].(string)
+	if !ok {
+		return nil, apperrors.NewInvalidTokenError("Error: Encode data not found in token claims")
+	}
+
+	// Giải mã dữ liệu payload bằng AES với encryptKey từ config
+
+	decryptedBytes, err := DecryptAES(encryptedData, []byte(global.Config.Authentication.JWT.EncrypKey))
+	if err != nil {
+		return nil, apperrors.NewInvalidTokenError("Error: Decrypt data failed")
+	}
+
+	// Unmarshal dữ liệu payload đã giải mã thành struct Payload
+	var payload Payload
+	if err := json.Unmarshal(decryptedBytes, &payload); err != nil {
+		return nil, apperrors.NewInvalidTokenError("Error: Unmarshal data failed")
+	}
+
+	return &payload, nil
 }

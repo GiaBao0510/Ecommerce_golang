@@ -3,8 +3,10 @@ package repositoryimpl
 import (
 	"context"
 	"time"
+
 	"github.com/GiaBao0510/Ecommerce_golang/global"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -19,14 +21,14 @@ func NewRedisRepositoryImpl(logger *loghelper.DBLogger) repository.IRedisReposit
 	return &RedisRepositoryImpl{log: logger}
 }
 
-func (r *RedisRepositoryImpl) Set(ctx context.Context, key, value string, expiration time.Duration) error {
+func (r *RedisRepositoryImpl) Set(ctx context.Context, key string, value any, expiration time.Duration) error {
 	err := global.Redis.Set(ctx, key, value, expiration).Err()
 	if err != nil {
 		r.log.LogError("Lôi khi set key-value vào Redis.", err, zap.String("key", key))
 		return err
 	}
 
-	r.log.LogInfo("Set key-value", "Thực hiện thành công.",zap.String("key", key), zap.String("value", value), zap.Duration("expiration", expiration))
+	r.log.LogInfo("Set key-value", "Thực hiện thành công.",zap.String("key", key), zap.Duration("expiration", expiration))
 	return nil
 }
 
@@ -41,7 +43,7 @@ func (r *RedisRepositoryImpl) Get(ctx context.Context, key string) (string, erro
 		return "", err
 	}
 
-	r.log.LogInfo("Get key-value", "Thực hiện thành công.", zap.String("key", key), zap.String("value", value))
+	r.log.LogInfo("Get key-value", "Thực hiện thành công.", zap.String("key", key))
 	return value, nil
 }
 
@@ -83,6 +85,14 @@ func (r *RedisRepositoryImpl) GetTTL(ctx context.Context, key string) (time.Dura
 	if err != nil {
 		r.log.LogError("Lỗi khi lấy thời gian còn lại trước khi key hết hạn trong Redis.", err, zap.String("key", key))
 		return 0, err
+	}
+
+	// Xác định trường hợp key không tồn tại hoặc đã hết hạn
+	switch duration {
+		case -2 * time.Second:
+			return 0, apperrors.NewNotFoundError("Key không tồn tại trong Redis.")
+		case -1 * time.Second:
+			return 0, apperrors.NewNotFoundError("Key tồn tại nhưng không có thời gian hết hạn trong Redis.")
 	}
 
 	r.log.LogInfo("GetTTL key", "Thực hiện thành công.", zap.String("key", key), zap.Duration("ttl", duration))

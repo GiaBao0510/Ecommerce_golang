@@ -103,15 +103,15 @@ func (u *VerifyUserUsecase) VerifyEmail(ctx context.Context, email, otp string) 
 	}
 
 	// 2. Xác minh mã OTP
-	if storedOtp != otp {
-		u.logger.LogWarning("VerifyEmail", "Mã OTP không hợp lệ", zap.String("email", email), zap.String("provided_otp", otp))
-		return apperrors.NewBadRequestError("Mã OTP không hợp lệ")
-	}
-
 	if storedOtp == "" {
 		return apperrors.NewBadRequestError("Mã OTP đã hết hạn hoặc không tồn tại, vui lòng gửi lại mã")
 	}
 
+	if storedOtp != otp {
+		u.logger.LogWarning("VerifyEmail", "Mã OTP không hợp lệ", zap.String("email", email), zap.String("provided_otp", otp))
+		return apperrors.NewBadRequestError("Mã OTP không hợp lệ")
+	}
+	
 	// 3. Cập nhật trong cơ sở dữ liệu để đánh dấu email là đã xác thực
 	if err := u.userRepo.VerifyUserEmail(ctx, email); err != nil {
 		u.logger.LogError("Error[VerifyEmail]: Lỗi khi cập nhật trạng thái xác thực email trong cơ sở dữ liệu", err, zap.Error(err), zap.String("email", email))

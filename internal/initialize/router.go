@@ -1,10 +1,12 @@
 package initialize
 
 import (
+	"github.com/gin-contrib/gzip"
+	"github.com/gin-gonic/gin"
+
 	"github.com/GiaBao0510/Ecommerce_golang/global"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/middleware"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/routers"
-	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -28,6 +30,10 @@ func InitRouter() *gin.Engine {
 
 	r = gin.New() // Sử dụng gin.New() để tạo một instance Gin mới mà không có middleware mặc định, giúp giảm overhead và tăng hiệu suất trong môi trường sản xuất
 
+	// Mục đích câu lệnh này là để nén dữ liệu trả về từ server trước khi gửi cho client, giúp giảm băng thông và tăng tốc độ tải trang. 
+	// gzip.DefaultCompression là mức nén mặc định, cân bằng giữa tốc độ nén và hiệu quả nén. Khi client nhận được dữ liệu nén, nó sẽ tự động giải nén để hiển thị nội dung.
+	r.Use(gzip.Gzip(gzip.DefaultCompression)) 
+	
 	/* ---Bước 2: Đăng ký middleware chung------------------------------------------------------
 		THỨ TỰ ĐĂNG KÝ RẤT QUAN TRỌNG — middleware chạy TRƯỚC bọc quanh middleware
 	chạy SAU (giống như vỏ hành). Lý do thứ tự dưới đây:
@@ -53,7 +59,6 @@ func InitRouter() *gin.Engine {
 	→ Dùng Access logger (không phải Error logger)
 
 	6. tương tự Logger, cần status code cuối cùng.
-
 
 	------------------------------------------------------------------------------------------ */
 	r.Use(
@@ -104,7 +109,11 @@ func InitRouter() *gin.Engine {
 
 	// Định nghĩa route cho từng vai trò
 	UserGroup := MainGroup.Group("/user")
+	UserGroup.Use(middleware.AuthenMiddleware())
+
 	ManagerGroup := MainGroup.Group("/manager")
+	ManagerGroup.Use(middleware.AuthenMiddleware())
+	
 	PublicGroup := MainGroup.Group("/common")
 
 	// Định nghĩa route thường dùng cho việc xác thực

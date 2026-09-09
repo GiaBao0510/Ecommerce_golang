@@ -2,10 +2,13 @@ package authen
 
 import (
 	"context"
+	"time"
 
+	"github.com/GiaBao0510/Ecommerce_golang/global"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
 	_const "github.com/GiaBao0510/Ecommerce_golang/internal/const"
@@ -38,55 +41,75 @@ func (l *LogoutUseCase) Logout(ctx context.Context, req *models.LogoutRequest) e
 	hashedRefreshToken := util.HashToken(req.RefreshToken)
 
 	// Lấy thời gian hết hạn của access token và refresh token từ Redis
-	expirationTimeAccessToken,_ := l.redisRepo.GetTTL(ctx, _const.WhiteListAccessToken+":"+jti)
+	exp_AccessToken, err := l.redisRepo.GetTTL(ctx, _const.WhiteListAccessToken+":"+jti)
 	if err != nil {
 		l.slog.LogError("Failed to get TTL for access token from Redis", err, zap.Error(err))
 		return err
 	}
-	expirationTimeRefreshToken, err := l.redisRepo.GetTTL(ctx, _const.WhiteListRefreshToken+":"+hashedRefreshToken)
+	exp_RefreshToken, err := l.redisRepo.GetTTL(ctx, _const.WhiteListRefreshToken+":"+hashedRefreshToken)
 	if err != nil {
 		l.slog.LogError("Failed to get TTL for refresh token from Redis", err, zap.Error(err))
 		return err
 	}
+	
 
-	// Kiểm tra xem token có tồn tại trong blacklist không
-	accessTokenBeenBlackListed, err := l.redisRepo.Exists(ctx, _const.BlackList+":"+jti)
-	if err != nil {
-		l.slog.LogError("Failed to check if access token is blacklisted in Redis", err, zap.Error(err))
-		return err
-	}
+	// Thực hiện thu hồi token bằng cách thêm vào blacklist trước, sau đó xóa khỏi whitelist
 
-	refreshTokenBeenBlackListed, err := l.redisRepo.Exists(ctx, _const.BlackList+":"+hashedRefreshToken)
-	if err != nil {
-		l.slog.LogError("Failed to check if refresh token is blacklisted in Redis", err, zap.Error(err))
-		return err
-	}
-
-	// Nếu token đã tồn tại trong blacklist, trả về lỗi
-	if accessTokenBeenBlackListed || refreshTokenBeenBlackListed {
-		l.slog.LogWarning("Check Token in Blacklist", "Token has already been blacklisted")
-		return apperrors.NewBadRequestError("Lỗi Token không hợp lệ") // Nếu token đã tồn tại trong blacklist
-	}
+	err = l.revokeToken(
+		ctx,
+		_const.WhiteListAccessToken+":"+jti,
+		_const.WhiteListRefreshToken+":"+hashedRefreshToken,
+		_const.BlackList+":"+jti,
+		_const.BlackList+":"+hashedRefreshToken,
+		exp_AccessToken,
+		exp_RefreshToken,
+	)
 	
 	// Xóa token khỏi whitelist
-	if err := l.redisRepo.Delete(ctx, _const.WhiteListAccessToken+":"+jti); err != nil {
-		l.slog.LogError("Failed to delete access token from whitelist in Redis", err, zap.Error(err))
-		return err
-	} 
-	if err := l.redisRepo.Delete(ctx, _const.WhiteListRefreshToken+":"+hashedRefreshToken); err != nil {
-		l.slog.LogError("Failed to delete refresh token from whitelist in Redis", err, zap.Error(err))
-		return err
-	}
+	// if err := l.redisRepo.Delete(ctx, _const.WhiteListAccessToken+":"+jti); err != nil {
+	// 	l.slog.LogError("Failed to delete access token from whitelist in Redis", err, zap.Error(err))
+	// 	return err
+	// } 
+	// if err := l.redisRepo.Delete(ctx, _const.WhiteListRefreshToken+":"+hashedRefreshToken); err != nil {
+	// 	l.slog.LogError("Failed to delete refresh token from whitelist in Redis", err, zap.Error(err))
+	// 	return err
+	// }
 
-	// thêm token vào blacklist
-	if err := l.redisRepo.Set(ctx, _const.BlackList+":"+jti, "1", expirationTimeAccessToken); err != nil {
-		l.slog.LogError("Failed to add access token to blacklist in Redis", err, zap.Error(err))
-		return err
-	}
-	if err := l.redisRepo.Set(ctx, _const.BlackList+":"+hashedRefreshToken, "1", expirationTimeRefreshToken); err != nil {
-		l.slog.LogError("Failed to add refresh token to blacklist in Redis", err, zap.Error(err))
-		return err
-	}
+	// // thêm token vào blacklist
+	// if err := l.redisRepo.Set(ctx, _const.BlackList+":"+jti, "1", exp_AccessToken); err != nil {
+	// 	l.slog.LogError("Failed to add access token to blacklist in Redis", err, zap.Error(err))
+	// 	return err
+	// }
+	// if err := l.redisRepo.Set(ctx, _const.BlackList+":"+hashedRefreshToken, "1", exp_RefreshToken); err != nil {
+	// 	l.slog.LogError("Failed to add refresh token to blacklist in Redis", err, zap.Error(err))
+	// 	return err
+	// }
 
 	return nil
+}
+
+// Thực hiện quy trình thu hồi token. Quá trình thực hiện: Đặt vào blacklist trước, rồi xóa khỏi whitelist. Nếu có lỗi xảy ra trong quá trình thực hiện, sẽ trả về lỗi và không xóa khỏi whitelist.
+func (l *LogoutUseCase) revokeToken(
+	ctx context.Context,
+	access_WhiteList string,
+	refresh_WhiteList string,
+	access_BlackList string,
+	refresh_BlackList string,
+	access_TTL time.Duration,
+	refresh_TTL time.Duration,
+) error {
+
+	_, err := global.Redis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+		
+		// 1. Thêm token vào blacklist trước
+		pipe.Set(ctx,access_BlackList, "1", access_TTL)
+		pipe.Set(ctx,refresh_BlackList, "1", refresh_TTL)
+
+		// 2. Xóa token khỏi whitelist
+		pipe.Del(ctx, access_WhiteList)
+		pipe.Del(ctx, refresh_WhiteList)
+		return nil
+	})
+
+	return err
 }

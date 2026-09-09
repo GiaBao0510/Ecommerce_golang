@@ -14,7 +14,7 @@ type IAuthService interface {
 	Register(ctx context.Context, obj *models.CreateUsersRequest) error
 	Login(ctx context.Context, loginRequest *models.LoginRequest) (*models.LoginResponse, error)
 	Logout(ctx context.Context, logoutReq *models.LogoutRequest) error
-	RefreshToken(ctx context.Context, token *dto.Token) (*dto.Token, error)
+	RefreshToken(ctx context.Context, token string) (*dto.Token, error)
 }
 
 // Triển khai Interface IAuthService
@@ -60,6 +60,6 @@ func (s *AuthService) Login(ctx context.Context, loginRequest *models.LoginReque
 func (s *AuthService) Logout(ctx context.Context, logoutReq *models.LogoutRequest) error {
 	return s.logoutUseCase.Logout(ctx, logoutReq)
 }
-func (s *AuthService) RefreshToken(ctx context.Context, token *dto.Token) (*dto.Token, error) {
+func (s *AuthService) RefreshToken(ctx context.Context, token string) (*dto.Token, error) {
 	return s.refreshTokenUseCase.RefreshToken(ctx, token)
 }

@@ -20,6 +20,7 @@ var (
 	ErrTokenExpired = errors.New("Token expired")
 	ErrTokenInvalid = errors.New("Invalid token")
 	ErrTokenMissing = errors.New("Token missing")
+	ErrInvalidToken = errors.New("Invalid token")
 
 	// 403 - Forbidden
 	ErrForbidden    = errors.New("Forbidden")
@@ -150,6 +151,16 @@ func NewTokenMissingError() *AppError {
 		Code:    http.StatusUnauthorized,
 		Message: "Token bị thiếu",
 		ErrKey:  ErrTokenMissing,
+		Status:  "Unauthorized",
+	}
+}
+
+// Tạo hàm thông báo lỗi không hợp lệ liên quan đến token
+func NewInvalidTokenError(mgs string) *AppError {
+	return &AppError{
+		Code:    http.StatusUnauthorized,
+		Message: mgs,
+		ErrKey:  ErrInvalidToken,
 		Status:  "Unauthorized",
 	}
 }

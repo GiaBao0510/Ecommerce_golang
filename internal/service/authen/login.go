@@ -2,10 +2,11 @@ package authen
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
-	_const "github.com/GiaBao0510/Ecommerce_golang/internal/const"
 	"github.com/GiaBao0510/Ecommerce_golang/global"
+	_const "github.com/GiaBao0510/Ecommerce_golang/internal/const"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
@@ -50,7 +51,7 @@ func (l *LoginUseCase) loginByEmail(ctx context.Context, loginRequest *models.Lo
 		l.slog.LogError("Login", err, zap.Error(err))
 		return nil, apperrors.NewUnauthorizedError("Tài khoản hoặc mật khẩu không chính xác")
 	}
-
+ 
 	return l.verifyUserCredentials(ctx, *userVeriInfor, loginRequest.Passoword)
 }
 
@@ -79,33 +80,33 @@ func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor 
 		return nil, apperrors.NewForbiddenError("Người dùng không hoạt động")
 	}
 
-	// Lấy thêm thông tin IP của người dùng từ 
-
 	// Tạo access token và refresh token
 	accesstoken, err := util.GenerateAccessToken(userVeriInfor.Uuid, userVeriInfor.Email, int(userVeriInfor.Role_id))
 	if err != nil {
 		l.slog.LogError("Failed to generate access token", err, zap.Error(err))
-		return nil, err
+		return nil, apperrors.NewInternalServerError(err)
 	}
 	jti, err := util.GetJTIFromClaims(accesstoken)
 	if err != nil {
 		l.slog.LogError("Failed to get JTI from access token", err, zap.Error(err))
-		return nil, err
+		return nil, apperrors.NewInternalServerError(err)
 	}
 
 	// Tạo refresh token
-	refreshToken, err := util.GenerateRefreshToken()
+	refreshToken, err := util.GenerateRefreshToken(userVeriInfor.Uuid)
 	if err != nil {
 		l.slog.LogError("Failed to generate refresh token", err, zap.Error(err))
-		return nil, err
+		return nil, apperrors.NewInternalServerError(err)
 	}
-
-	// Mã hóa refresh token trước khi lưu vào Redis
-	hashedRefreshToken := util.HashToken(refreshToken)
+	refreshTokenData, err := json.Marshal(refreshToken)
+	if err != nil {
+		l.slog.LogError("Failed to marshal refresh token", err, zap.Error(err))
+		return nil, apperrors.NewInternalServerError(err)
+	}
 
 	// Lưu refresh token (đã bị mã hóa) vào whitelist thông qua Redis với thời hạn là 7 ngày [Cấu trúc lưu trữ: Key: WhiteList_RefreshToken:<hashed_refresh_token>; Value: <user_id>]
 	ttl := time.Duration(global.Config.Authentication.JWT.RefreshTokenExpirationDays) * 24 * time.Hour
-	if err := l.redisRepo.Set(ctx, _const.WhiteListRefreshToken + ":" + hashedRefreshToken, userVeriInfor.Uuid, ttl); err != nil {
+	if err := l.redisRepo.Set(ctx, _const.WhiteListRefreshToken + refreshToken.Token, refreshTokenData, ttl ); err != nil {
 		l.slog.LogError("Failed to store refresh token in Redis", err, zap.Error(err))
 		return nil, apperrors.NewInternalServerError(err)
 	}
@@ -113,7 +114,7 @@ func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor 
 	// Lưu access token vào whitelist thông qua Redis với thời hạn là 15 phút
 	ttl = time.Duration(global.Config.Authentication.JWT.AccessTokenExpirationMinutes) * time.Minute
 	// Lưu access token vào whitelist thông qua Redis với thời hạn là 15 phút [Cấu trúc lưu trữ: Key: WhiteList_AccessToken:<jti>; Value: <user_id>]
-	if err := l.redisRepo.Set(ctx, _const.WhiteListAccessToken+":"+jti, userVeriInfor.Uuid, ttl); err != nil {	
+	if err := l.redisRepo.Set(ctx, _const.WhiteListAccessToken + jti, userVeriInfor.Uuid, ttl); err != nil {	
 		l.slog.LogError("Failed to store access token in Redis", err, zap.Error(err))
 		return nil, err
 	}
@@ -121,6 +122,6 @@ func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor 
 	// Trả về access token và refresh token
 	return &models.LoginResponse{
 		AccessToken:  accesstoken,
-		RefreshToken: refreshToken,
+		RefreshToken: refreshToken.Token,
 	}, nil
 }
