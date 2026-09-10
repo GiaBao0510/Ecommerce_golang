@@ -36,7 +36,7 @@ func InitAuthenRouterHandler(db *sql.DB, queries *database.Queries, logger *zap.
 	iEmailRepository := repositoryimpl.NewEmailRepositoryImpl(client, dbLogger)
 	verifyUserUsecase := authen2.NewVerifyUserUsecase(iUserRepository, iEmailRepository, iRedisRepository, dbLogger)
 	logoutUseCase := authen2.NewLogoutUseCase(iRedisRepository, serviceLogger)
-	refreshTokenUseCase := authen2.NewRefreshTokenUseCase(iRedisRepository, serviceLogger)
+	refreshTokenUseCase := authen2.NewRefreshTokenUseCase(iRedisRepository, serviceLogger, iUserRepository)
 	iAuthService := authen2.NewAuthService(registerUseCase, loginUseCase, verifyUserUsecase, logoutUseCase, refreshTokenUseCase)
 	loginController := authen.NewLoginController(iAuthService)
 	logoutController := authen.NewLogoutController(iAuthService)

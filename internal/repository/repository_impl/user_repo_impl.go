@@ -458,6 +458,22 @@ func (r *UserRepository) UserVerificationInformationViaPhone(ctx context.Context
 	return &result, nil
 }
 
+func (r *UserRepository) UserVerificationInformationViaUID(ctx context.Context, uid string) (*models.UserVerificationInformation, error) {
+	row, err := r.db.UserVerificationInformationViaUID(ctx, uid)
+	if err != nil {
+		r.dblog.LogError("UserVerificationInformationViaUID", err, zap.String("uid", uid))
+		return nil, MapDBErrorWithContext(err, "Lỗi khi lấy thông tin xác thực người dùng với UID: "+uid)
+	}
+
+	result := models.UserVerificationInformation{
+		Uuid: row.Uuid,
+		Email: row.Email,
+		Role_id: row.RoleID,
+	}
+	
+	return &result, nil
+}
+
 func (r *UserRepository) WithTx(tx *sql.Tx) repository.IUserRepository {
 	return &UserRepository{
 		db: r.db.WithTx(tx),

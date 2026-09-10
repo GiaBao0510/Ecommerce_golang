@@ -116,6 +116,26 @@ func (q *Queries) UserVerificationInformationViaPhone(ctx context.Context, phone
 	return i, err
 }
 
+const userVerificationInformationViaUID = `-- name: UserVerificationInformationViaUID :one
+SELECT u.uuid, u.email, ur.role_id
+FROM "user" u 
+INNER JOIN user_role ur ON u.uuid = ur.uuid
+WHERE u.uuid = $1
+`
+
+type UserVerificationInformationViaUIDRow struct {
+	Uuid   string
+	Email  string
+	RoleID int32
+}
+
+func (q *Queries) UserVerificationInformationViaUID(ctx context.Context, uuid string) (UserVerificationInformationViaUIDRow, error) {
+	row := q.db.QueryRowContext(ctx, userVerificationInformationViaUID, uuid)
+	var i UserVerificationInformationViaUIDRow
+	err := row.Scan(&i.Uuid, &i.Email, &i.RoleID)
+	return i, err
+}
+
 const verifyEmail = `-- name: VerifyEmail :execresult
 UPDATE "user"
 	SET is_email_verified = TRUE,

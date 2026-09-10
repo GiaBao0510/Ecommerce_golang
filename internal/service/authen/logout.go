@@ -37,16 +37,13 @@ func (l *LogoutUseCase) Logout(ctx context.Context, req *models.LogoutRequest) e
 		return apperrors.NewUnauthorizedError("Access token không hợp lệ")
 	}
 
-	// Băm refresh token để đảm bảo tính bảo mật
-	hashedRefreshToken := util.HashToken(req.RefreshToken)
-
 	// Lấy thời gian hết hạn của access token và refresh token từ Redis
-	exp_AccessToken, err := l.redisRepo.GetTTL(ctx, _const.WhiteListAccessToken+":"+jti)
+	exp_AccessToken, err := l.redisRepo.GetTTL(ctx, _const.WhiteListAccessToken + jti)
 	if err != nil {
 		l.slog.LogError("Failed to get TTL for access token from Redis", err, zap.Error(err))
 		return err
 	}
-	exp_RefreshToken, err := l.redisRepo.GetTTL(ctx, _const.WhiteListRefreshToken+":"+hashedRefreshToken)
+	exp_RefreshToken, err := l.redisRepo.GetTTL(ctx, _const.WhiteListRefreshToken + req.RefreshToken)
 	if err != nil {
 		l.slog.LogError("Failed to get TTL for refresh token from Redis", err, zap.Error(err))
 		return err
@@ -57,33 +54,13 @@ func (l *LogoutUseCase) Logout(ctx context.Context, req *models.LogoutRequest) e
 
 	err = l.revokeToken(
 		ctx,
-		_const.WhiteListAccessToken+":"+jti,
-		_const.WhiteListRefreshToken+":"+hashedRefreshToken,
-		_const.BlackList+":"+jti,
-		_const.BlackList+":"+hashedRefreshToken,
+		_const.WhiteListAccessToken + jti,
+		_const.WhiteListRefreshToken + req.RefreshToken,
+		_const.BlackList + jti,
+		_const.BlackList + req.RefreshToken,
 		exp_AccessToken,
 		exp_RefreshToken,
 	)
-	
-	// Xóa token khỏi whitelist
-	// if err := l.redisRepo.Delete(ctx, _const.WhiteListAccessToken+":"+jti); err != nil {
-	// 	l.slog.LogError("Failed to delete access token from whitelist in Redis", err, zap.Error(err))
-	// 	return err
-	// } 
-	// if err := l.redisRepo.Delete(ctx, _const.WhiteListRefreshToken+":"+hashedRefreshToken); err != nil {
-	// 	l.slog.LogError("Failed to delete refresh token from whitelist in Redis", err, zap.Error(err))
-	// 	return err
-	// }
-
-	// // thêm token vào blacklist
-	// if err := l.redisRepo.Set(ctx, _const.BlackList+":"+jti, "1", exp_AccessToken); err != nil {
-	// 	l.slog.LogError("Failed to add access token to blacklist in Redis", err, zap.Error(err))
-	// 	return err
-	// }
-	// if err := l.redisRepo.Set(ctx, _const.BlackList+":"+hashedRefreshToken, "1", exp_RefreshToken); err != nil {
-	// 	l.slog.LogError("Failed to add refresh token to blacklist in Redis", err, zap.Error(err))
-	// 	return err
-	// }
 
 	return nil
 }

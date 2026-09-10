@@ -14,15 +14,15 @@ type IAuthService interface {
 	Register(ctx context.Context, obj *models.CreateUsersRequest) error
 	Login(ctx context.Context, loginRequest *models.LoginRequest) (*models.LoginResponse, error)
 	Logout(ctx context.Context, logoutReq *models.LogoutRequest) error
-	RefreshToken(ctx context.Context, token string) (*dto.Token, error)
+	RefreshToken(ctx context.Context, token *dto.Token) (*dto.Token, error)
 }
 
 // Triển khai Interface IAuthService
 type AuthService struct {
-	registerUseCase   *RegisterUseCase
-	loginUseCase      *LoginUseCase
-	verifyUserUseCase *VerifyUserUsecase
-	logoutUseCase     *LogoutUseCase
+	registerUseCase     *RegisterUseCase
+	loginUseCase        *LoginUseCase
+	verifyUserUseCase   *VerifyUserUsecase
+	logoutUseCase       *LogoutUseCase
 	refreshTokenUseCase *RefreshTokenUseCase
 }
 
@@ -34,10 +34,10 @@ func NewAuthService(
 	refreshTokenUseCase *RefreshTokenUseCase,
 ) IAuthService {
 	return &AuthService{
-		registerUseCase:   registerUseCase,
-		loginUseCase:      loginUseCase,
-		verifyUserUseCase: verifyUserUseCase,
-		logoutUseCase:     logoutUseCase,
+		registerUseCase:     registerUseCase,
+		loginUseCase:        loginUseCase,
+		verifyUserUseCase:   verifyUserUseCase,
+		logoutUseCase:       logoutUseCase,
 		refreshTokenUseCase: refreshTokenUseCase,
 	}
 }
@@ -60,6 +60,6 @@ func (s *AuthService) Login(ctx context.Context, loginRequest *models.LoginReque
 func (s *AuthService) Logout(ctx context.Context, logoutReq *models.LogoutRequest) error {
 	return s.logoutUseCase.Logout(ctx, logoutReq)
 }
-func (s *AuthService) RefreshToken(ctx context.Context, token string) (*dto.Token, error) {
+func (s *AuthService) RefreshToken(ctx context.Context, token *dto.Token) (*dto.Token, error) {
 	return s.refreshTokenUseCase.RefreshToken(ctx, token)
 }

@@ -35,3 +35,9 @@ SELECT u.uuid, u.user_name, u.email, ur.role_id, u.password_hash, u.id_status
 FROM "user" u 
 INNER JOIN user_role ur ON u.uuid = ur.uuid
 WHERE phone_num = $1;
+
+-- name: UserVerificationInformationViaUID :one
+SELECT u.uuid, u.email, ur.role_id
+FROM "user" u 
+INNER JOIN user_role ur ON u.uuid = ur.uuid
+WHERE u.uuid = $1;

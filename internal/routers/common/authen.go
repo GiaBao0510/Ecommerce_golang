@@ -23,6 +23,7 @@ func (a *AuthenRouter) InitAuthenRouter(Router *gin.RouterGroup, db *sql.DB, que
 	Router.POST("/register", controller.Build(authController.Register, logger))
 	Router.POST("/login", controller.Build(authController.Login, logger))
 	
-	// private routes for authentication (require authentication)
+	// private routes for authentication (require authentication) 
 	Router.POST("/logout", controller.Build(authController.Logout, logger))
+	Router.POST("/refresh", controller.Build(authController.RefreshToken, logger))
 } 
