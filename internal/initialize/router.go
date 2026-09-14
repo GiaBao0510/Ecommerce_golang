@@ -6,11 +6,14 @@ import (
 
 	"github.com/GiaBao0510/Ecommerce_golang/global"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/middleware"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/routers"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func InitRouter() *gin.Engine {
+func InitRouter(
+	redisRepo repository.IRedisRepository,
+) *gin.Engine {
 
 	var r *gin.Engine
 
@@ -73,17 +76,16 @@ func InitRouter() *gin.Engine {
 		// → Chưa implement, sẽ thêm sau
 		// middleware.CorsMiddleware(),
 
-		// [5] Rate Limiter — Giới hạn số request từ 1 IP
-		// → Ngăn DDoS, brute force
-		// → Chưa implement, sẽ thêm sau
-		// middleware.RateLimitMiddleware(),
-
 		// [6] Authentication — Xác thực JWT token
 		// → Kiểm tra Authorization header
 		// → PHẢI sau Recovery (để Recovery bắt được panic nếu auth bị lỗi)
 		// → Chưa implement đầy đủ, bật khi sẵn sàng
 		// middleware.AuthenMiddleware(),
 	)
+
+	// ==================================================
+	// Tạo Middleware
+	authenMiddleware := middleware.NewAuthenMiddleware(redisRepo)
 
 	/* ==================================================
 	// Metric Endpoint — /metrics
@@ -104,17 +106,26 @@ func InitRouter() *gin.Engine {
 
 	MainGroup := r.Group("/v1/api")
 	{
-		MainGroup.GET("/checkStatus")
+		MainGroup.GET(
+			"/checkStatus",
+			middleware.RateLimitingMiddlewareForPublicAccess(),
+			func(c *gin.Context) {
+				c.JSON(200, gin.H{"status": "ok"})
+			},
+		)
 	}
 
 	// Định nghĩa route cho từng vai trò
 	UserGroup := MainGroup.Group("/user")
-	UserGroup.Use(middleware.AuthenMiddleware())
+	UserGroup.Use(middleware.RateLimitingMiddlewareForPrivateAccess()) 
+	UserGroup.Use(authenMiddleware.Handler())
 
 	ManagerGroup := MainGroup.Group("/manager")
-	ManagerGroup.Use(middleware.AuthenMiddleware())
+	ManagerGroup.Use(middleware.RateLimitingMiddlewareForPrivateAccess()) 
+	ManagerGroup.Use(authenMiddleware.Handler())
 	
 	PublicGroup := MainGroup.Group("/common")
+	PublicGroup.Use(middleware.RateLimitingMiddlewareForPublicAccess())
 
 	// Định nghĩa route thường dùng cho việc xác thực
 	commonRouter.InitAuthenRouter(
@@ -122,6 +133,7 @@ func InitRouter() *gin.Engine {
 		global.PostgreSQL,
 		global.DB,
 		global.Logger.Error,
+		authenMiddleware.Handler(),
 	)
 
 	// Định nghĩa route cho vai trò user

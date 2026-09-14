@@ -34,7 +34,7 @@ func SetUpRouter(logger *zap.Logger) *gin.Engine {
 
 		//HSTS(),
 		//HttpRedirection(),
-		middleware.AuthenMiddleware(),
+		//middleware.AuthenMiddleware(),
 	)
 
 	v1 := r.Group("/v1/api")

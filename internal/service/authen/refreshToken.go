@@ -13,6 +13,7 @@ import (
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"go.uber.org/zap"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // Mô tả:
@@ -43,6 +44,11 @@ func NewRefreshTokenUseCase(
 func(r *RefreshTokenUseCase) RefreshToken(ctx context.Context, token *dto.Token) (*dto.Token, error){
 
 	// ----- Các bước kiểm tra token -----
+
+	if err := r.validationToken(token); err != nil {
+		r.slog.LogError("Failed to validate token", err)
+		return nil, apperrors.NewUnauthorizedError("Access token hoặc refresh token không hợp lệ")
+	}
 
 	// Kiểm tra xem refrestoken có tồn tại trong whitelist hay không, nếu có thì lấy uuid,nếu không tồn tại thì trả về lỗi
 	refreshToken, err := r.redis.Get(ctx, _const.WhiteListRefreshToken + token.RefreshToken)
@@ -98,6 +104,59 @@ func(r *RefreshTokenUseCase) RefreshToken(ctx context.Context, token *dto.Token)
 	}, nil
 }
 
+// Hàm xác thực token (chủ yếu là xác thực trên access token để cấp cho refresh token mới)
+func( r *RefreshTokenUseCase) validationToken(tokenData *dto.Token) error {
+
+	// Kiểm tra xem một trong hai token có rỗng hay không, nếu có thì trả về lỗi
+	if tokenData.AccessToken== "" || tokenData.RefreshToken == "" {
+		r.slog.LogError("Access token hoặc refresh token rỗng", nil)
+		return apperrors.NewUnauthorizedError("Access token hoặc refresh token không hợp lệ")
+	}
+
+	// Lây thông tin từ token
+	parsedToken, err := jwt.Parse(
+		tokenData.AccessToken,
+		func(token *jwt.Token) (any, error) {
+			// Kiểm tra thuật toán chính xác là HS256
+			if token.Method != jwt.SigningMethodHS256 {
+				r.slog.LogError("Thuật toán mã hóa token không hợp lệ", nil)
+				return nil, apperrors.NewUnauthorizedError("Access token không hợp lệ")
+			}
+
+			// jwt Parse dùng secret này để kiểm tra chữ ký
+			return [] byte(global.Config.Authentication.JWT.Secret), nil
+		},
+
+		// Cho phép parse token đã hết hạn để tự kiếm tra
+		jwt.WithoutClaimsValidation(),
+	)
+
+	if err != nil || !parsedToken.Valid {
+		r.slog.LogError("Chữ ký xác thức token không hợp lệ", err)
+		return apperrors.NewUnauthorizedError(
+            "Access token không hợp lệ",
+	    )
+	}
+
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok {
+		r.slog.LogError("Claims trong token không hợp lệ", nil)
+		return apperrors.NewUnauthorizedError("Access token không hợp lệ")
+	}
+
+	// Kiểm tra xem access token có hết hạn hay chưa, nếu chưa hết hạn thì trả về lỗi
+	exp, ok := claims["exp"].(float64)
+	if !ok {
+		r.slog.LogError("Lỗi khi lấy thông tin hạn sử dụng của token", nil)
+		return apperrors.NewUnauthorizedError("Access token không hợp lệ")
+	}
+	if int64(exp) > time.Now() .Unix() {
+		r.slog.LogError("Access token chưa hết hạn. Nên không thể refresh token", nil)
+		return apperrors.NewUnauthorizedError("Access token chưa hết hạn, không thể refresh token")
+	}
+
+	return nil
+}
 
 // Thu hồi Token bằng cách xóa refresh token cũ khỏi whitelist và thêm refresh token cũ vào blacklist
 func (r *RefreshTokenUseCase) revokeRefreshToken(ctx context.Context, refreshToken, userID string) error {

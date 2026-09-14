@@ -8,6 +8,7 @@ type Config struct {
 	Server         ServerConfig         `mapstructure:"server"`
 	Cors           CORS_Config          `mapstructure:"cors"`
 	Authentication AuthenticationConfig `mapstructure:"authentication"`
+	RateLimit      RateLimitConfig      `mapstructure:"rate_limit"`
 }
 
 // Cấu hình cho Authentication, bao gồm các thông tin liên quan khác.
@@ -88,4 +89,20 @@ type JWTConfig struct {
 	AccessTokenExpirationMinutes int    `mapstructure:"AccessTokenExpirationMinutes"`
 	RefreshTokenExpirationDays   int    `mapstructure:"RefreshTokenExpirationDays"`
 	EncrypKey                    string `mapstructure:"encrypKey"`
+}
+
+/*================ RATE LIMITER*/
+type RateLimitConfig struct {
+	PerClient PerClientConfig `mapstructure:"per_client"`
+}
+
+type PerClientConfig struct {
+	Enabled              bool   `mapstructure:"enabled"`
+	Key_by               string `mapstructure:"key_by"`
+	Fallback_to_ip       bool   `mapstructure:"fallback_to_ip"`
+	Unauthenticated_tier string `mapstructure:"unauthenticated_tier"`
+	Request_sec_public   int    `mapstructure:"request_sec_public"`
+	Burst_public         int    `mapstructure:"burst_public"`
+	Request_sec_private  int    `mapstructure:"request_sec_private"`
+	Burst_private        int    `mapstructure:"burst_private"`
 }

@@ -37,7 +37,7 @@ func (r *RedisRepositoryImpl) Get(ctx context.Context, key string) (string, erro
 	if err != nil {
 		if err == redis.Nil {
 			r.log.LogWarning("Key không tồn tại trong Redis.", "Key không tồn tại.", zap.String("key", key))
-			return "", nil // Trả về nil nếu key không tồn tại
+			return "", redis.Nil // Trả về nil nếu key không tồn tại
 		}
 		r.log.LogError("Lỗi khi lấy giá trị từ Redis.", err, zap.String("key", key))
 		return "", err

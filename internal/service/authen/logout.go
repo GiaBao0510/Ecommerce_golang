@@ -32,7 +32,7 @@ func (l *LogoutUseCase) Logout(ctx context.Context, req *models.LogoutRequest) e
 	
 	// Lấy JTI (JWT ID) từ access token
 	jti, err := util.GetJTIFromClaims(req.AccessToken)
-	if err != nil {
+	if err != nil { 
 		l.slog.LogError("Failed to get JTI from access token", err, zap.Error(err))
 		return apperrors.NewUnauthorizedError("Access token không hợp lệ")
 	}
@@ -48,10 +48,8 @@ func (l *LogoutUseCase) Logout(ctx context.Context, req *models.LogoutRequest) e
 		l.slog.LogError("Failed to get TTL for refresh token from Redis", err, zap.Error(err))
 		return err
 	}
-	
 
 	// Thực hiện thu hồi token bằng cách thêm vào blacklist trước, sau đó xóa khỏi whitelist
-
 	err = l.revokeToken(
 		ctx,
 		_const.WhiteListAccessToken + jti,

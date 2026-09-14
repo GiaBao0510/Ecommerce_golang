@@ -4,20 +4,32 @@ import (
 	"fmt"
 
 	"github.com/GiaBao0510/Ecommerce_golang/global"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/repository/repository_impl"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
+	"go.uber.org/zap"
 )
 
 func Run() {
-	// Load configuration
 	LoadConfig()
-	InitLogger()
-	InitPostgreSQL()
-	InitRedis()
+    InitLogger()
+    InitPostgreSQL()
+    InitRedis()
+	
 
-	// Hiển thị cấu hình đã load để kiểm tra
-	DisplayConfig()
+    dbLogger := loghelper.NewDBLogger(
+        global.Logger.Error,
+        "RedisRepository",
+    )
 
-	r := InitRouter()
-	r.Run(":8080")
+    redisRepo := repositoryimpl.NewRedisRepositoryImpl(dbLogger)
+
+    r := InitRouter(redisRepo)
+
+	InitializeBackgroundTasks()
+
+    if err := r.Run(":8080"); err != nil {
+        global.Logger.Error.Error("Server stopped", zap.Error(err))
+    }
 }
 
 // Hàm tạm - chỉ hiển thị cấu hình đã load để kiểm tra

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	_const "github.com/GiaBao0510/Ecommerce_golang/internal/const"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -41,7 +42,7 @@ func HttpLoggerMiddleware(logger *zap.Logger) gin.HandlerFunc {
 		latency := time.Since(startTime)                       // Tính thời gian xử lý
 		traceID := GetTraceID(ctx)                             // Lấy request_id từ context (được set bởi RequestIDMiddleware)
 		statusCode := ctx.Writer.Status()                      // Lấy status code trả về cho client
-		realIP := util.GetStringFromContextValue(ctx, RealIPKey) // Lấy real_ip từ context (được set bởi RealIPMiddleware)
+		realIP := util.GetStringFromContextValue(ctx, _const.RealIPKey) // Lấy real_ip từ context (được set bởi RealIPMiddleware)
 		if realIP == "" {
 			realIP = ctx.ClientIP() // Nếu không có real_ip trong context thì lấy từ ctx.ClientIP()
 		}

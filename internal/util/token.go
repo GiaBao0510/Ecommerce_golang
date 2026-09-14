@@ -15,7 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
-
+ 
 type Payload struct {
 	UserID   string `json:"user_id"`
 	Email    string `json:"email"`
@@ -127,7 +127,7 @@ func ParseTokenWithClaims(tokenStr string) (jwt.MapClaims, error) {
 
 	// Thực hiện parse token với secret key
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-
+ 
 		// Kiểm tra phương thức ký của token có phải là HMAC hay không
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("Invalid signing method")
@@ -262,4 +262,26 @@ func DecryptPayloadFromToken(tokenStr string) (*Payload, error) {
 	}
 
 	return &payload, nil
+}
+
+// Hàm kiểm tra xem token đã hết hạn hay chưa
+func IsTokenExpired(tokenStr string) (bool, error) {
+
+	// Parse token và lấy claims
+	_, claims, err := ParseToken(tokenStr)
+	if err != nil {
+		return false, apperrors.NewInvalidTokenError("Error: Token không hợp lệ hoặc đã hết hạn")
+	}
+
+	// Lấy thời gian hết hạn từ claims
+	exp, ok := claims["exp"].(float64)
+	if !ok {
+		return false, apperrors.NewInvalidTokenError("Error: Expiration time not found in token claims")
+	}
+
+	// So sánh thời gian hiện tại với thời gian hết hạn
+	if time.Now().Unix() > int64(exp) {
+		return true, nil // Token đã hết hạn
+	}
+	return false, nil // Token còn hiệu lực
 }

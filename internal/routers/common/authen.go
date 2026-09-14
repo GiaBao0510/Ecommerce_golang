@@ -12,9 +12,15 @@ import (
 
 type AuthenRouter struct{}
 
-func (a *AuthenRouter) InitAuthenRouter(Router *gin.RouterGroup, db *sql.DB, queries *database.Queries, logger *zap.Logger) {
-	
-	authController, err := wire.InitAuthenRouterHandler(db ,queries ,logger)
+func (a *AuthenRouter) InitAuthenRouter(
+	Router *gin.RouterGroup, 
+	db *sql.DB, 
+	queries *database.Queries, 
+	logger *zap.Logger,
+	authMiddleware gin.HandlerFunc,
+) {
+
+	authController, err := wire.InitAuthenRouterHandler(db, queries, logger)
 	if err != nil {
 		panic("Lỗi khi khởi tạo ")
 	}
@@ -22,8 +28,13 @@ func (a *AuthenRouter) InitAuthenRouter(Router *gin.RouterGroup, db *sql.DB, que
 	// public routes for authentication
 	Router.POST("/register", controller.Build(authController.Register, logger))
 	Router.POST("/login", controller.Build(authController.Login, logger))
-	
-	// private routes for authentication (require authentication) 
-	Router.POST("/logout", controller.Build(authController.Logout, logger))
 	Router.POST("/refresh", controller.Build(authController.RefreshToken, logger))
-} 
+
+	// private routes for authentication (require authentication)
+	Router.POST(
+		"/logout",
+		authMiddleware,
+		controller.Build(authController.Logout, logger),
+	)
+
+}

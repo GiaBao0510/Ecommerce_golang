@@ -1,18 +1,10 @@
 package middleware
 
 import (
+	_const "github.com/GiaBao0510/Ecommerce_golang/internal/const"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
-
-// ContextKey là kiểu dùng để đặt key trong context.
-// Tại sao không dùng string trực tiếp?
-// → Tránh xung đột key nếu các package khác cũng dùng key cùng tên.
-type ContextKey string
-
-// TraceIDKey là key để lấy trace_id ra từ context.
-// Khai báo constant để dùng ở nhiều nơi mà không sợ typo.
-const traceIDKey ContextKey = "trace_id"
 
 // TraceIDMiddleware là middleware chạy ĐẦU TIÊN cho mỗi request.
 //
@@ -25,7 +17,7 @@ const traceIDKey ContextKey = "trace_id"
 func TraceID_Middleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
-		// 1. Lấy trace_id từ header "X-Trace-ID"
+		// 1. Lấy trace_id từ header "X-Trace-ID" 
 		traceID := ctx.GetHeader("X-Trace-ID")
 
 		//2. Nếu không có trace_id từ client → tự sinh UUID mới
@@ -35,7 +27,7 @@ func TraceID_Middleware() gin.HandlerFunc {
 
 		// 3. Lưu trace_id vào gin.Conttext của request hiện tại
 		// Từ đây, bất kỳ tầng (Controller, Service, Repository) nào cũng có thể lấy trace_id ra dùng
-		ctx.Set(string(traceIDKey), traceID)
+		ctx.Set(string(_const.TraceIDKey), traceID)
 
 		//4. Đặt trace_ID vào trong response header
 		// Khi frontend nhận được lỗi, họ có thể dùng trace_id này để báo với bạn
@@ -56,7 +48,7 @@ func TraceID_Middleware() gin.HandlerFunc {
 // Cách dùng trong các tầng khác:
 //   traceID := middleware.GetTraceID(c)
 func GetTraceID(c *gin.Context) string {
-	traceID, exists := c.Get(string(traceIDKey))
+	traceID, exists := c.Get(string(_const.TraceIDKey))
 	if !exists {
 		return "" // Nếu không tìm thấy trace_id nào thì trả về rỗng
 	}

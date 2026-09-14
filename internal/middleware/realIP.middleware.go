@@ -3,10 +3,9 @@ package middleware
 import (
 	"strings"
 
+	_const "github.com/GiaBao0510/Ecommerce_golang/internal/const"
 	"github.com/gin-gonic/gin"
 )
-
-const RealIPKey = "real_ip"
 
 // RealIPMiddleware xác định IP thật của client, kể cả khi request đi qua
 // reverse proxy / load balancer (Nginx, Cloudflare, AWS ALB...).
@@ -20,11 +19,18 @@ func RealIPMiddleware() gin.HandlerFunc {
 				ip = strings.TrimSpace(strings.Split(forwarded, ",")[0])
 			}
 		}
+
+		// Nếu vẫn không có IP từ header, lấy IP từ c.ClientIP()
 		if ip == "" {
 			ip = c.ClientIP() // Nếu không có header nào, lấy IP từ c.ClientIP()
 		}
 
-		c.Set(RealIPKey, ip)
+		// Nếu vẫn không có IP, lấy IP từ c.Request.RemoteAddr (Trường hợp do bên Client có dùng Proxy để fake IP)
+		if ip == "" {
+			ip = c.Request.RemoteAddr
+		}
+
+		c.Set(_const.RealIPKey, ip)
 		c.Next() // Tiếp tục xử lý request
 	}
 }

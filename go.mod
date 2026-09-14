@@ -1,6 +1,6 @@
 module github.com/GiaBao0510/Ecommerce_golang
 
-go 1.25.5
+go 1.26.0
 
 require (
 	github.com/fsnotify/fsnotify v1.9.0
@@ -24,6 +24,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.44.0
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.55.0
+	golang.org/x/time v0.16.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
