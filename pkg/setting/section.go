@@ -15,6 +15,7 @@ type Config struct {
 type AuthenticationConfig struct {
 	MailJet MailJetConfig `mapstructure:"mailjet"`
 	JWT     JWTConfig     `mapstructure:"jwt"`
+	Cloudflare CloudflareConfig `mapstructure:"cloudflare"`
 }
 
 // Cấu trúc con cho phần cấu hình server (port, host, mode)
@@ -89,6 +90,16 @@ type JWTConfig struct {
 	AccessTokenExpirationMinutes int    `mapstructure:"AccessTokenExpirationMinutes"`
 	RefreshTokenExpirationDays   int    `mapstructure:"RefreshTokenExpirationDays"`
 	EncrypKey                    string `mapstructure:"encrypKey"`
+}
+
+type CloudflareConfig struct {
+	TokenName       string `mapstructure:"r2_token_name"`
+	BucketName      string `mapstructure:"r2_bucket_name"`
+	TokenValue      string `mapstructure:"r2_token_value"`
+	AccountID       string `mapstructure:"r2_account_id"`
+	AccessKeyID     string `mapstructure:"r2_access_key_id"`
+	SecretAccessKey string `mapstructure:"r2_secret_access_key"`
+	Endpoint        string `mapstructure:"r2_endpoint"`
 }
 
 /*================ RATE LIMITER*/
