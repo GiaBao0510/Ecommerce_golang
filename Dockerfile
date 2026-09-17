@@ -1,5 +1,5 @@
 # câu lệnh FROM này để xác định Image gốc mà Container sẽ dựa vào đó để tạo nên
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 #   2) Tạo thư mục làm việc bên trong container
 # Từ đây các lệnh tiếp theo sẽ chạy trong /build

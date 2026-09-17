@@ -3,6 +3,7 @@ package initialize
 import (
 	"fmt"
 
+	"github.com/GiaBao0510/Ecommerce_golang/cmd/cronjob"
 	"github.com/GiaBao0510/Ecommerce_golang/global"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository/repository_impl"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
@@ -25,7 +26,7 @@ func Run() {
 
     r := InitRouter(redisRepo)
 
-	InitializeBackgroundTasks()
+	cronjob.InitializeBackgroundTasks()
 
     if err := r.Run(":8080"); err != nil {
         global.Logger.Error.Error("Server stopped", zap.Error(err))

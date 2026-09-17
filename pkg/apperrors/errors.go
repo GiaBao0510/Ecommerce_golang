@@ -38,6 +38,13 @@ var (
 	ErrInternalServer  = errors.New("Internal server error")
 	ErrDatabase        = errors.New("Database error")
 	ErrDatabaseTimeout = errors.New("Database timeout")
+
+	// Các lỗi liên quan đến thao tác chay ngầm (background tasks)
+	ErrBackupDirectory = errors.New("backup directory error")
+    ErrDatabaseBackup  = errors.New("database backup failed")
+    ErrBackupUpload    = errors.New("backup upload failed")
+    ErrBackupCleanup   = errors.New("backup cleanup failed")
+    ErrBackupConfig    = errors.New("backup configuration invalid")
 )
 
 /* AppError bọc lỗi với mã lỗi và thông điệp chi tiết. ErrorCatalog là bảng tra cứu lỗi */
@@ -218,6 +225,15 @@ func NewInternalServerError(err error) *AppError {
 	return &AppError{
 		Code:    http.StatusInternalServerError,
 		Message: "Lỗi máy chủ nội bộ",
+		ErrKey:  err,
+		Status:  "Internal Server Error",
+	}
+}
+
+func NewDetailedInternalServerError(msg string, err error) *AppError {
+	return &AppError{
+		Code:    http.StatusInternalServerError,
+		Message: msg,
 		ErrKey:  err,
 		Status:  "Internal Server Error",
 	}

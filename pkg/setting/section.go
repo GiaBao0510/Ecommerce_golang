@@ -9,12 +9,13 @@ type Config struct {
 	Cors           CORS_Config          `mapstructure:"cors"`
 	Authentication AuthenticationConfig `mapstructure:"authentication"`
 	RateLimit      RateLimitConfig      `mapstructure:"rate_limit"`
+	CronJob        CronJob_config       `mapstructure:"cronjob"`
 }
 
 // Cấu hình cho Authentication, bao gồm các thông tin liên quan khác.
 type AuthenticationConfig struct {
-	MailJet MailJetConfig `mapstructure:"mailjet"`
-	JWT     JWTConfig     `mapstructure:"jwt"`
+	MailJet    MailJetConfig    `mapstructure:"mailjet"`
+	JWT        JWTConfig        `mapstructure:"jwt"`
 	Cloudflare CloudflareConfig `mapstructure:"cloudflare"`
 }
 
@@ -81,6 +82,13 @@ type CORS_Config struct {
 	Allowed_headers   []string `mapstructure:"allowed_headers"`
 	Allow_credentials bool     `mapstructure:"allow_credentials"`
 	Max_age           int      `mapstructure:"max_age"`
+}
+
+// cấu trúc cho các cronjob
+type CronJob_config struct {
+	Backup_cron           string `mapstructure:"backup_cron"`
+	Backup_retention_days int    `mapstructure:"backup_retention_days"`
+	Backup_dir            string `mapstructure:"backup_dir"`
 }
 
 type JWTConfig struct {
