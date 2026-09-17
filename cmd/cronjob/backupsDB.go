@@ -3,7 +3,6 @@ package cronjob
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -23,23 +22,39 @@ import (
 
 /*------------ Các tác vụ liên quan đến việc sao lưu DB --------------------*/
 
+const (
+	backupTimeout = 30 * time.Minute // pg_dump có thể chạy lâu nếu DB lớn
+	uploadTimeout = 10 * time.Minute
+)
+
 // hàm RunBackupJob gồm 3 bước theo thứ tự: backup local -> upload cloud -> xóa các bản backup cũ
 func RunBackupJob(ctx context.Context, backupDir string, retentionDays int) {
+	
+	startTime := time.Now()
+
 	// Bước 1: Backup local
-	filename, err := runBackupLocal(ctx, backupDir)
+	backupCtx, cancelBackup := context.WithTimeout(ctx, backupTimeout)
+	filename, err := runBackupLocal(backupCtx, backupDir)
+	cancelBackup() // Hủy context sau khi hoàn thành backup local
+
 	if err != nil {
 		global.Logger.Error.Error("Lỗi khi sao lưu cơ sở dữ liệu: ", zap.Error(err))
 		return
 	}
+	global.Logger.Access.Info("Sao lưu cơ sở dữ liệu thành công: ", zap.String("file", filename), zap.Duration("duration", time.Since(startTime)))
 
 	// Bước 2: Upload cloud
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-	defer cancel()
+	uploadCtx, cancelUpload  := context.WithTimeout(ctx, uploadTimeout)
+	defer cancelUpload()
 
-	if err := uploadToCloud_R2(ctx, filename); err != nil {
-		global.Logger.Warning.Error("[CẢNH BÁO] Upload lên Cloudflare R2 thất bại (backup local vẫn an toàn): ", zap.Error(err))
+	if err := uploadToCloud_R2(uploadCtx, filename); err != nil {
+		global.Logger.Warning.Warn("Upload lên Cloudflare R2 thất bại (backup local vẫn an toàn)",
+			zap.String("file", filepath.Base(filename)),
+			zap.Error(err),
+		)
 	} else {
-		global.Logger.Access.Info("Upload file backup lên Cloudflare R2 thành công: ", zap.String("file", filename))
+		global.Logger.Access.Info("Upload lên Cloudflare R2 thành công",
+			zap.String("file", filepath.Base(filename)))
 	}
 
 	// Bước 3: Xóa các bản backup cũ
@@ -67,9 +82,21 @@ func runBackupLocal(ctx context.Context, backupDir string) (string, error) {
 
 	output, err := cmd.CombinedOutput() // Thực thi lệnh và lấy output
 	if err != nil {
-		log.Printf("Error during backup: %s\nOutput: %s", err, string(output))
+		global.Logger.Error.Error("pg_dump thực thi thất bại",
+			zap.String("output", strings.TrimSpace(string(output))),
+			zap.Error(err),
+		)
+
+		// Để tránh có lỗi file .dump đang dang dở pg_dump thất bại giữa chừng
+		//  nếu để lại, cleanupOldBackups sẽ tưởng đó là bản backup hợp lệ
+		// (vì vẫn có đuôi .dump), gây nhầm lẫn nghiêm trọng lúc cần restore
+		if reomoveErr := os.Remove(filename); reomoveErr != nil && !os.IsNotExist(reomoveErr) {
+			global.Logger.Warning.Warn("Không xoá được file backup dang dở",
+				zap.String("file", filename), zap.Error(reomoveErr))
+		}
 		return "", apperrors.NewDetailedInternalServerError("Lỗi khi sao lưu cơ sở dữ liệu", err)
 	}
+
 	return filename, nil
 }
 
@@ -138,7 +165,6 @@ func cleanupOldBackups(backupDir string, retentionDays int) error {
 
 		// Bỏ qua các file không phải là file backup (không có đuôi .dump)
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".dump") {
-			global.Logger.Access.Info("Bỏ qua file không phải là file backup: ", zap.String("file", entry.Name()))
 			continue
 		}
 
@@ -163,7 +189,10 @@ func cleanupOldBackups(backupDir string, retentionDays int) error {
 	}
 
 	if deletedCount > 0 {
-		global.Logger.Access.Info("Đã xóa tổng cộng ", zap.Int("count", deletedCount), zap.Int("retentionDays", retentionDays), zap.String("backupDir", backupDir))
+		global.Logger.Access.Info("Đã dọn dẹp các bản backup cũ",
+			zap.Int("deleted_count", deletedCount),
+			zap.Int("retention_days", retentionDays),
+		)
 	}
 
 	return nil
