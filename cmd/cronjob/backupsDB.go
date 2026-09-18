@@ -94,6 +94,7 @@ func runBackupLocal(ctx context.Context, backupDir string) (string, error) {
 			global.Logger.Warning.Warn("Không xoá được file backup dang dở",
 				zap.String("file", filename), zap.Error(reomoveErr))
 		}
+
 		return "", apperrors.NewDetailedInternalServerError("Lỗi khi sao lưu cơ sở dữ liệu", err)
 	}
 
@@ -124,7 +125,7 @@ func uploadToCloud_R2(ctx context.Context, filePath string) error {
 	)
 	if err != nil {
 		global.Logger.Error.Error("không load được cấu hình AWS SDK: ", zap.Error(err))
-		return apperrors.NewInternalServerError(err)
+		return apperrors.NewDetailedInternalServerError("Không load được cấu hình AWS SDK", err)
 	}
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
@@ -134,7 +135,7 @@ func uploadToCloud_R2(ctx context.Context, filePath string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
 		global.Logger.Error.Error("không mở được file backup: ", zap.Error(err))
-		return apperrors.NewInternalServerError(err)
+		return apperrors.NewDetailedInternalServerError("Không mở được file backup", err)
 	}
 	defer file.Close()
 
@@ -179,11 +180,10 @@ func cleanupOldBackups(backupDir string, retentionDays int) error {
 		if info.ModTime().Before(cutoff) {
 			path := filepath.Join(backupDir, entry.Name())
 			if err := os.Remove(path); err != nil {
-				global.Logger.Error.Error("Không xóa được file backup cũ: ", zap.String("file", path), zap.Error(err))
+				global.Logger.Error.Error("Không xoá được bản backup cũ",
+					zap.String("file", path), zap.Error(err))
 				continue
 			}
-
-			global.Logger.Access.Info("Đã xóa file backup cũ: ", zap.String("file", path))
 			deletedCount++
 		}
 	}

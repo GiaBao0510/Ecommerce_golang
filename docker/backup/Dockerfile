@@ -6,7 +6,7 @@ FROM golang:1.26-alpine AS builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
-COPY cmd/backup ./cmd/backup
+COPY . .
 RUN CGO_ENABLED=0 go build -o /backup-service ./cmd/backup
 
 # ------ Giai đoạn 2: Tạo image nhẹ cho backup-service ------
@@ -18,8 +18,9 @@ RUN apk add --no-cache postgresql15-client tzdata
 
 WORKDIR /app
 COPY --from=builder /backup-service .
+COPY --from=builder /app/configs ./configs
 
 # Thư mục lưu backup — sẽ được mount ra Docker volume trong docker-compose
-RUN mkdir -p /backup
+RUN mkdir -p /backups
 
 ENTRYPOINT ["/app/backup-service"]
