@@ -28,13 +28,14 @@ func Run() {
 
 	cronjob.InitializeBackgroundTasks()
 
-    if err := r.Run(":8080"); err != nil {
+	add := fmt.Sprintf("%s:%d", global.Config.Server.Host, global.Config.Server.Port)
+    if err := r.Run(add); err != nil {
         global.Logger.Error.Error("Server stopped", zap.Error(err))
     }
 }
 
 // Hàm tạm - chỉ hiển thị cấu hình đã load để kiểm tra
-func DisplayConfig() {
+func displayConfig() {
 
 	fmt.Println("\t ==== PostgreSQL: ===== ")
 	fmt.Println("Loading config postgresql: ", global.Config.PostgreSQL.User)

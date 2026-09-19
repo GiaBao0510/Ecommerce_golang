@@ -53,6 +53,7 @@ services:
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
       R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
       R2_BUCKET_NAME: ${R2_BUCKET_NAME}
+      APP_ENV: docker
       TZ: "Asia/Ho_Chi_Minh"                  # Thiết lập múi giờ cho cronjob
     volumes:
       - backup_data:/backups  # Lưu trữ backup bền vững trên host
@@ -66,6 +67,9 @@ services:
         limits:
           memory: 256M
           cpus: "0.5"
+    e-commerce:
+      environment:
+        APP_ENV: docker
     logging: *default-logging
 
   # Redis: cơ sở dữ liệu key-value
@@ -149,7 +153,7 @@ services:
 
   kafka:          # Tên dịch vụ trong Docker Compose
     image: apache/kafka:3.8.1   # Tải image Kafka bản 3.8.1 từ Docker Hub
-    container_name: my-kafka    # Đặt tên cố định cho container để dễ quản lý
+    container_name: kafka.ecommerce    # Đặt tên cố định cho container để dễ quản lý
     restart: unless-stopped  # Tự động khởi động lại container nếu nó dừng bất ngờ, trừ khi bạn dừng thủ công
 
     ports:
@@ -197,11 +201,12 @@ services:
       test:
         [
           "CMD-SHELL",
-          "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1",
+          "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:19092"
         ]
       interval: 10s  # Cứ 10 giây kiểm tra một lần
-      timeout: 5s    # Quá 5 giây không phản hồi thì coi như lần đó thất bại
-      retries: 10    # Thử lại tối đa 10 lần trước khi báo trạng thái "Unhealthy"
+      timeout: 10s    # Quá 5 giây không phản hồi thì coi như lần đó thất bại
+      retries: 20    # Thử lại tối đa 10 lần trước khi báo trạng thái "Unhealthy"
+      start_period: 60s
 
     logging: *default-logging  # Tái sử dụng cấu hình log đã khai báo ở trên
 
@@ -213,7 +218,7 @@ services:
 # ============================================================================
   redpanda-console:
     image: redpandadata/console:latest
-    container_name: redpanda-console
+    container_name: redpanda-console.ecommerce
     ports:
       - "9091:8080"
     environment:

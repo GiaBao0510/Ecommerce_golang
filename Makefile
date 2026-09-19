@@ -2,14 +2,17 @@ SERVER_NAME = server
 BACKUP_NAME = backup-service
 BIN_DIR = ./bin
 
+.PHONY: run run-server run-backup dev build build-server build-backup \
+	docker-up docker-down docker-logs-backup test tidy help
+
 # _____ chạy trực tiếp _________
-run := run-server
+run := run-server					## Mặc định: chạy API server
 
 run-server:
-	go run ./cmd/server/main.go
+	go run ./cmd/server
 
 run-backup:
-	go run ./cmd/cronjob/backupsDB.go
+	go run ./cmd/backup
 
 dev:
 	air
@@ -21,7 +24,7 @@ build-server:
 	go build -o $(BIN_DIR)/$(SERVER_NAME) ./cmd/server
 
 build-backup:
-	go build -o $(BIN_DIR)/$(BACKUP_NAME) ./cmd/cronjob
+	go build -o $(BIN_DIR)/$(BACKUP_NAME) ./cmd/backup
 
 #_________ Docker _________
 docker-up:

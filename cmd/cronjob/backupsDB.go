@@ -38,7 +38,7 @@ func RunBackupJob(ctx context.Context, backupDir string, retentionDays int) {
 	cancelBackup() // Hủy context sau khi hoàn thành backup local
 
 	if err != nil {
-		global.Logger.Error.Error("Lỗi khi sao lưu cơ sở dữ liệu: ", zap.Error(err))
+		global.Logger.Error.Error("Lỗi khi sao lưu cơ sở dữ liệu vào local: ", zap.Error(err))
 		return
 	}
 	global.Logger.Access.Info("Sao lưu cơ sở dữ liệu thành công: ", zap.String("file", filename), zap.Duration("duration", time.Since(startTime)))

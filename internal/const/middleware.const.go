@@ -8,3 +8,9 @@ const (
 	X_Trace_ID      = "X-Trace-ID"
 	X_Forwarded_For = "X-Forwarded-For"
 )
+
+// Hằng số liên quan đến phân quyền truy cập (Authorization)
+const (
+	RoleAdmin = 1
+	RoleUser  = 2
+)

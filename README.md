@@ -187,3 +187,6 @@ http://localhost:8080
 This project is still evolving. The next development focus is to complete authentication, authorization, OTP verification, product APIs, order flows, realtime notifications, search integration, message queue processing, and observability.
 
 The long-term goal is to turn this codebase into a realistic e-commerce backend that demonstrates backend engineering practices such as clean architecture layering, secure authentication, optimized database access, asynchronous processing, containerized infrastructure, and operational monitoring.
+
+Bổ sung:
+- Dựa án có thêm phần backups DB vừa ở cục bộ vừa trên Cloud (Cloudflare) thông qua backups service chạy riêng. Sao lưu sẽ chạy ngầm và thực hiện sao lưu theo 2 giờ tối định kỳ mỗi ngày
