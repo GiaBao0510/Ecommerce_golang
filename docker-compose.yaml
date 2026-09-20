@@ -67,9 +67,6 @@ services:
         limits:
           memory: 256M
           cpus: "0.5"
-    e-commerce:
-      environment:
-        APP_ENV: docker
     logging: *default-logging
 
   # Redis: cơ sở dữ liệu key-value
