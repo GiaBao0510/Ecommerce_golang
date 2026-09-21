@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/GiaBao0510/Ecommerce_golang/cmd/cronjob"
+	"github.com/GiaBao0510/Ecommerce_golang/cmd/cronjob/backup"
 	"github.com/GiaBao0510/Ecommerce_golang/global"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/initialize"
 	"github.com/robfig/cron/v3"
@@ -43,7 +43,7 @@ func main() {
 	// Lên lịch cron job để thực hiện backup
 	c := cron.New()
 	_, err := c.AddFunc(cronExpr, func() {
-		cronjob.RunBackupJob(context.Background(), backupDir, retentionDays)
+		backup.RunBackupJob(context.Background(), backupDir, retentionDays)
 	})
 	if err != nil {
 		global.Logger.Error.Error("Lỗi khi thêm tác vụ cron: ", zap.Error(err))
@@ -57,7 +57,7 @@ func main() {
 	)
 
 	// Chạy thử trước 1 lần
-	cronjob.RunBackupJob(context.Background(), backupDir, retentionDays)
+	backup.RunBackupJob(context.Background(), backupDir, retentionDays)
 	c.Start()
 
 	// Lắng nghe SIGTERM/SIGINT để dừng cron job khi ứng dụng kết thúc

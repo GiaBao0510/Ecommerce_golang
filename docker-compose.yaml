@@ -41,6 +41,11 @@ services:
     container_name: backup.ecommerce
     restart: unless-stopped
     environment:
+      # Cấu hình cho ứng dụng Go
+      ConfigPath: /app/configs
+      ConfigName: docker
+      ConfigType: yaml
+
       DB_HOST: ${DB_HOST}                 # Tên service Postgres trong CÙNG docker network — Docker tự phân giải DNS nội bộ
       DB_PORT: "5432"
       DB_USER: ${DB_USER}
