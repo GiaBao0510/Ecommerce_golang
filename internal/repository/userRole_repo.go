@@ -14,6 +14,7 @@ type IUserRoleRepository interface {
 	Delete(ctx context.Context, uuid string, roleID int32) error
 	GetUserByRoleID(ctx context.Context, roleID int32) ([]models.UserByRole, error)
 	GetRolesByUserID(ctx context.Context, userID string) ([]models.RoleByUser, error)
+	GetRoleIDByUserID(ctx context.Context, userID string) (int32, error)
 
 	// WithTx: Thực hiện các thao tác trong một giao dịch
 	WithTx(tx *sql.Tx) IUserRoleRepository

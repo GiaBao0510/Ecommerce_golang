@@ -42,7 +42,7 @@ func (ctr *UserController) GetByID(c *gin.Context) error {
 }
 
 func (ctr *UserController) Create(c *gin.Context) error {
-	var input models.CreateUsersRequest
+	var input models.CreateUsersRequestStrict
 	if err := c.ShouldBindJSON(&input); err != nil {
 		return HandleValidationError(err)
 	}

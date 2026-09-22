@@ -43,7 +43,7 @@ func NewRegisterUseCase (
 	}
 }
 
-func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.CreateUsersRequest) error{
+func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.CreateUsersRequestStrict) error{
 
 	// Check kiểm tra email có bị trùng lặp không
 	checkDulicateEmail, err := r.userRepo.UserEmailExists(ctx, input.Email)

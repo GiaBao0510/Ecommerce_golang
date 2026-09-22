@@ -64,7 +64,7 @@ func (l *LoginUseCase) loginByPhone(ctx context.Context, loginRequest *models.Lo
 	}
 
 	return l.verifyUserCredentials(ctx, *userVeriInfor, loginRequest.Passoword)
-}
+} 
 
 // Hàm kiểm tra thông tin xác thực của người dùng
 func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor models.UserVerificationInformation, password string) (*models.LoginResponse, error) {
@@ -91,7 +91,7 @@ func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor 
 		l.slog.LogError("Failed to get JTI from access token", err, zap.Error(err))
 		return nil, apperrors.NewInternalServerError(err)
 	}
-
+ 
 	// Tạo refresh token
 	refreshToken, err := util.GenerateRefreshToken(userVeriInfor.Uuid)
 	if err != nil {
@@ -110,7 +110,7 @@ func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor 
 		l.slog.LogError("Failed to store refresh token in Redis", err, zap.Error(err))
 		return nil, apperrors.NewInternalServerError(err)
 	}
-
+	
 	// Lưu access token vào whitelist thông qua Redis với thời hạn là 15 phút
 	ttl = time.Duration(global.Config.Authentication.JWT.AccessTokenExpirationMinutes) * time.Minute
 	// Lưu access token vào whitelist thông qua Redis với thời hạn là 15 phút [Cấu trúc lưu trữ: Key: WhiteList_AccessToken:<jti>; Value: <user_id>]

@@ -17,10 +17,13 @@ import (
 type IUserService interface {
 	// CRUD
 	GetByID(ctx context.Context, id string) (*models.Users, error)
-	Create(ctx context.Context, obj *models.CreateUsersRequest) (string, error)
+	Create(ctx context.Context, obj *models.CreateUsersRequestStrict) (string, error)
 	Update_Put(ctx context.Context, id string, obj *models.UpdateUsersPutRequest) error
 	Update_Patch(ctx context.Context, id string, obj *models.UpdateUsersPatchRequest) error
 	Delete(ctx context.Context, id string) error
+
+	// Create User from OAuth2
+	CreateUserFromOAuth2(ctx context.Context, obj *models.CreateUsersRequestNonStrict) (string, error)
 
 	// List operations 
 	GetAll(ctx context.Context) ([]models.Users, error)
@@ -54,7 +57,7 @@ func (s *UserService) GetByID(ctx context.Context, id string) (*models.Users, er
 	return s.UserRepo.GetByID(ctx, id)
 }
 
-func (s *UserService) Create(ctx context.Context, obj *models.CreateUsersRequest) (string, error) {
+func (s *UserService) Create(ctx context.Context, obj *models.CreateUsersRequestStrict) (string, error) {
 		
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(obj.Password_hash), bcrypt.DefaultCost)
 	if err != nil {
@@ -65,6 +68,10 @@ func (s *UserService) Create(ctx context.Context, obj *models.CreateUsersRequest
 	obj.Password_hash = string(hashedPassword)
 
 	return s.UserRepo.Create(ctx, obj) 
+}
+
+func (s *UserService) CreateUserFromOAuth2(ctx context.Context, obj *models.CreateUsersRequestNonStrict) (string, error) {
+	return s.UserRepo.CreateUserFromOAuth2(ctx, obj)
 }
 
 func (s *UserService) Update_Put(ctx context.Context, id string, obj *models.UpdateUsersPutRequest) error {

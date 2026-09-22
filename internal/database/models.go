@@ -82,15 +82,12 @@ type Notification struct {
 }
 
 type OauthAccount struct {
-	ID           int64
-	Uuid         string
-	Provider     string
-	ProviderID   string
-	AccessToken  sql.NullString
-	RefreshToken sql.NullString
-	ExpiredAt    sql.NullTime
-	CreatedAt    time.Time
-	UpdatedAt    sql.NullTime
+	ID         int64
+	Uuid       string
+	Provider   string
+	ProviderID string
+	CreatedAt  time.Time
+	UpdatedAt  sql.NullTime
 }
 
 type Order struct {
@@ -245,7 +242,7 @@ type User struct {
 	IsEmailVerified    sql.NullBool
 	IsPhonenumVerified sql.NullBool
 	Address            sql.NullString
-	PasswordHash       string
+	PasswordHash       sql.NullString
 	AvatarUrl          sql.NullString
 	CreatedAt          sql.NullTime
 	UpdatedAt          sql.NullTime

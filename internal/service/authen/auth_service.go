@@ -11,7 +11,7 @@ type IAuthService interface {
 	ChangePassword(ctx context.Context, uid string, newPassword string) error
 	VerifyEmail(ctx context.Context, email, otp string) error
 	VerifyPhone(ctx context.Context, phone, otp string) error
-	Register(ctx context.Context, obj *models.CreateUsersRequest) error
+	Register(ctx context.Context, obj *models.CreateUsersRequestStrict) error
 	Login(ctx context.Context, loginRequest *models.LoginRequest) (*models.LoginResponse, error)
 	Logout(ctx context.Context, logoutReq *models.LogoutRequest) error
 	RefreshToken(ctx context.Context, token *dto.Token) (*dto.Token, error)
@@ -51,7 +51,7 @@ func (s *AuthService) VerifyEmail(ctx context.Context, email, otp string) error 
 func (s *AuthService) VerifyPhone(ctx context.Context, phone string, otp string) error {
 	return s.verifyUserUseCase.VerifyPhone(ctx, phone, otp)
 }
-func (s *AuthService) Register(ctx context.Context, obj *models.CreateUsersRequest) error {
+func (s *AuthService) Register(ctx context.Context, obj *models.CreateUsersRequestStrict) error {
 	return s.registerUseCase.RegisterUser(ctx, obj)
 }
 func (s *AuthService) Login(ctx context.Context, loginRequest *models.LoginRequest) (*models.LoginResponse, error) {

@@ -110,7 +110,7 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]models.Users, error) {
 	return users, nil
 } 
 
-func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequest) (string, error) {
+func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequestStrict) (string, error) {
 
 	// Nhận các giá trị từ obj và chuẩn bị các tham số cho truy vấn SQL
 	params := database.CreateUserParams{
@@ -134,6 +134,44 @@ func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequ
 			Valid:  obj.Address != "",
 		},
 		PasswordHash: obj.Password_hash,
+		AvatarUrl: sql.NullString{
+			String: obj.Avatar_url,
+			Valid:  obj.Avatar_url != "",
+		},
+	}
+
+	// Gọi phương thức CreateUser từ database.Queries để thực hiện việc tạo mới
+	if err := r.db.CreateUser(ctx, params); err != nil {
+		r.dblog.LogError("Create", err, zap.String("name", obj.User_name))
+		return "", MapDBErrorWithContext(err, "Lỗi khi tạo người dùng mới")
+	}
+
+	return params.Uuid, nil
+}
+
+func (r *UserRepository) CreateUserFromOAuth2(ctx context.Context, obj *models.CreateUsersRequestNonStrict) (string, error) {
+
+	// Nhận các giá trị từ obj và chuẩn bị các tham số cho truy vấn SQL
+	params := database.CreateUserParams{
+		Uuid: uuid.NewString(), // Tạo UUID mới cho người dùng
+		IDStatus: sql.NullInt32{
+			Int32: obj.Id_status,
+			Valid: obj.Id_status != 0,
+		},
+		UserName: obj.User_name,
+		BirthDate: sql.NullTime{
+			Time:  obj.Birth_date.Time,
+			Valid: !obj.Birth_date.IsZero(),
+		},
+		Email: obj.Email,
+		PhoneNum: sql.NullString{
+			String: obj.Phone_num,
+			Valid:  obj.Phone_num != "",
+		},
+		Address: sql.NullString{
+			String: obj.Address,
+			Valid:  obj.Address != "",
+		},
 		AvatarUrl: sql.NullString{
 			String: obj.Avatar_url,
 			Valid:  obj.Avatar_url != "",

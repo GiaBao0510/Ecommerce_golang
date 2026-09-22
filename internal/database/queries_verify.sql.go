@@ -68,7 +68,7 @@ type UserVerificationInformationViaEmailRow struct {
 	UserName     string
 	Email        string
 	RoleID       int32
-	PasswordHash string
+	PasswordHash sql.NullString
 	IDStatus     sql.NullInt32
 }
 
@@ -98,7 +98,7 @@ type UserVerificationInformationViaPhoneRow struct {
 	UserName     string
 	Email        string
 	RoleID       int32
-	PasswordHash string
+	PasswordHash sql.NullString
 	IDStatus     sql.NullInt32
 }
 

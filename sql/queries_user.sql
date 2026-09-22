@@ -73,6 +73,9 @@ FROM "user" u
 	JOIN role r ON r.role_id = ur.role_id
 	WHERE u.uuid = $1;
 
+-- name: GetRoleIDByUserID :one
+SELECT role_id FROM user_role WHERE uuid = $1;
+
 -- name: UpdateUserRoleByUserID_PUT :execresult
 UPDATE user_role SET role_id = $1 WHERE uuid = $2;
 

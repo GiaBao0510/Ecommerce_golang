@@ -19,7 +19,7 @@ func NewRegisterController(svc service.IAuthService, ) *RegisterController {
 
 func (L *RegisterController) Register(ctx *gin.Context) error {
 	
-	input := models.CreateUsersRequest{}
+	input := models.CreateUsersRequestStrict{}
 
 	// Parse JSON body vào struct CreateUsersRequest
 	if err := ctx.ShouldBindJSON(&input); err != nil {

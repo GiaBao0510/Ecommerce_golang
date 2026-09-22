@@ -8,7 +8,7 @@ INSERT INTO status(name,description,updated_at,deleted_at) VALUES($1,$2,$3,$4) R
 SELECT * FROM status WHERE id_status = $1;
 
 -- name: GetAllStatus :many
-SELECT * FROM status;
+SELECT * FROM status; 
 
 -- name: UpdateStatus_PUT :execresult
 UPDATE status SET name = $1, description = $2, updated_at = NOW() WHERE id_status = $3;

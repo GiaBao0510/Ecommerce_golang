@@ -131,6 +131,17 @@ func (r *UserRoleRepository) GetRolesByUserID(ctx context.Context, userID string
 	return result, nil
 }
 
+func (r *UserRoleRepository) GetRoleIDByUserID(ctx context.Context, userID string) (int32, error) {
+	
+	roleID, err := r.db.GetRoleIDByUserID(ctx, userID)
+	if err != nil {
+		r.dblog.LogError("get_roles_by_user_id", err, zap.String("user_id", userID))
+		return 0, MapDBErrorWithContext(err, "Lỗi khi lấy role theo user_id")
+	}
+
+	return roleID, nil
+}
+
 func (r *UserRoleRepository) WithTx(tx *sql.Tx) repository.IUserRoleRepository{
 	return &UserRoleRepository{
 		db: r.db.WithTx(tx),

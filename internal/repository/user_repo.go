@@ -13,10 +13,13 @@ type IUserRepository interface {
 
 	// CRUD
 	GetByID(ctx context.Context, id string) (*models.Users, error)
-	Create(ctx context.Context, obj *models.CreateUsersRequest) (string, error)
+	Create(ctx context.Context, obj *models.CreateUsersRequestStrict) (string, error) 
 	Update_Put(ctx context.Context, id string, obj *models.UpdateUsersPutRequest) error
 	Update_Patch(ctx context.Context, id string, obj *models.UpdateUsersPatchRequest) error
 	Delete(ctx context.Context, id string) error
+
+	// Tạo tài khoản người dùng, khi người dùng đăng nhập thông qua OAuth2 mà không có tài khoản trong hệ thống
+	CreateUserFromOAuth2(ctx context.Context, obj *models.CreateUsersRequestNonStrict) (string, error)
 
 	// List operations
 	GetAll(ctx context.Context) ([]models.Users, error)
@@ -29,7 +32,7 @@ type IUserRepository interface {
 
 	// Relationship operations
 
-	// Update other operations
+	// Update other operations 
 	UpdateUserPassword_PATCH(ctx context.Context, id string, passwordHash string) error
 	UpdateUserAvatar_PATCH(ctx context.Context, id string, avatarURL string) error
 

@@ -23,7 +23,7 @@ type CreateUserParams struct {
 	Email        string
 	PhoneNum     sql.NullString
 	Address      sql.NullString
-	PasswordHash string
+	PasswordHash sql.NullString
 	AvatarUrl    sql.NullString
 }
 
@@ -121,6 +121,17 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
+const getRoleIDByUserID = `-- name: GetRoleIDByUserID :one
+SELECT role_id FROM user_role WHERE uuid = $1
+`
+
+func (q *Queries) GetRoleIDByUserID(ctx context.Context, uuid string) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getRoleIDByUserID, uuid)
+	var role_id int32
+	err := row.Scan(&role_id)
+	return role_id, err
+}
+
 const getRolesByUserID = `-- name: GetRolesByUserID :many
 SELECT r.role_id, r.role_name, r.description
 FROM "user" u 
@@ -158,7 +169,7 @@ SELECT uuid, password_hash FROM "user" WHERE email = $1
 
 type GetUID_PasswordHashByEmailRow struct {
 	Uuid         string
-	PasswordHash string
+	PasswordHash sql.NullString
 }
 
 func (q *Queries) GetUID_PasswordHashByEmail(ctx context.Context, email string) (GetUID_PasswordHashByEmailRow, error) {
@@ -174,7 +185,7 @@ SELECT uuid, password_hash FROM "user" WHERE phone_num = $1
 
 type GetUID_PasswordHashByPhoneRow struct {
 	Uuid         string
-	PasswordHash string
+	PasswordHash sql.NullString
 }
 
 func (q *Queries) GetUID_PasswordHashByPhone(ctx context.Context, phoneNum sql.NullString) (GetUID_PasswordHashByPhoneRow, error) {
@@ -331,7 +342,7 @@ UPDATE "user"
 `
 
 type UpdateUserPassword_PATCHParams struct {
-	PasswordHash string
+	PasswordHash sql.NullString
 	Uuid         string
 }
 

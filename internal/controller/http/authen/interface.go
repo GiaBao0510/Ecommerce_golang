@@ -4,6 +4,7 @@ import "github.com/gin-gonic/gin"
 
 type IAuthenController interface {
 	Login(ctx *gin.Context) error
+	Login_Google(ctx *gin.Context) error
 	Logout(ctx *gin.Context) error
 	Register(ctx *gin.Context) error
 	RefreshToken(ctx *gin.Context) error
