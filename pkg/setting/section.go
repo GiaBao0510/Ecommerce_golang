@@ -17,6 +17,7 @@ type AuthenticationConfig struct {
 	MailJet    MailJetConfig    `mapstructure:"mailjet"`
 	JWT        JWTConfig        `mapstructure:"jwt"`
 	Cloudflare CloudflareConfig `mapstructure:"cloudflare"`
+	OAuth2     OAuth2Config     `mapstructure:"google"`
 }
 
 // Cấu trúc con cho phần cấu hình server (port, host, mode)
@@ -110,7 +111,7 @@ type CloudflareConfig struct {
 	Endpoint        string `mapstructure:"r2_endpoint"`
 }
 
-/*================ RATE LIMITER*/
+/*================ RATE LIMITER ============= */
 type RateLimitConfig struct {
 	PerClient PerClientConfig `mapstructure:"per_client"`
 }
@@ -124,4 +125,15 @@ type PerClientConfig struct {
 	Burst_public         int    `mapstructure:"burst_public"`
 	Request_sec_private  int    `mapstructure:"request_sec_private"`
 	Burst_private        int    `mapstructure:"burst_private"`
+}
+
+/* =========== OAUTH2 ===============*/
+type OAuth2Config struct {
+	Google GoogleOAuth2Config `mapstructure:"google"`
+}
+
+type GoogleOAuth2Config struct {
+	ClientID     string `mapstructure:"client_id"`
+	ClientSecret string `mapstructure:"client_secret"`
+	RedirectURL  string `mapstructure:"redirect_url"`
 }
