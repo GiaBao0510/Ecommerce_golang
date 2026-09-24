@@ -71,7 +71,7 @@ func (r *UserRepository) GetUID_PasswordHashByEmail(ctx context.Context, email s
 
 	result := dto.UserResponseBase{
 		Uuid:          row.Uuid,
-		Password_hash: row.PasswordHash,
+		Password_hash: row.PasswordHash.String,
 	}
 	return &result, nil
 }
@@ -85,7 +85,7 @@ func (r *UserRepository) GetUID_PasswordHashByPhone(ctx context.Context, phone s
 
 	result := dto.UserResponseBase{
 		Uuid:          row.Uuid,
-		Password_hash: row.PasswordHash,
+		Password_hash: row.PasswordHash.String,
 	}
 	return &result, nil
 }
@@ -133,7 +133,10 @@ func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequ
 			String: obj.Address,
 			Valid:  obj.Address != "",
 		},
-		PasswordHash: obj.Password_hash,
+		PasswordHash: sql.NullString{
+			String: obj.Password_hash,
+			Valid:  obj.Password_hash != "",
+		},
 		AvatarUrl: sql.NullString{
 			String: obj.Avatar_url,
 			Valid:  obj.Avatar_url != "",
@@ -307,7 +310,10 @@ func (r *UserRepository) Update_Patch(ctx context.Context, id string, obj *model
 
 func (r *UserRepository) UpdateUserPassword_PATCH(ctx context.Context, id string, passwordHash string) error {
 	params := database.UpdateUserPassword_PATCHParams{
-		PasswordHash: passwordHash,
+		PasswordHash: sql.NullString{
+			String: passwordHash,
+			Valid:  passwordHash != "",
+		},
 		Uuid:         id,
 	}
 
@@ -489,7 +495,7 @@ func (r *UserRepository) UserVerificationInformationViaPhone(ctx context.Context
 		User_name: row.UserName,
 		Email: row.Email,
 		Role_id: row.RoleID,
-		Password_hash: row.PasswordHash,
+		Password_hash: row.PasswordHash.String,
 		Id_status: row.IDStatus.Int32,
 	}
 	

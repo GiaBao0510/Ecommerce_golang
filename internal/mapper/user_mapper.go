@@ -1,6 +1,7 @@
 package mapper
 
 import (
+
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 )
@@ -14,7 +15,7 @@ func ToUserModel(u database.User) models.Users {
 		Email:                u.Email,
 		Phone_num:            u.PhoneNum.String,
 		Address:              u.Address.String,
-		Password_hash:        u.PasswordHash,
+		Password_hash:        u.PasswordHash.String,
 		Avatar_url:           u.AvatarUrl.String,
 		Created_at:           u.CreatedAt.Time,
 		Updated_at:           u.UpdatedAt,
@@ -48,7 +49,7 @@ func ToUserVerificationInformationModel(uvi database.UserVerificationInformation
 		User_name:            uvi.UserName,
 		Email: uvi.Email,
 		Role_id: uvi.RoleID,
-		Password_hash: uvi.PasswordHash,
+		Password_hash: uvi.PasswordHash.String,
 		Id_status: uvi.IDStatus.Int32,
 	}
 }

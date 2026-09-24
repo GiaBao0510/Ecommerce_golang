@@ -17,7 +17,7 @@ type AuthenticationConfig struct {
 	MailJet    MailJetConfig    `mapstructure:"mailjet"`
 	JWT        JWTConfig        `mapstructure:"jwt"`
 	Cloudflare CloudflareConfig `mapstructure:"cloudflare"`
-	OAuth2     OAuth2Config     `mapstructure:"google"`
+	OAuth2     OAuth2Config     `mapstructure:"oauth2"`
 }
 
 // Cấu trúc con cho phần cấu hình server (port, host, mode)
