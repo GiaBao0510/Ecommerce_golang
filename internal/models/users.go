@@ -76,17 +76,18 @@ type CreateUsersRequestStrict struct {
 
 // cấu trúc tạo người dùng, không yêu cầu chặt chẽ
 type CreateUsersRequestNonStrict struct {
-	Uuid          string   // Thuộc tính này sẽ được thư viện uuid tự động tạo ra, nên không cần binding
-	Id_status     int32    `json:"id_status" binding:"required"`
-	User_name     string   `json:"user_name" binding:"required,min=2,max=100"`
-	Birth_date    DateOnly `json:"birth_date" binding:"omitempty"`
-	Email         string   `json:"email" binding:"required,email"`
-	Phone_num     string   `json:"phone_num" binding:"omitempty"`
-	Address       string   `json:"address" binding:"omitempty"`
-	Password_hash string   `json:"password_hash" binding:"omitempty"`
-	Avatar_url    string   `json:"avatar_url" binding:"omitempty,url"`
-	Provider      string   `json:"provider"`
-	ProviderId    string   `json:"provider_id"`
+	Uuid              string   // Thuộc tính này sẽ được thư viện uuid tự động tạo ra, nên không cần binding
+	Id_status         int32    `json:"id_status" binding:"required"`
+	User_name         string   `json:"user_name" binding:"required,min=2,max=100"`
+	Birth_date        DateOnly `json:"birth_date" binding:"omitempty"`
+	Email             string   `json:"email" binding:"required,email"`
+	Phone_num         string   `json:"phone_num" binding:"omitempty"`
+	Address           string   `json:"address" binding:"omitempty"`
+	Password_hash     string   `json:"password_hash" binding:"omitempty"`
+	Avatar_url        string   `json:"avatar_url" binding:"omitempty,url"`
+	Provider          string   `json:"provider"`
+	ProviderId        string   `json:"provider_id"`
+	Is_email_verified bool     `json:"is_email_verified" binding:"omitempty"`
 }
 
 type RegisterRequest struct {
@@ -130,12 +131,13 @@ type LoginResponse struct {
 }
 
 type UserVerificationInformation struct {
-	Uuid          string `json:"uuid"`
-	User_name     string `json:"user_name"`
-	Email         string `json:"email"`
-	Role_id       int32  `json:"role_id"`
-	Password_hash string `json:"password_hash"`
-	Id_status     int32  `json:"id_status"`
+	Uuid              string `json:"uuid"`
+	User_name         string `json:"user_name"`
+	Email             string `json:"email"`
+	Role_id           int32  `json:"role_id"`
+	Password_hash     string `json:"password_hash"`
+	Id_status         int32  `json:"id_status"`
+	Is_email_verified bool   `json:"is_email_verified"`
 }
 
 // LogoutRequest struct represents the request payload for logging out a user. It contains the user's UUID and the refresh token that needs to be invalidated.

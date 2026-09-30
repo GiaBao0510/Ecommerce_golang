@@ -30,6 +30,9 @@ func (a *AuthenRouter) InitAuthenRouter(
 	Router.POST("/login", controller.Build(authController.Login, logger))
 	Router.POST("/refresh", controller.Build(authController.RefreshToken, logger))
 
+	Router.POST("/login/google", controller.Build(authController.Login_Google, logger))
+	Router.GET("/google/callback", controller.Build(authController.Login_Google_Callback, logger))
+
 	// private routes for authentication (require authentication)
 	Router.POST(
 		"/logout",

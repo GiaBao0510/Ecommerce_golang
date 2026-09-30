@@ -3,7 +3,9 @@ package repositoryimpl
 import (
 	"context"
 	"database/sql"
+	"time"
 
+	"github.com/GiaBao0510/Ecommerce_golang/global"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
 	dto "github.com/GiaBao0510/Ecommerce_golang/internal/dto/user"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/mapper"
@@ -19,7 +21,7 @@ type UserRepository struct {
 	db    *database.Queries
 	dblog *loghelper.DBLogger
 }
-
+ 
 // triển khai
 func NewUserRepository(db *database.Queries, logger *zap.Logger) repository.IUserRepository {
 	return &UserRepository{
@@ -141,6 +143,8 @@ func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequ
 			String: obj.Avatar_url,
 			Valid:  obj.Avatar_url != "",
 		},
+		IsEmailVerified: sql.NullBool{Bool: false, Valid: true},
+		IsPhonenumVerified: sql.NullBool{Bool: false, Valid: true},
 	}
 
 	// Gọi phương thức CreateUser từ database.Queries để thực hiện việc tạo mới
@@ -179,6 +183,8 @@ func (r *UserRepository) CreateUserFromOAuth2(ctx context.Context, obj *models.C
 			String: obj.Avatar_url,
 			Valid:  obj.Avatar_url != "",
 		},
+		IsEmailVerified: sql.NullBool{Bool: true, Valid: true},
+		IsPhonenumVerified: sql.NullBool{Bool: false, Valid: true},
 	}
 
 	// Gọi phương thức CreateUser từ database.Queries để thực hiện việc tạo mới
@@ -473,6 +479,10 @@ func (r *UserRepository) UserPhoneExists(ctx context.Context, phone string) (boo
 }
 
 func (r *UserRepository) UserVerificationInformationViaEmail(ctx context.Context, email string) (*models.UserVerificationInformation, error) {
+	
+	startTime := time.Now()
+	global.Logger.Access.Info("[Repository: UserVerificationInformationViaEmail] Bắt đầu truy vấn thông tin xác thực người dùng với email", zap.String("email", email), zap.Time("start_time", startTime))
+	
 	row, err := r.db.UserVerificationInformationViaEmail(ctx, email)
 	if err != nil {
 		r.dblog.LogError("UserVerificationInformationViaEmail", err, zap.String("email", email))
@@ -480,10 +490,18 @@ func (r *UserRepository) UserVerificationInformationViaEmail(ctx context.Context
 	}
 
 	result := mapper.ToUserVerificationInformationModel(row)
+
+	endTime := time.Now()
+	duration := endTime.Sub(startTime)
+	global.Logger.Access.Info("[Repository: UserVerificationInformationViaEmail] Kết thúc truy vấn thông tin xác thực người dùng với email", zap.String("email", email), zap.Time("end_time", endTime), zap.Duration("duration", duration))
 	return &result, nil
 }
 
 func (r *UserRepository) UserVerificationInformationViaPhone(ctx context.Context, phone string) (*models.UserVerificationInformation, error) {
+	
+	startTime := time.Now()
+	global.Logger.Access.Info("[Repository: UserVerificationInformationViaPhone] Bắt đầu truy vấn thông tin xác thực người dùng với số điện thoại", zap.String("phone", phone), zap.Time("start_time", startTime)) 
+	
 	row, err := r.db.UserVerificationInformationViaPhone(ctx, sql.NullString{String: phone, Valid: true})
 	if err != nil {
 		r.dblog.LogError("UserVerificationInformationViaPhone", err, zap.String("phone", phone))
@@ -498,6 +516,10 @@ func (r *UserRepository) UserVerificationInformationViaPhone(ctx context.Context
 		Password_hash: row.PasswordHash.String,
 		Id_status: row.IDStatus.Int32,
 	}
+
+	endTime := time.Now()
+	duration := endTime.Sub(startTime)
+	global.Logger.Access.Info("[Repository: UserVerificationInformationViaPhone] Kết thúc truy vấn thông tin xác thực người dùng với số điện thoại", zap.String("phone", phone), zap.Time("end_time", endTime), zap.Duration("duration", duration))
 	
 	return &result, nil
 }

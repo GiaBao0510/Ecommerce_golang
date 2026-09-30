@@ -17,7 +17,7 @@ import (
 type UserRoleRepository struct {
 	db    *database.Queries
 	dblog *loghelper.DBLogger
-}
+} 
 
 // triển khai
 func NewUserRoleRepository(db *database.Queries, logger *zap.Logger) repository.IUserRoleRepository {

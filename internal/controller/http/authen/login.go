@@ -2,8 +2,10 @@ package authen
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 
 	"github.com/GiaBao0510/Ecommerce_golang/global"
 	controller "github.com/GiaBao0510/Ecommerce_golang/internal/controller/http"
@@ -21,6 +23,9 @@ func NewLoginController(svc service.IAuthService) *LoginController {
 }
 
 func (L *LoginController) Login(ctx *gin.Context) error {
+
+	startTime := time.Now() // Bắt đầu đo thời gian thực hiện
+	global.Logger.Access.Info("[Controller: Login] Bắt đầu xử lý yêu cầu đăng nhập", zap.Time("start_time", startTime))
 	
 	input := models.LoginRequest{}
 
@@ -61,5 +66,11 @@ func (L *LoginController) Login(ctx *gin.Context) error {
 
 	// Gửi phản hồi
 	response.Success_Response(ctx, 200, "Login successful", result)
+
+	// Ghi log thời gian thực hiện
+	endTime := time.Now()
+	duration := endTime.Sub(startTime)
+	global.Logger.Access.Info("[Controller: Login] Kết thúc xử lý yêu cầu đăng nhập", zap.Time("end_time", endTime), zap.Duration("duration", duration))
+
 	return nil
 }

@@ -100,7 +100,7 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.Create
 		if _, err := userRoleRepoTx.Create(ctx, &models.UserRole{
 			Id_role: 2,
 			Uuid: uid,
-		}); err != nil {
+		}); err != nil { 
 			return err //Rollback
 		}
 

@@ -10,6 +10,7 @@ import (
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
 	repositoryimpl "github.com/GiaBao0510/Ecommerce_golang/internal/repository/repository_impl"
 	service "github.com/GiaBao0510/Ecommerce_golang/internal/service/authen"
+	svc_oauth2 "github.com/GiaBao0510/Ecommerce_golang/internal/service/oauth2"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"github.com/google/wire"
 	"go.uber.org/zap"
@@ -38,13 +39,17 @@ func InitAuthenRouterHandler(
 		service.NewLogoutUseCase,
 		service.NewAuthService,
 		service.NewRefreshTokenUseCase,
+		svc_oauth2.NewOAuth2ServiceContext,
+		svc_oauth2.NewGoogleProviderStrategy,
+		svc_oauth2.NewLoginWithGoogleUseCase,
 
-		//Controller layer
+		//Controller layer 
 		controllerAuth.NewRegisterController,
 		controllerAuth.NewLoginController,
 		controllerAuth.NewLogoutController,
 		controllerAuth.NewRefreshTokenController,
 		controllerAuth.NewAuthenController,
+		controllerAuth.NewLoginGoogleController,
 	)
 
 	return nil, nil

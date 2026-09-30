@@ -25,7 +25,7 @@ UPDATE "user"
 	WHERE phone_num = $1;
 
 -- name: UserVerificationInformationViaEmail :one
-SELECT u.uuid, u.user_name, u.email, ur.role_id, u.password_hash, u.id_status
+SELECT u.uuid, u.user_name, u.email, ur.role_id, u.password_hash, u.id_status, u.is_email_verified
 FROM "user" u 
 INNER JOIN user_role ur ON u.uuid = ur.uuid
 WHERE email = $1;

@@ -32,6 +32,9 @@ func NewLoginUseCase(userRepo  repository.IUserRepository, redisRepo repository.
 
 func (l *LoginUseCase) Login(ctx context.Context, loginRequest *models.LoginRequest) (*models.LoginResponse, error) {
 
+	startTime := time.Now()
+	global.Logger.Access.Info("[Service: login] Bắt đầu xử lý yêu cầu đăng nhập", zap.Time("start_time", startTime))
+
 	// Kiểm tra đầu vào là email hay số điện thoại
 	if util.DetectType(loginRequest.Account) == "email" {
 		return l.loginByEmail(ctx, loginRequest)
@@ -41,6 +44,11 @@ func (l *LoginUseCase) Login(ctx context.Context, loginRequest *models.LoginRequ
 
 	// Nếu không phải thì báo lỗi
 	l.slog.LogWarning("Login", "Account is not valid", zap.String("account", loginRequest.Account))
+
+	endTime := time.Now()
+	duration := endTime.Sub(startTime)
+	global.Logger.Access.Info("[Service: login] Kết thúc xử lý yêu cầu đăng nhập", zap.Time("end_time", endTime), zap.Duration("duration", duration))
+
 	return nil, apperrors.NewBadRequestError("Account không hợp lệ")
 }
 

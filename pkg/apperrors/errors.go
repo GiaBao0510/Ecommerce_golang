@@ -41,10 +41,10 @@ var (
 
 	// Các lỗi liên quan đến thao tác chay ngầm (background tasks)
 	ErrBackupDirectory = errors.New("backup directory error")
-    ErrDatabaseBackup  = errors.New("database backup failed")
-    ErrBackupUpload    = errors.New("backup upload failed")
-    ErrBackupCleanup   = errors.New("backup cleanup failed")
-    ErrBackupConfig    = errors.New("backup configuration invalid")
+	ErrDatabaseBackup  = errors.New("database backup failed")
+	ErrBackupUpload    = errors.New("backup upload failed")
+	ErrBackupCleanup   = errors.New("backup cleanup failed")
+	ErrBackupConfig    = errors.New("backup configuration invalid")
 )
 
 /* AppError bọc lỗi với mã lỗi và thông điệp chi tiết. ErrorCatalog là bảng tra cứu lỗi */
@@ -111,6 +111,15 @@ func NewEmailDuplicateError() *AppError {
 	return &AppError{
 		Code:    http.StatusConflict,
 		Message: "Email đã tồn tại",
+		ErrKey:  ErrEmailDuplicate,
+		Status:  "Conflict",
+	}
+}
+
+func NewDetailedEmailDuplicateError(msg string) *AppError {
+	return &AppError{
+		Code:    http.StatusConflict,
+		Message: msg,
 		ErrKey:  ErrEmailDuplicate,
 		Status:  "Conflict",
 	}

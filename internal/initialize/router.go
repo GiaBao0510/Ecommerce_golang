@@ -70,17 +70,8 @@ func InitRouter(
 		middleware.TracingMiddleware(),                        // Bọc quanh các middleware sau để đo thời gian xử lý toàn bộ request
 		middleware.RecoveryMiddleware(),                       // Bắt panic, ngăn app crash, trả về 500 thay vì để server tắt
 		middleware.HttpLoggerMiddleware(global.Logger.Access), // Ghi access log: method, path, status, latency, trace_id vào storages/logs/access.log
-		middleware.MetricsMiddleware(),                        //
-
-		// [4] CORS — Cho phép cross-origin requests (frontend khác domain)
-		// → Chưa implement, sẽ thêm sau
-		// middleware.CorsMiddleware(),
-
-		// [6] Authentication — Xác thực JWT token
-		// → Kiểm tra Authorization header
-		// → PHẢI sau Recovery (để Recovery bắt được panic nếu auth bị lỗi)
-		// → Chưa implement đầy đủ, bật khi sẵn sàng
-		// middleware.AuthenMiddleware(),
+		middleware.CORSMiddleware(),							// Cho phép cross-origin requests (frontend khác domain)
+		middleware.MetricsMiddleware(),                        // Tầng này thu thập dữ liệu metric cho Prometheus, cần đặt sau Recovery để đảm bảo không bỏ lỡ metric nếu có panic
 	)
 
 	// ==================================================

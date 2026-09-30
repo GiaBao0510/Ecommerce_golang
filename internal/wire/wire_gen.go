@@ -16,6 +16,7 @@ import (
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository/repository_impl"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
 	authen2 "github.com/GiaBao0510/Ecommerce_golang/internal/service/authen"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/service/oauth2"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service/user"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 	"github.com/mailjet/mailjet-apiv3-go"
@@ -39,10 +40,14 @@ func InitAuthenRouterHandler(db *sql.DB, queries *database.Queries, logger *zap.
 	refreshTokenUseCase := authen2.NewRefreshTokenUseCase(iRedisRepository, serviceLogger, iUserRepository)
 	iAuthService := authen2.NewAuthService(registerUseCase, loginUseCase, verifyUserUsecase, logoutUseCase, refreshTokenUseCase)
 	loginController := authen.NewLoginController(iAuthService)
+	ioAuth2ServiceStrategy := oauth2.NewGoogleProviderStrategy()
+	oAuth2ServiceContext := oauth2.NewOAuth2ServiceContext(ioAuth2ServiceStrategy)
+	loginWithGoogleUseCase := oauth2.NewLoginWithGoogleUseCase(iUserRepository, iUserRoleRepository, iRedisRepository, serviceLogger, db, logger)
+	loginGoogleController := authen.NewLoginGoogleController(iRedisRepository, oAuth2ServiceContext, loginWithGoogleUseCase)
 	logoutController := authen.NewLogoutController(iAuthService)
 	registerController := authen.NewRegisterController(iAuthService)
 	refreshTokenController := authen.NewRefreshTokenController(iAuthService)
-	iAuthenController := authen.NewAuthenController(loginController, logoutController, registerController, refreshTokenController)
+	iAuthenController := authen.NewAuthenController(loginController, loginGoogleController, logoutController, registerController, refreshTokenController)
 	return iAuthenController, nil
 }
 

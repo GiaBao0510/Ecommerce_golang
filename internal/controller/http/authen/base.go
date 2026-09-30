@@ -46,3 +46,7 @@ func (ctr *AuthenController) Register(ctx *gin.Context) error {
 func (ctr *AuthenController) RefreshToken(ctx *gin.Context) error {
 	return ctr.refreshTokenCtrl.RefreshToken(ctx)
 }
+
+func(ctr *AuthenController) Login_Google_Callback(ctx *gin.Context) error{
+	return ctr.loginGoogleCtrl.Login_GoogleCallback(ctx)
+}

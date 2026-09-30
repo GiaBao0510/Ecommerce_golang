@@ -11,20 +11,22 @@ import (
 )
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO "user"(uuid, id_status, user_name, birth_date, email, phone_num, address, password_hash, avatar_url)
-VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO "user"(uuid, id_status, user_name, birth_date, email, phone_num, address, password_hash, avatar_url, is_email_verified, is_phonenum_verified)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 `
 
 type CreateUserParams struct {
-	Uuid         string
-	IDStatus     sql.NullInt32
-	UserName     string
-	BirthDate    sql.NullTime
-	Email        string
-	PhoneNum     sql.NullString
-	Address      sql.NullString
-	PasswordHash sql.NullString
-	AvatarUrl    sql.NullString
+	Uuid               string
+	IDStatus           sql.NullInt32
+	UserName           string
+	BirthDate          sql.NullTime
+	Email              string
+	PhoneNum           sql.NullString
+	Address            sql.NullString
+	PasswordHash       sql.NullString
+	AvatarUrl          sql.NullString
+	IsEmailVerified    sql.NullBool
+	IsPhonenumVerified sql.NullBool
 }
 
 // _______________ Bảng User 4 ___________________
@@ -39,6 +41,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.Address,
 		arg.PasswordHash,
 		arg.AvatarUrl,
+		arg.IsEmailVerified,
+		arg.IsPhonenumVerified,
 	)
 	return err
 }

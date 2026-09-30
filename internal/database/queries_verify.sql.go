@@ -57,19 +57,20 @@ func (q *Queries) UserPhoneExists_HasNotBeenVerified(ctx context.Context, phoneN
 }
 
 const userVerificationInformationViaEmail = `-- name: UserVerificationInformationViaEmail :one
-SELECT u.uuid, u.user_name, u.email, ur.role_id, u.password_hash, u.id_status
+SELECT u.uuid, u.user_name, u.email, ur.role_id, u.password_hash, u.id_status, u.is_email_verified
 FROM "user" u 
 INNER JOIN user_role ur ON u.uuid = ur.uuid
 WHERE email = $1
 `
 
 type UserVerificationInformationViaEmailRow struct {
-	Uuid         string
-	UserName     string
-	Email        string
-	RoleID       int32
-	PasswordHash sql.NullString
-	IDStatus     sql.NullInt32
+	Uuid            string
+	UserName        string
+	Email           string
+	RoleID          int32
+	PasswordHash    sql.NullString
+	IDStatus        sql.NullInt32
+	IsEmailVerified sql.NullBool
 }
 
 func (q *Queries) UserVerificationInformationViaEmail(ctx context.Context, email string) (UserVerificationInformationViaEmailRow, error) {
@@ -82,6 +83,7 @@ func (q *Queries) UserVerificationInformationViaEmail(ctx context.Context, email
 		&i.RoleID,
 		&i.PasswordHash,
 		&i.IDStatus,
+		&i.IsEmailVerified,
 	)
 	return i, err
 }
