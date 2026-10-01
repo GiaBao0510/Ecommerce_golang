@@ -138,6 +138,8 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - loki-data:/loki  # Lưu trữ dữ liệu Loki trên ổ đĩa local của máy host
+    networks:
+      - ecommerce_net
     logging: *default-logging 
   
   # Promtail: thu thập log từ các container và gửi đến Loki
@@ -151,6 +153,8 @@ services:
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       - loki
+    networks:
+      - ecommerce_net
     logging: *default-logging
 
   kafka:          # Tên dịch vụ trong Docker Compose

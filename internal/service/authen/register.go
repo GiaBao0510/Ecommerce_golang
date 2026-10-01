@@ -17,33 +17,48 @@ import (
 )
 
 type RegisterUseCase struct {
-	userRepo repository.IUserRepository
-	userRoleRepo repository.IUserRoleRepository
-	redisRepo repository.IRedisRepository
-	db *sql.DB
-	slog *loghelper.ServiceLogger
-	zapLogger *zap.Logger
+	userRepo       repository.IUserRepository
+	userRoleRepo   repository.IUserRoleRepository
+	redisRepo      repository.IRedisRepository
+	db             *sql.DB
+	slog           *loghelper.ServiceLogger
+	zapLogger      *zap.Logger
+	eventPublisher repository.IEventPublisher
 }
 
-func NewRegisterUseCase (
+func NewRegisterUseCase(
 	db *sql.DB,
 	logger *zap.Logger,
 	userRepo repository.IUserRepository,
 	userRoleRepo repository.IUserRoleRepository,
 	redisRepo repository.IRedisRepository,
-	
+	eventPublisher repository.IEventPublisher,
+
 ) *RegisterUseCase {
 	return &RegisterUseCase{
-		userRepo: userRepo,
-		redisRepo: redisRepo,
-		userRoleRepo: userRoleRepo,
-		db: db,
-		zapLogger: logger,
-		slog: loghelper.NewServiceLogger(logger, "RegisterUseCase"),
+		userRepo:       userRepo,
+		redisRepo:      redisRepo,
+		userRoleRepo:   userRoleRepo,
+		eventPublisher: eventPublisher,
+		db:             db,
+		zapLogger:      logger,
+		slog:           loghelper.NewServiceLogger(logger, "RegisterUseCase"),
 	}
 }
 
-func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.CreateUsersRequestStrict) error{
+// Phát sự kiện sau khi đăng ký thành công
+func (r *RegisterUseCase) publishUserRegisteredEvent(ctx context.Context, operation, userUUID string, eventPayload []byte) error {
+	if err := r.eventPublisher.Publish(ctx, operation, userUUID, eventPayload); err != nil {
+		r.slog.LogError("Failed to publish user registered event", err,
+			zap.String("operation", operation),
+			zap.String("userUUID", userUUID),
+		)
+		return err
+	}
+	return nil
+}
+
+func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.CreateUsersRequestStrict) error {
 
 	// Check kiểm tra email có bị trùng lặp không
 	checkDulicateEmail, err := r.userRepo.UserEmailExists(ctx, input.Email)
@@ -69,7 +84,7 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.Create
 	if checkDulicatePhoneNum {
 		r.slog.LogWarning(
 			"Checking duplicate phone number failed",
-			"Số điện thoại đã tồn tại trong cơ sở dữ liệu", 
+			"Số điện thoại đã tồn tại trong cơ sở dữ liệu",
 			zap.String("phone_num", input.Phone_num),
 		)
 		return apperrors.NewPhoneDuplicateError()
@@ -85,7 +100,7 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.Create
 
 	// Các thao tác trong transaction
 	var newUUID string
- 
+
 	err = servicesupport.RunInTx(ctx, r.db, r.zapLogger, func(tx *sql.Tx) error {
 
 		userRepoTx := r.userRepo.WithTx(tx)
@@ -99,8 +114,8 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.Create
 
 		if _, err := userRoleRepoTx.Create(ctx, &models.UserRole{
 			Id_role: 2,
-			Uuid: uid,
-		}); err != nil { 
+			Uuid:    uid,
+		}); err != nil {
 			return err //Rollback
 		}
 
@@ -108,7 +123,7 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.Create
 	})
 
 	if err != nil {
-		r.slog.LogError("RegisterUser: Quá trình đăng ký người dùng thất bại", err, zap.String("email", input.Email ))
+		r.slog.LogError("RegisterUser: Quá trình đăng ký người dùng thất bại", err, zap.String("email", input.Email))
 		return err
 	}
 
@@ -117,5 +132,11 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.Create
 		zap.String("phone_num", input.Phone_num),
 		zap.String("uuid", newUUID),
 	)
+
+	eventPayload := []byte(`{"uuid":"` + newUUID + `","email":"` + input.Email + `"}`)
+	if err := r.publishUserRegisteredEvent(ctx, "user.registered", newUUID, eventPayload); err != nil {
+		return err
+	}
+
 	return nil
 }
