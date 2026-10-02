@@ -232,7 +232,7 @@ func (r *UserRepository) Update_Put(ctx context.Context, id string, obj *models.
 		return MapDBErrorWithContext(err, "Lỗi khi kiểm tra số lượng bản ghi bị ảnh hưởng cho người dùng với ID: "+id)
 	}
 
-	if affected == 0 {
+	if affected == 0 { 
 		r.dblog.LogWarning("UpdateUser_PUT", "No rows affected", zap.String("id", id))
 		return MapDBErrorWithContext(apperrors.NewNotFoundError("Không tìm thấy người dùng với ID: "+id), "Không tìm thấy người dùng với ID: "+id)
 	}

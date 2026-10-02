@@ -23,7 +23,6 @@ type RegisterUseCase struct {
 	db             *sql.DB
 	slog           *loghelper.ServiceLogger
 	zapLogger      *zap.Logger
-	eventPublisher repository.IEventPublisher
 }
 
 func NewRegisterUseCase(
@@ -32,30 +31,16 @@ func NewRegisterUseCase(
 	userRepo repository.IUserRepository,
 	userRoleRepo repository.IUserRoleRepository,
 	redisRepo repository.IRedisRepository,
-	eventPublisher repository.IEventPublisher,
 
 ) *RegisterUseCase {
 	return &RegisterUseCase{
 		userRepo:       userRepo,
 		redisRepo:      redisRepo,
 		userRoleRepo:   userRoleRepo,
-		eventPublisher: eventPublisher,
 		db:             db,
 		zapLogger:      logger,
 		slog:           loghelper.NewServiceLogger(logger, "RegisterUseCase"),
 	}
-}
-
-// Phát sự kiện sau khi đăng ký thành công
-func (r *RegisterUseCase) publishUserRegisteredEvent(ctx context.Context, operation, userUUID string, eventPayload []byte) error {
-	if err := r.eventPublisher.Publish(ctx, operation, userUUID, eventPayload); err != nil {
-		r.slog.LogError("Failed to publish user registered event", err,
-			zap.String("operation", operation),
-			zap.String("userUUID", userUUID),
-		)
-		return err
-	}
-	return nil
 }
 
 func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.CreateUsersRequestStrict) error {
@@ -132,11 +117,6 @@ func (r *RegisterUseCase) RegisterUser(ctx context.Context, input *models.Create
 		zap.String("phone_num", input.Phone_num),
 		zap.String("uuid", newUUID),
 	)
-
-	eventPayload := []byte(`{"uuid":"` + newUUID + `","email":"` + input.Email + `"}`)
-	if err := r.publishUserRegisteredEvent(ctx, "user.registered", newUUID, eventPayload); err != nil {
-		return err
-	}
 
 	return nil
 }
