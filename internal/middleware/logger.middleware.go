@@ -6,6 +6,7 @@ import (
 
 	_const "github.com/GiaBao0510/Ecommerce_golang/internal/const"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/timing"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -67,6 +68,11 @@ func HttpLoggerMiddleware(logger *zap.Logger) gin.HandlerFunc {
 			zap.Int("status_code", statusCode),                // HTTP status code trả về cho client
 			zap.Int64("latency_ms", latency.Milliseconds()),   // Thời gian xử lý request (milliseconds)
 			zap.String("user_agent", ctx.Request.UserAgent()), // User-Agent của client (Postman, Chrome,...)
+		}
+
+		// Thêm 1 field
+		if col := timing.FromContext(ctx.Request.Context()); col != nil {
+			fields = append(fields, zap.Any("timing", col.Snapshot())) // Thêm thông tin timing nếu có
 		}
 
 		// -------------------------------------------------------

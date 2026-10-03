@@ -13,6 +13,7 @@ import (
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/timing"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -480,9 +481,8 @@ func (r *UserRepository) UserPhoneExists(ctx context.Context, phone string) (boo
 
 func (r *UserRepository) UserVerificationInformationViaEmail(ctx context.Context, email string) (*models.UserVerificationInformation, error) {
 	
-	startTime := time.Now()
-	global.Logger.Access.Info("[Repository: UserVerificationInformationViaEmail] Bắt đầu truy vấn thông tin xác thực người dùng với email", zap.String("email", email), zap.Time("start_time", startTime))
-	
+	defer timing.Track(ctx, "Repository.UserVerificationInformationViaEmail")
+
 	row, err := r.db.UserVerificationInformationViaEmail(ctx, email)
 	if err != nil {
 		r.dblog.LogError("UserVerificationInformationViaEmail", err, zap.String("email", email))
@@ -490,10 +490,6 @@ func (r *UserRepository) UserVerificationInformationViaEmail(ctx context.Context
 	}
 
 	result := mapper.ToUserVerificationInformationModel(row)
-
-	endTime := time.Now()
-	duration := endTime.Sub(startTime)
-	global.Logger.Access.Info("[Repository: UserVerificationInformationViaEmail] Kết thúc truy vấn thông tin xác thực người dùng với email", zap.String("email", email), zap.Time("end_time", endTime), zap.Duration("duration", duration))
 	return &result, nil
 }
 

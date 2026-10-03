@@ -12,6 +12,7 @@ import (
 	"github.com/GiaBao0510/Ecommerce_golang/internal/util"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
+	"github.com/GiaBao0510/Ecommerce_golang/pkg/timing"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -32,24 +33,17 @@ func NewLoginUseCase(userRepo  repository.IUserRepository, redisRepo repository.
 
 func (l *LoginUseCase) Login(ctx context.Context, loginRequest *models.LoginRequest) (*models.LoginResponse, error) {
 
-	startTime := time.Now()
-	global.Logger.Access.Info("[Service: login] Bắt đầu xử lý yêu cầu đăng nhập", zap.Time("start_time", startTime))
+	defer timing.Track(ctx,"UseCase.Login")
 
-	// Kiểm tra đầu vào là email hay số điện thoại
-	if util.DetectType(loginRequest.Account) == "email" {
-		return l.loginByEmail(ctx, loginRequest)
-	} else if util.DetectType(loginRequest.Account) == "phone" {
-		return l.loginByPhone(ctx, loginRequest)
+	switch util.DetectType(loginRequest.Account) {
+		case "email":
+			return l.loginByEmail(ctx, loginRequest)
+		case "phone":
+			return l.loginByPhone(ctx, loginRequest)
+		default:
+			l.slog.LogWarning("Login", "Account is not valid", zap.String("account", loginRequest.Account))
+			return nil, apperrors.NewBadRequestError("Account không hợp lệ")
 	}
-
-	// Nếu không phải thì báo lỗi
-	l.slog.LogWarning("Login", "Account is not valid", zap.String("account", loginRequest.Account))
-
-	endTime := time.Now()
-	duration := endTime.Sub(startTime)
-	global.Logger.Access.Info("[Service: login] Kết thúc xử lý yêu cầu đăng nhập", zap.Time("end_time", endTime), zap.Duration("duration", duration))
-
-	return nil, apperrors.NewBadRequestError("Account không hợp lệ")
 }
 
 func (l *LoginUseCase) loginByEmail(ctx context.Context, loginRequest *models.LoginRequest) (*models.LoginResponse, error) {
@@ -76,11 +70,15 @@ func (l *LoginUseCase) loginByPhone(ctx context.Context, loginRequest *models.Lo
 
 // Hàm kiểm tra thông tin xác thực của người dùng
 func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor models.UserVerificationInformation, password string) (*models.LoginResponse, error) {
+	
+	stop := timing.Track(ctx, "UseCase.verifyUserCredentials")
+
 	// Kiểm tra xem mật khâủ đầu vào có khớp với mật khẩu đã băm không
 	if err := bcrypt.CompareHashAndPassword([]byte(userVeriInfor.Password_hash), []byte(password)); err != nil {
 		l.slog.LogWarning("Login", "Password is not match", zap.String("account", userVeriInfor.Email))
 		return nil, apperrors.NewUnauthorizedError("Tài khoản hoặc mật khẩu không chính xác")
 	}
+	stop() // Dừng đo thời gian thực hiện của hàm verifyUserCredentials
 
 	// Kiểm tra xem trạng thái người dùng có hợp lệ không
 	if userVeriInfor.Id_status == 2 || userVeriInfor.Id_status == 3 {
@@ -88,6 +86,7 @@ func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor 
 		return nil, apperrors.NewForbiddenError("Người dùng không hoạt động")
 	}
 
+	stop = timing.Track(ctx, "UseCase.generateTokens") // Bắt đầu đo thời gian thực hiện của hàm generateTokens
 	// Tạo access token và refresh token
 	accesstoken, err := util.GenerateAccessToken(userVeriInfor.Uuid, userVeriInfor.Email, int(userVeriInfor.Role_id))
 	if err != nil {
@@ -126,6 +125,8 @@ func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor 
 		l.slog.LogError("Failed to store access token in Redis", err, zap.Error(err))
 		return nil, err
 	}
+
+	stop() // Dừng đo thời gian thực hiện của hàm generateTokens
 
 	// Trả về access token và refresh token
 	return &models.LoginResponse{
