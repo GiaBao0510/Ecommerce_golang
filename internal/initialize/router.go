@@ -68,7 +68,7 @@ func InitRouter(
 		middleware.RealIPMiddleware(),                         // Đầu tiên, lấy IP thực của client từ header X-Real-IP hoặc X-Forwarded-For
 		middleware.TraceID_Middleware(),                       // Sinh trace_id duy nhất cho mỗi request, lưu vào context để các middleware/handler sau có thể sử dụng
 		middleware.Timing_Middleware(),							//
-		middleware.TracingMiddleware(),                        // Bọc quanh các middleware sau để đo thời gian xử lý toàn bộ request
+		//middleware.TracingMiddleware(),                        // Bọc quanh các middleware sau để đo thời gian xử lý toàn bộ request
 		middleware.RecoveryMiddleware(),                       // Bắt panic, ngăn app crash, trả về 500 thay vì để server tắt
 		middleware.HttpLoggerMiddleware(global.Logger.Access), // Ghi access log: method, path, status, latency, trace_id vào storages/logs/access.log
 		middleware.CORSMiddleware(),							// Cho phép cross-origin requests (frontend khác domain)

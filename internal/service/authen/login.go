@@ -33,7 +33,7 @@ func NewLoginUseCase(userRepo  repository.IUserRepository, redisRepo repository.
 
 func (l *LoginUseCase) Login(ctx context.Context, loginRequest *models.LoginRequest) (*models.LoginResponse, error) {
 
-	defer timing.Track(ctx,"UseCase.Login")
+	defer timing.Track(ctx,"UseCase.Login")()
 
 	switch util.DetectType(loginRequest.Account) {
 		case "email":
@@ -71,22 +71,30 @@ func (l *LoginUseCase) loginByPhone(ctx context.Context, loginRequest *models.Lo
 // Hàm kiểm tra thông tin xác thực của người dùng
 func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor models.UserVerificationInformation, password string) (*models.LoginResponse, error) {
 	
-	stop := timing.Track(ctx, "UseCase.verifyUserCredentials")
-
 	// Kiểm tra xem mật khâủ đầu vào có khớp với mật khẩu đã băm không
-	if err := bcrypt.CompareHashAndPassword([]byte(userVeriInfor.Password_hash), []byte(password)); err != nil {
+	if err := l.checkPassword(ctx, password, userVeriInfor.Password_hash); err != nil {
 		l.slog.LogWarning("Login", "Password is not match", zap.String("account", userVeriInfor.Email))
 		return nil, apperrors.NewUnauthorizedError("Tài khoản hoặc mật khẩu không chính xác")
 	}
-	stop() // Dừng đo thời gian thực hiện của hàm verifyUserCredentials
+
+	return l.issueTokens(ctx, userVeriInfor)
+}
+
+func (l *LoginUseCase) checkPassword(ctx context.Context, password string, passwordHash string) error {
+	defer timing.Track(ctx, "service.login.checkPassword")()
+	return bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password))
+}
+
+func (l *LoginUseCase) issueTokens(ctx context.Context, userVeriInfor models.UserVerificationInformation) (*models.LoginResponse, error) {
+
+	defer timing.Track(ctx, "service.login.issueTokens")()
 
 	// Kiểm tra xem trạng thái người dùng có hợp lệ không
 	if userVeriInfor.Id_status == 2 || userVeriInfor.Id_status == 3 {
 		l.slog.LogWarning("Login", "User is not active", zap.String("account", userVeriInfor.Email))
 		return nil, apperrors.NewForbiddenError("Người dùng không hoạt động")
 	}
-
-	stop = timing.Track(ctx, "UseCase.generateTokens") // Bắt đầu đo thời gian thực hiện của hàm generateTokens
+	
 	// Tạo access token và refresh token
 	accesstoken, err := util.GenerateAccessToken(userVeriInfor.Uuid, userVeriInfor.Email, int(userVeriInfor.Role_id))
 	if err != nil {
@@ -125,8 +133,6 @@ func (l *LoginUseCase) verifyUserCredentials(ctx context.Context, userVeriInfor 
 		l.slog.LogError("Failed to store access token in Redis", err, zap.Error(err))
 		return nil, err
 	}
-
-	stop() // Dừng đo thời gian thực hiện của hàm generateTokens
 
 	// Trả về access token và refresh token
 	return &models.LoginResponse{

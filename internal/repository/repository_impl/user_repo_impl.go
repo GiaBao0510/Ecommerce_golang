@@ -481,13 +481,13 @@ func (r *UserRepository) UserPhoneExists(ctx context.Context, phone string) (boo
 
 func (r *UserRepository) UserVerificationInformationViaEmail(ctx context.Context, email string) (*models.UserVerificationInformation, error) {
 	
-	defer timing.Track(ctx, "Repository.UserVerificationInformationViaEmail")
+	defer timing.Track(ctx, "Repository.UserVerificationInformationViaEmail")()
 
 	row, err := r.db.UserVerificationInformationViaEmail(ctx, email)
 	if err != nil {
 		r.dblog.LogError("UserVerificationInformationViaEmail", err, zap.String("email", email))
 		return nil, MapDBErrorWithContext(err, "Lỗi khi lấy thông tin xác thực người dùng với email: "+email)
-	}
+	} 
 
 	result := mapper.ToUserVerificationInformationModel(row)
 	return &result, nil

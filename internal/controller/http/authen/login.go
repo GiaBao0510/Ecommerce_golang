@@ -23,7 +23,8 @@ func NewLoginController(svc service.IAuthService) *LoginController {
 
 func (L *LoginController) Login(ctx *gin.Context) error {
 
-	defer timing.Track(ctx.Request.Context(), "Controller.Login")
+	reqCtx := ctx.Request.Context()
+	defer timing.Track(reqCtx, "Controller.Login")()
 
 	input := models.LoginRequest{}
 	// Parse JSON body vào struct LoginRequest
@@ -32,7 +33,7 @@ func (L *LoginController) Login(ctx *gin.Context) error {
 	}
 
 	// Gọi service để thực hiện đăng nhập
-	result, err := L.svc.Login(ctx, &input)
+	result, err := L.svc.Login(reqCtx, &input)
 	if err != nil {
 		return err 
 	}

@@ -38,12 +38,13 @@ func Track(ctx context.Context, name string) func() {
 	}
 }
 
+// Snapshot trả về một bản sao của các bản ghi thời gian hiện tại dưới dạng map[string]float64, trong đó giá trị là thời gian tính bằng giây.
 func(c *Collector) Snapshot() map[string]float64 {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	out := make(map[string]float64, len(c.records))
 	for k, v := range c.records {
-		out[k] = float64(v.Milliseconds())/ 1000.0	// chuyển đổi sang giây
+		out[k] = float64(v.Milliseconds())/ 1000	// chuyển đổi sang giây
 	}
 	return out
 }
