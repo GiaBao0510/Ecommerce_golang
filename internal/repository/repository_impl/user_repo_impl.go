@@ -536,6 +536,16 @@ func (r *UserRepository) UserVerificationInformationViaUID(ctx context.Context, 
 	return &result, nil
 }
 
+func (r *UserRepository) UserEmailVerificationStatus(ctx context.Context, email string) (int, error) {
+	row, err := r.db.UserEmailVerificationStatus(ctx, email)
+	if err != nil {
+		r.dblog.LogError("UserEmailVerificationStatus", err, zap.String("email", email))
+		return 0, MapDBErrorWithContext(err, "Lỗi khi kiểm tra trạng thái xác thực email người dùng với email: "+email)
+	}
+
+	return int(row), nil
+}
+
 func (r *UserRepository) WithTx(tx *sql.Tx) repository.IUserRepository {
 	return &UserRepository{
 		db: r.db.WithTx(tx),

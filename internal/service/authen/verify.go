@@ -116,7 +116,7 @@ func (u *VerifyUserUsecase) VerifyEmail(ctx context.Context, email, otp string) 
 	if err := u.userRepo.VerifyUserEmail(ctx, email); err != nil {
 		u.logger.LogError("Error[VerifyEmail]: Lỗi khi cập nhật trạng thái xác thực email trong cơ sở dữ liệu", err, zap.Error(err), zap.String("email", email))
 		return err
-	}
+	} 
 
 	// 4. Xóa mã OTP khỏi Redis sau khi xác thực thành công. Tại đây, nếu xóa thất bại, chúng ta chỉ log lỗi mà không trả về lỗi, vì xác thực đã thành công.
 	if err := u.redisRepo.Delete(ctx, "otp:"+email); err != nil {

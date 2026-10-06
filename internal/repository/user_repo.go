@@ -44,6 +44,7 @@ type IUserRepository interface {
 	UserVerificationInformationViaEmail(ctx context.Context, email string) (*models.UserVerificationInformation, error) 
 	UserVerificationInformationViaPhone(ctx context.Context, phone string) (*models.UserVerificationInformation, error)
 	UserVerificationInformationViaUID(ctx context.Context, uid string) (*models.UserVerificationInformation, error)
+	UserEmailVerificationStatus(ctx context.Context, email string) (int, error) // Kiểm tra xem email người dùng đã được xác minh chưa
 
 	// Check duplicate email and phone
 	UserEmailExists(ctx context.Context, email string) (bool, error) // Kiểm tra xem email người dùng đã tồn tại

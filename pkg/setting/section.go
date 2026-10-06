@@ -15,6 +15,7 @@ type Config struct {
 // Cấu hình cho Authentication, bao gồm các thông tin liên quan khác.
 type AuthenticationConfig struct {
 	MailJet    MailJetConfig    `mapstructure:"mailjet"`
+	MailTrap   MailTrapConfig   `mapstructure:"mailtrap"`
 	JWT        JWTConfig        `mapstructure:"jwt"`
 	Cloudflare CloudflareConfig `mapstructure:"cloudflare"`
 	OAuth2     OAuth2Config     `mapstructure:"oauth2"`
@@ -74,6 +75,13 @@ type MailJetConfig struct {
 	From_mail  string `mapstructure:"from_mail"`
 	From_name  string `mapstructure:"from_name"`
 	App_url    string `mapstructure:"app_url"`
+}
+
+type MailTrapConfig struct {
+	API_key     string `mapstructure:"api_key"`
+	SandboxID   string `mapstructure:"sandboxID"`
+	Sender_mail string `mapstructure:"sender_mail"`
+	Sender_name string `mapstructure:"sender_name"`
 }
 
 // Cấu trúc CORS

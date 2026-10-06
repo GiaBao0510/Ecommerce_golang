@@ -34,6 +34,27 @@ func (q *Queries) UserEmailExists_HasNotBeenVerified(ctx context.Context, email 
 	return exists, err
 }
 
+const userEmailVerificationStatus = `-- name: UserEmailVerificationStatus :one
+SELECT COALESCE(
+	(
+		SELECT CASE 
+			WHEN is_email_verified = FALSE THEN 0
+			WHEN is_email_verified = TRUE THEN 1
+		END
+		FROM "user"
+		WHERE email = $1
+	),
+	-1
+)::integer AS email_status
+`
+
+func (q *Queries) UserEmailVerificationStatus(ctx context.Context, email string) (int32, error) {
+	row := q.db.QueryRowContext(ctx, userEmailVerificationStatus, email)
+	var email_status int32
+	err := row.Scan(&email_status)
+	return email_status, err
+}
+
 const userPhoneExists = `-- name: UserPhoneExists :one
 SELECT EXISTS(SELECT 1 FROM "user" WHERE phone_num = $1)
 `

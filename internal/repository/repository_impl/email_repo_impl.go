@@ -70,7 +70,7 @@ func (e *EmailRepositoryImpl) SendEmail(ctx context.Context, data models.EmailDa
 		)
 		return err
 	}
-
+ 
 	e.logger.LogInfo("Email sent successfully via Mailjet: ","",
 		zap.String("to_email", data.ToEmail),
 		zap.String("subject", data.Subject),

@@ -41,3 +41,16 @@ SELECT u.uuid, u.email, ur.role_id
 FROM "user" u 
 INNER JOIN user_role ur ON u.uuid = ur.uuid
 WHERE u.uuid = $1;
+
+-- name: UserEmailVerificationStatus :one
+SELECT COALESCE(
+	(
+		SELECT CASE 
+			WHEN is_email_verified = FALSE THEN 0
+			WHEN is_email_verified = TRUE THEN 1
+		END
+		FROM "user"
+		WHERE email = $1
+	),
+	-1
+)::integer AS email_status;
