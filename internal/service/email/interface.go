@@ -7,6 +7,9 @@ import (
 )
 
 type IEmailProviderService interface {
-	SendNotification(ctx context.Context, email *dto.Email) error
-	SubmitAuthenticationInformation(ctx context.Context, email *dto.Email) error
+	// Gửi email qua nhà cung cấp email
+	Send(ctx context.Context, message *dto.EmailMessage) error
+	
+	// Đóng kết nối với nhà cung cấp email
+	Close() error
 }

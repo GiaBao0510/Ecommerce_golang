@@ -2,10 +2,14 @@ package email
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/apperrors"
+	"go.uber.org/zap"
 )
 
+
+// ProviderType định nghĩa các loại nhà cung cấp email
 type ProviderType string
 
 const (
@@ -15,31 +19,30 @@ const (
 	ProviderSendgrid ProviderType = "sendgrid"
 )
 
-type ProviderFactory interface {
-	CreateProviver(config *MailConfig) (IEmailProviderService, error)
+// ProviderConfig chứa thông tin cấu hình cho nhà cung cấp email
+type ProviderConfig struct {
+	Type        ProviderType
+	APIKey      string
+	SecretKey   string
+	SandboxID   int64
+	SenderEmail string
+	SenderName  string
+	Timeout     time.Duration
 }
 
-type MailtrapProviderFactory struct{}
-
-func (f *MailtrapProviderFactory) CreateProviver(config *MailConfig) (IEmailProviderService, error) {
-	return NewMailtrapProvider(config)
-}
-
-type MailjetProviderFactory struct{}
-
-func (f *MailjetProviderFactory) CreateProviver(config *MailConfig) (IEmailProviderService, error) {
-	return NewMailjetProvider(config)
-}
-
-func NewProviderFactory(providerType ProviderType) (ProviderFactory, error) {
-	switch providerType {
+// Factory trả về hàm khởi tạo đối với trường hợp cụ thể
+func NewProviderFactory(
+	config ProviderConfig,
+	logger *zap.Logger,
+) (IEmailProviderService, error) {
+	switch config.Type {
 	case ProviderMailtrap:
-		return &MailtrapProviderFactory{}, nil
+		return NewMailtrapProvider(config, logger)
 	case ProviderMailjet:
-		return &MailjetProviderFactory{}, nil
+		return NewMailjetProvider(config, logger)
 	default:
 		return nil, apperrors.NewDetailedInternalServerError(
-			fmt.Sprintf("Unsupported email provider type: %s", providerType),
+			fmt.Sprintf("Unsupported email provider type: %s", config.Type),
 			apperrors.ErrInternalServer,
 		)
 	}

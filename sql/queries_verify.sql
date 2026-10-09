@@ -46,11 +46,11 @@ WHERE u.uuid = $1;
 SELECT COALESCE(
 	(
 		SELECT CASE 
-			WHEN is_email_verified = FALSE THEN 0
-			WHEN is_email_verified = TRUE THEN 1
+			WHEN is_email_verified = FALSE THEN 0	-- Email tồn tại nhưng chưa được xác thực	
+			WHEN is_email_verified = TRUE THEN 1	-- Email tồn tại và đã được xác thực
 		END
 		FROM "user"
 		WHERE email = $1
 	),
-	-1
+	-1												-- Email không tồn tại
 )::integer AS email_status;

@@ -59,7 +59,7 @@ func (e *AppError) Error() string { return e.Message }
 func (e *AppError) Unwrap() error { return e.ErrKey }
 
 // ══════════════════════════════════════════════════════════
-// CONSTRUCTOR FUNCTIONS – Tạo lỗi có cấu trúc
+// CONSTRUCTOR FUNCTIONS
 // ══════════════════════════════════════════════════════════
 // -------- 400 Bad Request --------
 func NewBadRequestError(message string) *AppError {
@@ -201,10 +201,10 @@ func NewAccessDeniedError() *AppError {
 }
 
 // -------- 404 Not Found --------
-func NewNotFoundError(resource string) *AppError {
+func NewNotFoundError(message string) *AppError {
 	return &AppError{
 		Code:    http.StatusNotFound,
-		Message: resource + " không tìm thấy",
+		Message: message,
 		ErrKey:  ErrNotFound,
 		Status:  "Not Found",
 	}

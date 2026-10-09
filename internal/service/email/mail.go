@@ -13,7 +13,3 @@ type MailConfig struct {
 	Timeout         time.Duration
 	Logger          *loghelper.ServiceLogger
 }
-
-func NewMailConfig(logger *loghelper.ServiceLogger, providerFactory ProviderFactory) (IEmailProviderService, error) {
-	
-}

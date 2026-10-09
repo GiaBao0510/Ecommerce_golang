@@ -2,41 +2,71 @@ package email
 
 import (
 	"context"
-
-	"github.com/GiaBao0510/Ecommerce_golang/global"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/dto"
-	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
+
+	"github.com/mailjet/mailjet-apiv3-go"
+	"go.uber.org/zap"
 )
 
-type MailjetConfig struct{
-	APIKey string
-	SecretKey string
-	SenderMail string
-	SenderName string
-	AppURL string
-}
-
 type MailjetProvider struct {
-	config *MailjetConfig
-	logger *loghelper.ServiceLogger
+	client *mailjet.Client
+	senderMail string
+	senderName string
+	logger *zap.Logger
 }
 
-func NewMailjetProvider(config *MailConfig) (IEmailProviderService, error) {
+func NewMailjetProvider(
+	config ProviderConfig, 
+	logger *zap.Logger,
+) (IEmailProviderService, error) {
+
+	// Khởi tạo cấu hình
+	client := mailjet.NewMailjetClient(
+		config.APIKey,
+		config.SecretKey,
+	)
+
 	return &MailjetProvider{
-		config: &MailjetConfig{
-			APIKey: global.Config.Authentication.,
-		},
-		logger: &loghelper.ServiceLogger{},
+		client: client,
+		senderMail: config.SenderEmail,
+		senderName: config.SenderName,
+		logger: logger,
 	}, nil
 }
 
-func(m *MailjetProvider) SendNotification(ctx context.Context, email *dto.Email) error{
+// Thực hiện gửi
+func(m *MailjetProvider) Send(ctx context.Context, message *dto.EmailMessage) error {
 
-	// Kiểm tra xem có tồn tại trong DB khônng
+	// Tạo message
+	messagesInfo := []mailjet.InfoMessagesV31{
+		{
+			From: &mailjet.RecipientV31{
+				Email: m.senderMail,
+				Name: m.senderName,				
+			},
+			To: &mailjet.RecipientsV31{
+				mailjet.RecipientV31{
+					Email: message.To,
+				},
+			},
+			Subject: message.Subject,
+			HTMLPart: message.Text,
+		},
+	}
+
+	// thiết lập message
+	messages := mailjet.MessagesV31{Info: messagesInfo}
+
+	// Gửi email và kiểm tra lỗi
+	_, err := m.client.SendMailV31(&messages)
+	if err != nil {
+		m.logger.Error("Lỗi khi gửi email qua Mailjet: ", zap.Error(err), zap.String("to", message.To))
+		return err
+	}
+
 	return nil
 }
-func(m *MailjetProvider) SubmitAuthenticationInformation(ctx context.Context, email *dto.Email) error {
 
-	// Kiểm tra xem có tồn tại không và đã xác thực chưa, nếu chưa thì gửi email xác thực
+func (m *MailjetProvider) Close() error {
 	return nil
 }

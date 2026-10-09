@@ -21,6 +21,7 @@ func (a *AuthenRouter) InitAuthenRouter(
 ) {
 
 	authController, err := wire.InitAuthenRouterHandler(db, queries, logger)
+	mailController, err := wire.InitMailRouterHandler(queries, logger)
 	if err != nil {
 		panic("Lỗi khi khởi tạo ")
 	}
@@ -32,6 +33,8 @@ func (a *AuthenRouter) InitAuthenRouter(
 
 	Router.POST("/login/google", controller.Build(authController.Login_Google, logger))
 	Router.GET("/google/callback", controller.Build(authController.Login_Google_Callback, logger))
+	Router.GET("/verify-email-mailjet/", controller.Build(mailController.VerifyEmailMailjet, logger))
+	Router.GET("/verify-email-mailtrap/", controller.Build(mailController.VerifyEmailMailjet, logger))
 
 	// private routes for authentication (require authentication)
 	Router.POST(

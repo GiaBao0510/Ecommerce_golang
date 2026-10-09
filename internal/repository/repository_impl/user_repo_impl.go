@@ -518,7 +518,7 @@ func (r *UserRepository) UserVerificationInformationViaPhone(ctx context.Context
 	global.Logger.Access.Info("[Repository: UserVerificationInformationViaPhone] Kết thúc truy vấn thông tin xác thực người dùng với số điện thoại", zap.String("phone", phone), zap.Time("end_time", endTime), zap.Duration("duration", duration))
 	
 	return &result, nil
-}
+} 
 
 func (r *UserRepository) UserVerificationInformationViaUID(ctx context.Context, uid string) (*models.UserVerificationInformation, error) {
 	row, err := r.db.UserVerificationInformationViaUID(ctx, uid)
@@ -532,7 +532,7 @@ func (r *UserRepository) UserVerificationInformationViaUID(ctx context.Context, 
 		Email: row.Email,
 		Role_id: row.RoleID,
 	}
-	
+	 
 	return &result, nil
 }
 

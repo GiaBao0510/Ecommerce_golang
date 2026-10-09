@@ -3,42 +3,72 @@ package email
 import (
 	"context"
 
-	"github.com/GiaBao0510/Ecommerce_golang/global"
+	"github.com/mailtrap/mailtrap-go"
+	"go.uber.org/zap"
+
 	"github.com/GiaBao0510/Ecommerce_golang/internal/dto"
-	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
 )
 
-type MailTrapConfig struct{
-	APIKey string
-	SandboxID string
-	SenderMail string
-	SenderName string
-}
-
 type MailtrapProvider struct {
-	config *MailTrapConfig
-	logger *loghelper.ServiceLogger
+	client *mailtrap.Client
+	senderMail string
+	senderName string
+	logger *zap.Logger
 }
 
-func NewMailtrapProvider(config *MailConfig) (IEmailProviderService, error) {
+func NewMailtrapProvider(
+	config ProviderConfig,
+	logger *zap.Logger,
+) (IEmailProviderService, error) {
+
+	// thực hiện việc khởi tạo cấu hình trước khi gửi
+	client, err := mailtrap.NewClient(
+		config.APIKey,
+		mailtrap.WithSandbox(true),
+		mailtrap.WithSandboxID(config.SandboxID), 
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &MailtrapProvider{
-		config: &MailTrapConfig{
-			APIKey: global.Config.Authentication.MailTrap.API_key,
-			SandboxID: global.Config.Authentication.MailTrap.SandboxID,
-			SenderMail: global.Config.Authentication.MailTrap.Sender_mail,
-			SenderName: global.Config.Authentication.MailTrap.Sender_name,
-		},
-		logger: &loghelper.ServiceLogger{},
+		client: client,
+		senderMail: config.SenderEmail,
+		senderName: config.SenderName,
+		logger: logger,
 	}, nil
 }
 
-func(m *MailtrapProvider) SendNotification(ctx context.Context, email *dto.Email) error{
+func(m *MailtrapProvider) Send(ctx context.Context, message *dto.EmailMessage) error { 
 
-	// Kiểm tra xem có tồn tại trong DB khônng
+	_, _, err := m.client.Send(
+		ctx,
+		&mailtrap.SendRequest{
+			From: mailtrap.Address{
+				Email: m.senderMail, 
+				Name: m.senderName,
+			},
+			To: []mailtrap.Address{ 
+				{Email: message.To,},
+			},
+			Subject: message.Subject,
+			Category: message.Category,
+			Text: message.Text,
+		},
+	)
+
+	if err != nil {
+		m.logger.Error(
+            "Failed to send email via Mailtrap",
+            zap.Error(err),
+            zap.String("to", message.To),
+        )
+        return err
+	}
+
 	return nil
 }
-func(m *MailtrapProvider) SubmitAuthenticationInformation(ctx context.Context, email *dto.Email) error {
 
-	// Kiểm tra xem có tồn tại không và đã xác thực chưa, nếu chưa thì gửi email xác thực
+func (m *MailtrapProvider) Close() error {
 	return nil
 }

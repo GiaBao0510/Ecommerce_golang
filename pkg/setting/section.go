@@ -14,11 +14,13 @@ type Config struct {
 
 // Cấu hình cho Authentication, bao gồm các thông tin liên quan khác.
 type AuthenticationConfig struct {
-	MailJet    MailJetConfig    `mapstructure:"mailjet"`
-	MailTrap   MailTrapConfig   `mapstructure:"mailtrap"`
-	JWT        JWTConfig        `mapstructure:"jwt"`
-	Cloudflare CloudflareConfig `mapstructure:"cloudflare"`
-	OAuth2     OAuth2Config     `mapstructure:"oauth2"`
+	Email_provider string           `mapstructure:"email_provider"`
+	
+	MailJet        MailJetConfig    `mapstructure:"mailjet"`
+	MailTrap       MailTrapConfig   `mapstructure:"mailtrap"`
+	JWT            JWTConfig        `mapstructure:"jwt"`
+	Cloudflare     CloudflareConfig `mapstructure:"cloudflare"`
+	OAuth2         OAuth2Config     `mapstructure:"oauth2"`
 }
 
 // Cấu trúc con cho phần cấu hình server (port, host, mode)
@@ -79,7 +81,7 @@ type MailJetConfig struct {
 
 type MailTrapConfig struct {
 	API_key     string `mapstructure:"api_key"`
-	SandboxID   string `mapstructure:"sandboxID"`
+	SandboxID   int64  `mapstructure:"sandboxID"`
 	Sender_mail string `mapstructure:"sender_mail"`
 	Sender_name string `mapstructure:"sender_name"`
 }

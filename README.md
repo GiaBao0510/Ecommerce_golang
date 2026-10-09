@@ -190,3 +190,6 @@ The long-term goal is to turn this codebase into a realistic e-commerce backend 
 
 Bổ sung:
 - Dựa án có thêm phần backups DB vừa ở cục bộ vừa trên Cloud (Cloudflare) thông qua backups service chạy riêng. Sao lưu sẽ chạy ngầm và thực hiện sao lưu theo 2 giờ tối định kỳ mỗi ngày
+
+Tips:
+- Mỗi API endpoint nên có DTO riêng. Tên DTO phải phản ánh đúng mục đích sử dụng.
