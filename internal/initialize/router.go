@@ -33,10 +33,10 @@ func InitRouter(
 
 	r = gin.New() // Sử dụng gin.New() để tạo một instance Gin mới mà không có middleware mặc định, giúp giảm overhead và tăng hiệu suất trong môi trường sản xuất
 
-	// Mục đích câu lệnh này là để nén dữ liệu trả về từ server trước khi gửi cho client, giúp giảm băng thông và tăng tốc độ tải trang. 
+	// Mục đích câu lệnh này là để nén dữ liệu trả về từ server trước khi gửi cho client, giúp giảm băng thông và tăng tốc độ tải trang.
 	// gzip.DefaultCompression là mức nén mặc định, cân bằng giữa tốc độ nén và hiệu quả nén. Khi client nhận được dữ liệu nén, nó sẽ tự động giải nén để hiển thị nội dung.
-	r.Use(gzip.Gzip(gzip.DefaultCompression)) 
-	
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
+
 	/* ---Bước 2: Đăng ký middleware chung------------------------------------------------------
 		THỨ TỰ ĐĂNG KÝ RẤT QUAN TRỌNG — middleware chạy TRƯỚC bọc quanh middleware
 	chạy SAU (giống như vỏ hành). Lý do thứ tự dưới đây:
@@ -65,13 +65,13 @@ func InitRouter(
 
 	------------------------------------------------------------------------------------------ */
 	r.Use(
-		middleware.RealIPMiddleware(),                         // Đầu tiên, lấy IP thực của client từ header X-Real-IP hoặc X-Forwarded-For
-		middleware.TraceID_Middleware(),                       // Sinh trace_id duy nhất cho mỗi request, lưu vào context để các middleware/handler sau có thể sử dụng
-		middleware.Timing_Middleware(),							//
+		middleware.RealIPMiddleware(),   // Đầu tiên, lấy IP thực của client từ header X-Real-IP hoặc X-Forwarded-For
+		middleware.TraceID_Middleware(), // Sinh trace_id duy nhất cho mỗi request, lưu vào context để các middleware/handler sau có thể sử dụng
+		middleware.Timing_Middleware(),  //
 		//middleware.TracingMiddleware(),                        // Bọc quanh các middleware sau để đo thời gian xử lý toàn bộ request
 		middleware.RecoveryMiddleware(),                       // Bắt panic, ngăn app crash, trả về 500 thay vì để server tắt
 		middleware.HttpLoggerMiddleware(global.Logger.Access), // Ghi access log: method, path, status, latency, trace_id vào storages/logs/access.log
-		middleware.CORSMiddleware(),							// Cho phép cross-origin requests (frontend khác domain)
+		middleware.CORSMiddleware(),                           // Cho phép cross-origin requests (frontend khác domain)
 		middleware.MetricsMiddleware(),                        // Tầng này thu thập dữ liệu metric cho Prometheus, cần đặt sau Recovery để đảm bảo không bỏ lỡ metric nếu có panic
 	)
 
@@ -109,13 +109,13 @@ func InitRouter(
 
 	// Định nghĩa route cho từng vai trò
 	UserGroup := MainGroup.Group("/user")
-	UserGroup.Use(middleware.RateLimitingMiddlewareForPrivateAccess()) 
+	UserGroup.Use(middleware.RateLimitingMiddlewareForPrivateAccess())
 	UserGroup.Use(authenMiddleware.Handler())
 
 	ManagerGroup := MainGroup.Group("/manager")
-	ManagerGroup.Use(middleware.RateLimitingMiddlewareForPrivateAccess()) 
+	ManagerGroup.Use(middleware.RateLimitingMiddlewareForPrivateAccess())
 	ManagerGroup.Use(authenMiddleware.Handler())
-	
+
 	PublicGroup := MainGroup.Group("/common")
 	PublicGroup.Use(middleware.RateLimitingMiddlewareForPublicAccess())
 

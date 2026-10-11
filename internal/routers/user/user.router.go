@@ -24,4 +24,10 @@ func (r *UserRouter) InitUserRouter(Router *gin.RouterGroup, db *database.Querie
 	Router.PUT("/:uuid", controller.Build(userController.Update_Put, logger))
 	Router.PATCH("/:uuid", controller.Build(userController.Update_Patch, logger))
 	Router.DELETE("/:uuid", controller.Build(userController.Delete, logger))
+	
+	// --- Lấy thông tin người dùng áp dụng phân trang: Limit - Offset
+	// --- Lấy thông tin người dùng áp dụng phân trang: Deferred join
+	// --- Lấy thông tin người dùng áp dụng phân trang: Keyset pagination
+	// --- Lấy thông tin người dùng áp dụng phân trang: Cursor-based pagination
+
 }

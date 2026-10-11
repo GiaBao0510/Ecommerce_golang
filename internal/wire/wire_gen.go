@@ -11,11 +11,13 @@ import (
 	"github.com/GiaBao0510/Ecommerce_golang/global"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/controller/http"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/controller/http/authen"
-	"github.com/GiaBao0510/Ecommerce_golang/internal/controller/http/email"
+	email2 "github.com/GiaBao0510/Ecommerce_golang/internal/controller/http/email"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/controller/http/mail"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/database"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/repository/repository_impl"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service"
 	authen2 "github.com/GiaBao0510/Ecommerce_golang/internal/service/authen"
+	"github.com/GiaBao0510/Ecommerce_golang/internal/service/email"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service/oauth2"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/service/user"
 	"github.com/GiaBao0510/Ecommerce_golang/pkg/loghelper"
@@ -49,6 +51,23 @@ func InitAuthenRouterHandler(db *sql.DB, queries *database.Queries, logger *zap.
 	refreshTokenController := authen.NewRefreshTokenController(iAuthService)
 	iAuthenController := authen.NewAuthenController(loginController, loginGoogleController, logoutController, registerController, refreshTokenController)
 	return iAuthenController, nil
+}
+
+// Injectors from mail.wire.go:
+
+func InitMailRouterHandler(db *database.Queries, logger *zap.Logger) (mail.EmailControllerInterface, error) {
+	providerConfig := NewEmailProviderConfig()
+	iEmailProviderService, err := email.NewProviderFactory(providerConfig, logger)
+	if err != nil {
+		return nil, err
+	}
+	iUserRepository := repositoryimpl.NewUserRepository(db, logger)
+	dbLogger := NewDBLogger(logger)
+	iRedisRepository := repositoryimpl.NewRedisRepositoryImpl(dbLogger)
+	serviceLogger := NewMailServiceLogger(logger)
+	iEmailService := email.NewEmailService(iEmailProviderService, iUserRepository, iRedisRepository, serviceLogger)
+	emailControllerInterface := mail.NewEmailController(iEmailService)
+	return emailControllerInterface, nil
 }
 
 // Injectors from permission.wire.go:
@@ -109,14 +128,14 @@ func InitUserRoleRouterHandler(db *database.Queries, logger *zap.Logger) (*http.
 
 // Injectors from verify.wire.go:
 
-func InitVerifyRouterHandler(db *database.Queries, logger *zap.Logger) (email.EmailControllerInterface, error) {
+func InitVerifyRouterHandler(db *database.Queries, logger *zap.Logger) (email2.EmailControllerInterface, error) {
 	iUserRepository := repositoryimpl.NewUserRepository(db, logger)
 	client := NewMailJectClient()
 	dbLogger := NewDBLogger(logger)
 	iEmailRepository := repositoryimpl.NewEmailRepositoryImpl(client, dbLogger)
 	iRedisRepository := repositoryimpl.NewRedisRepositoryImpl(dbLogger)
 	verifyUserUsecase := authen2.NewVerifyUserUsecase(iUserRepository, iEmailRepository, iRedisRepository, dbLogger)
-	emailControllerInterface := email.NewEmailController(verifyUserUsecase)
+	emailControllerInterface := email2.NewEmailController(verifyUserUsecase)
 	return emailControllerInterface, nil
 }
 
@@ -124,6 +143,58 @@ func InitVerifyRouterHandler(db *database.Queries, logger *zap.Logger) (email.Em
 
 func NewServiceLogger(logger *zap.Logger) *loghelper.ServiceLogger {
 	return loghelper.NewServiceLogger(logger, "AuthFlow")
+}
+
+// mail.wire.go:
+
+// NewMailServiceLogger tạo ServiceLogger riêng cho module Email
+// Khác với NewServiceLogger (dùng cho AuthFlow)
+func NewMailServiceLogger(logger *zap.Logger) *loghelper.ServiceLogger {
+	return loghelper.NewServiceLogger(logger, "EmailFlow")
+}
+
+// ĐÂY LÀ NƠI CHỌN PROVIDER:
+// - Đọc global.Config.Authentication.EmailProvider → "mailtrap" hoặc "mailjet"
+// - Dựa vào giá trị đó, lấy config tương ứng (API key, sender, ...)
+// - Truyền vào NewProviderFactory() để tạo đúng provider
+func NewEmailProviderConfig() email.ProviderConfig {
+
+	providerType := global.Config.Authentication.Email_provider
+
+	switch email.ProviderType(providerType) {
+	case email.ProviderMailtrap:
+
+		mtConfig := global.Config.Authentication.MailTrap
+		return email.ProviderConfig{
+			Type:        email.ProviderMailtrap,
+			APIKey:      mtConfig.API_key,
+			SandboxID:   mtConfig.SandboxID,
+			SenderEmail: mtConfig.Sender_mail,
+			SenderName:  mtConfig.Sender_name,
+		}
+
+	case email.ProviderMailjet:
+
+		mjConfig := global.Config.Authentication.MailJet
+		return email.ProviderConfig{
+			Type:        email.ProviderMailjet,
+			APIKey:      mjConfig.API_key,
+			SecretKey:   mjConfig.Secret_key,
+			SenderEmail: mjConfig.From_mail,
+			SenderName:  mjConfig.From_name,
+		}
+
+	default:
+
+		mtConfig := global.Config.Authentication.MailTrap
+		return email.ProviderConfig{
+			Type:        email.ProviderMailtrap,
+			APIKey:      mtConfig.API_key,
+			SandboxID:   mtConfig.SandboxID,
+			SenderEmail: mtConfig.Sender_mail,
+			SenderName:  mtConfig.Sender_name,
+		}
+	}
 }
 
 // verify.wire.go:

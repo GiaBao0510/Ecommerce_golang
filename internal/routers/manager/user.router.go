@@ -17,25 +17,24 @@ type UserRouter struct {
 // Và với vai trò admin sẽ được phép truy cập tất cả các route này, còn với vai trò user sẽ chỉ được phép truy cập một số route nhất định
 func (r *UserRouter) InitUserRouter(
 	Router *gin.RouterGroup,
-	 db *database.Queries, 
-	 logger *zap.Logger,
+	db *database.Queries,
+	logger *zap.Logger,
 ) {
 	userController, err := wire.InitUserRouterHandler(db, logger)
 	if err != nil {
 		panic("Lỗi khi khởi tạo UserRouterHandler: " + err.Error())
 	}
 
-
 	Router.GET(
-		"", 
+		"",
 		middleware.RequireRoles(_const.RoleAdmin), // Chỉ cho phép role admin (1) truy cập
 		controller.Build(userController.GetAll, logger),
 	)
 	Router.POST(
-        "",
-        middleware.RequireRoles(_const.RoleAdmin),
-        controller.Build(userController.Create, logger),
-    )
+		"",
+		middleware.RequireRoles(_const.RoleAdmin),
+		controller.Build(userController.Create, logger),
+	)
 
 	Router.GET("/:uuid", controller.Build(userController.GetByID, logger))
 	Router.GET("/email/:email", controller.Build(userController.GetUserByEmail, logger))

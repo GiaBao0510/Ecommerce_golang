@@ -13,28 +13,32 @@ import (
 type AuthenRouter struct{}
 
 func (a *AuthenRouter) InitAuthenRouter(
-	Router *gin.RouterGroup, 
-	db *sql.DB, 
-	queries *database.Queries, 
+	Router *gin.RouterGroup,
+	db *sql.DB,
+	queries *database.Queries,
 	logger *zap.Logger,
 	authMiddleware gin.HandlerFunc,
 ) {
 
 	authController, err := wire.InitAuthenRouterHandler(db, queries, logger)
+	if err != nil {
+		panic("Lỗi khi khởi tạo AuthenRouterHandler: " + err.Error())
+	}
+
 	mailController, err := wire.InitMailRouterHandler(queries, logger)
 	if err != nil {
-		panic("Lỗi khi khởi tạo ")
+		panic("Lỗi khi khởi tạo MailRouterHandler: " + err.Error())
 	}
 
 	// public routes for authentication
 	Router.POST("/register", controller.Build(authController.Register, logger))
 	Router.POST("/login", controller.Build(authController.Login, logger))
 	Router.POST("/refresh", controller.Build(authController.RefreshToken, logger))
-
 	Router.POST("/login/google", controller.Build(authController.Login_Google, logger))
 	Router.GET("/google/callback", controller.Build(authController.Login_Google_Callback, logger))
-	Router.GET("/verify-email-mailjet/", controller.Build(mailController.VerifyEmailMailjet, logger))
-	Router.GET("/verify-email-mailtrap/", controller.Build(mailController.VerifyEmailMailjet, logger))
+
+	Router.POST("/send-otp", controller.Build(mailController.SendOTP, logger))
+	Router.POST("/send-notification", controller.Build(mailController.SendNotification, logger))
 
 	// private routes for authentication (require authentication)
 	Router.POST(
