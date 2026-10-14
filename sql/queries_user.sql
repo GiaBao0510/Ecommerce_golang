@@ -55,6 +55,22 @@ UPDATE "user"
 -- name: DeleteUser :execresult
 DELETE FROM "user" WHERE uuid = $1;
 
+-- name: GetUser_OffsetLimit :many
+SELECT *
+FROM "user"
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $1;
+
+-- name: GetUser_DefferedJoin :many
+SELECT u1.*
+FROM "user" AS u1
+INNER JOIN (
+    SELECT uuid
+    FROM "user"
+    ORDER BY created_at DESC
+    LIMIT $2 OFFSET $1
+) AS u2 ON u1.uuid = u2.uuid;
+
 /*_______________ Bảng User-Roles 5 ___________________*/
 -- name: CreateUserRole :exec
 INSERT INTO user_role(uuid, role_id) VALUES($1, $2);

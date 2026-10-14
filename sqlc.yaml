@@ -5,6 +5,7 @@ sql:
       - "sql/queries.sql"
       - "sql/queries_verify.sql"
       - "sql/queries_user.sql"
+      - "sql/queries_product.sql"
     schema: "sql/schema.sql"
     gen:
       go:

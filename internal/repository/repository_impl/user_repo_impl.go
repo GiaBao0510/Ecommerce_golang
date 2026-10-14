@@ -113,6 +113,47 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]models.Users, error) {
 	return users, nil
 } 
 
+func (r *UserRepository) GetUser_strategy_offset_limit(ctx context.Context, offset, limit int32) ([]models.Users, error) {
+	
+	param := database.GetUser_OffsetLimitParams{
+		Offset: offset,
+		Limit:  limit,
+	}
+	
+	query, err := r.db.GetUser_OffsetLimit(ctx, param)
+	if err != nil {
+		r.dblog.LogError("GetUser_strategy_offset_limit", err, zap.Int32("offset", offset), zap.Int32("limit", limit))
+		return nil, MapDBErrorWithContext(err, "Lỗi khi lấy danh sách người dùng với offset và limit")
+	}
+
+	var users []models.Users
+	for _, user := range query {
+		users = append(users, mapper.ToUserModel(user))
+	}
+
+	return users, nil
+}
+
+func (r *UserRepository) GetUser_strategy_deferred_join(ctx context.Context, offset, limit int32) ([]models.Users, error) {
+	param := database.GetUser_DefferedJoinParams{
+		Offset: offset,
+		Limit:  limit,
+	}
+	
+	query, err := r.db.GetUser_DefferedJoin(ctx, param)
+	if err != nil {
+		r.dblog.LogError("GetUser_strategy_deferred_join", err, zap.Int32("offset", offset), zap.Int32("limit", limit))
+		return nil, MapDBErrorWithContext(err, "Lỗi khi lấy danh sách người dùng với chiến lược deferred join")
+	}
+
+	var users []models.Users
+	for _, user := range query {
+		users = append(users, mapper.ToUserModel(user))
+	}
+
+	return users, nil
+}
+
 func (r *UserRepository) Create(ctx context.Context, obj *models.CreateUsersRequestStrict) (string, error) {
 
 	// Nhận các giá trị từ obj và chuẩn bị các tham số cho truy vấn SQL
@@ -530,7 +571,7 @@ func (r *UserRepository) UserVerificationInformationViaUID(ctx context.Context, 
 	result := models.UserVerificationInformation{
 		Uuid: row.Uuid,
 		Email: row.Email,
-		Role_id: row.RoleID,
+		Role_id: row.RoleID, 
 	}
 	 
 	return &result, nil

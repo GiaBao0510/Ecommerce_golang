@@ -26,7 +26,7 @@ type IUserService interface {
 	CreateUserFromOAuth2(ctx context.Context, obj *models.CreateUsersRequestNonStrict) (string, error)
 
 	// List operations 
-	GetAll(ctx context.Context) ([]models.Users, error)
+	GetAll(ctx context.Context, limit, offset int32) ([]models.Users, error)
 
 	// Search operations
 	GetUserByEmail(ctx context.Context, email string) (*models.Users, error)
@@ -102,8 +102,14 @@ func (s *UserService) Delete(ctx context.Context, id string) error {
 }
 
 // List operations 
-func (s *UserService) GetAll(ctx context.Context) ([]models.Users, error) {
-	return s.UserRepo.GetAll(ctx)
+const deferredJoinThreshold = 10000 // Ngưỡng để quyết định sử dụng chiến lược deferred join
+func (s *UserService) GetAll(ctx context.Context, limit, offset int32) ([]models.Users, error) {
+	
+	if offset >= deferredJoinThreshold {
+		return s.UserRepo.GetUser_strategy_deferred_join(ctx, offset, limit)
+	}
+
+	return s.UserRepo.GetUser_strategy_offset_limit(ctx, offset, limit)
 }
 
 // Search operations

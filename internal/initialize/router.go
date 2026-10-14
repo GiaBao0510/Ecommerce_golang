@@ -152,6 +152,18 @@ func InitRouter(
 		ManagerGroup.Group("/status"),
 		global.DB,
 		global.Logger.Error)
+	managerRouter.InitCategoryRouter(
+		ManagerGroup.Group("/category"),
+		global.DB,
+		global.Logger.Error)
+	managerRouter.InitSubCategoryRouter(
+		ManagerGroup.Group("/sub-category"),
+		global.DB,
+		global.Logger.Error)
+	managerRouter.InitProductDetailRouter(
+		ManagerGroup.Group("/product-detail"),
+		global.DB,
+		global.Logger.Error)
 	managerRouter.InitRolesRouter(
 		ManagerGroup.Group("/roles"),
 		global.DB,

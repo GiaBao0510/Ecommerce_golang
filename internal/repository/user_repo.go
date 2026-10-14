@@ -23,6 +23,8 @@ type IUserRepository interface {
 
 	// List operations
 	GetAll(ctx context.Context) ([]models.Users, error)
+	GetUser_strategy_offset_limit(ctx context.Context, offset, limit int32) ([]models.Users, error)
+	GetUser_strategy_deferred_join(ctx context.Context, offset, limit int32) ([]models.Users, error)
 
 	// Search operations
 	GetUID_PasswordHashByEmail(ctx context.Context, email string) (*dto.UserResponseBase, error)

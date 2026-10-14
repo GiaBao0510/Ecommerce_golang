@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
+	dtoUser "github.com/GiaBao0510/Ecommerce_golang/internal/dto/user"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/dto"
 	"github.com/GiaBao0510/Ecommerce_golang/internal/models"
 	service "github.com/GiaBao0510/Ecommerce_golang/internal/service/user"
@@ -16,7 +17,7 @@ type UserController struct {
 	userService service.IUserService
 	logger      *zap.Logger
 }
- 
+
 // hàm khởi tạo
 func NewUserController(userService service.IUserService, logger *zap.Logger) *UserController {
 	return &UserController{
@@ -110,7 +111,15 @@ func (ctr *UserController) Delete(c *gin.Context) error {
 
 // List operations
 func (ctr *UserController) GetAll(c *gin.Context) error {
-	result, err := ctr.userService.GetAll(c)
+
+	// Lấy các tham số offset và limit từ query parameters
+	var q dtoUser.PaginationRequest
+	if err := c.ShouldBindQuery(&q); err != nil {
+		return HandleValidationError(err)
+	}
+	q.SetDefault() // Set default values for limit and offset if they are not provided
+
+	result, err := ctr.userService.GetAll(c,q.Limit, q.Offset)
 	if err != nil {
 		return err
 	}

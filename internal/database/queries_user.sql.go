@@ -322,6 +322,110 @@ func (q *Queries) GetUserByRoleID(ctx context.Context, roleID int32) ([]GetUserB
 	return items, nil
 }
 
+const getUser_DefferedJoin = `-- name: GetUser_DefferedJoin :many
+SELECT u1.uuid, u1.id_status, u1.user_name, u1.birth_date, u1.email, u1.phone_num, u1.is_email_verified, u1.is_phonenum_verified, u1.address, u1.password_hash, u1.avatar_url, u1.created_at, u1.updated_at, u1.deleted_at
+FROM "user" AS u1
+INNER JOIN (
+    SELECT uuid
+    FROM "user"
+    ORDER BY created_at DESC
+    LIMIT $2 OFFSET $1
+) AS u2 ON u1.uuid = u2.uuid
+`
+
+type GetUser_DefferedJoinParams struct {
+	Offset int32
+	Limit  int32
+}
+
+func (q *Queries) GetUser_DefferedJoin(ctx context.Context, arg GetUser_DefferedJoinParams) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getUser_DefferedJoin, arg.Offset, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.Uuid,
+			&i.IDStatus,
+			&i.UserName,
+			&i.BirthDate,
+			&i.Email,
+			&i.PhoneNum,
+			&i.IsEmailVerified,
+			&i.IsPhonenumVerified,
+			&i.Address,
+			&i.PasswordHash,
+			&i.AvatarUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUser_OffsetLimit = `-- name: GetUser_OffsetLimit :many
+SELECT uuid, id_status, user_name, birth_date, email, phone_num, is_email_verified, is_phonenum_verified, address, password_hash, avatar_url, created_at, updated_at, deleted_at
+FROM "user"
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $1
+`
+
+type GetUser_OffsetLimitParams struct {
+	Offset int32
+	Limit  int32
+}
+
+func (q *Queries) GetUser_OffsetLimit(ctx context.Context, arg GetUser_OffsetLimitParams) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getUser_OffsetLimit, arg.Offset, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.Uuid,
+			&i.IDStatus,
+			&i.UserName,
+			&i.BirthDate,
+			&i.Email,
+			&i.PhoneNum,
+			&i.IsEmailVerified,
+			&i.IsPhonenumVerified,
+			&i.Address,
+			&i.PasswordHash,
+			&i.AvatarUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateUserAvatar_PATCH = `-- name: UpdateUserAvatar_PATCH :execresult
 UPDATE "user"
 	SET avatar_url = $1,

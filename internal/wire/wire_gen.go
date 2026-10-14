@@ -25,6 +25,24 @@ import (
 	"go.uber.org/zap"
 )
 
+// Injectors from ProductDetail.wire.go:
+
+func InitProductDetailRouterHandler(db *database.Queries, logger *zap.Logger) (*http.ProductDetailController, error) {
+	iProductDetailRepository := repositoryimpl.NewProductDetailRepository(db, logger)
+	iProductDetailService := service.NewProductDetailService(iProductDetailRepository, logger)
+	productDetailController := http.NewProductDetailController(iProductDetailService, logger)
+	return productDetailController, nil
+}
+
+// Injectors from SubCategories.wire.go:
+
+func InitSubCategoryRouterHandler(db *database.Queries, logger *zap.Logger) (*http.SubCategoryController, error) {
+	iSubCategoryRepository := repositoryimpl.NewSubCategoryRepository(db, logger)
+	iSubCategoryService := service.NewSubCategoryService(iSubCategoryRepository, logger)
+	subCategoryController := http.NewSubCategoryController(iSubCategoryService, logger)
+	return subCategoryController, nil
+}
+
 // Injectors from authen.wire.go:
 
 func InitAuthenRouterHandler(db *sql.DB, queries *database.Queries, logger *zap.Logger) (authen.IAuthenController, error) {
@@ -51,6 +69,15 @@ func InitAuthenRouterHandler(db *sql.DB, queries *database.Queries, logger *zap.
 	refreshTokenController := authen.NewRefreshTokenController(iAuthService)
 	iAuthenController := authen.NewAuthenController(loginController, loginGoogleController, logoutController, registerController, refreshTokenController)
 	return iAuthenController, nil
+}
+
+// Injectors from category.wire.go:
+
+func InitCategoryRouterHandler(db *database.Queries, logger *zap.Logger) (*http.CategoryController, error) {
+	iCategoryRepository := repositoryimpl.NewCategoryRepository(db, logger)
+	iCategoryService := service.NewCategoryService(iCategoryRepository, logger)
+	categoryController := http.NewCategoryController(iCategoryService, logger)
+	return categoryController, nil
 }
 
 // Injectors from mail.wire.go:
