@@ -10,6 +10,15 @@ import (
 	"database/sql"
 )
 
+const createBrand = `-- name: CreateBrand :exec
+INSERT INTO brand("name") VALUES($1)
+`
+
+func (q *Queries) CreateBrand(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, createBrand, name)
+	return err
+}
+
 const createCategory = `-- name: CreateCategory :exec
 INSERT INTO categories(name, description) VALUES($1,$2)
 `
@@ -49,6 +58,27 @@ func (q *Queries) CreateProductDetail(ctx context.Context, arg CreateProductDeta
 	return err
 }
 
+const createShopOwner = `-- name: CreateShopOwner :exec
+INSERT INTO shop_owner(uuid, "name", description, avatar_url) VALUES($1, $2, $3, $4)
+`
+
+type CreateShopOwnerParams struct {
+	Uuid        string
+	Name        string
+	Description sql.NullString
+	AvatarUrl   sql.NullString
+}
+
+func (q *Queries) CreateShopOwner(ctx context.Context, arg CreateShopOwnerParams) error {
+	_, err := q.db.ExecContext(ctx, createShopOwner,
+		arg.Uuid,
+		arg.Name,
+		arg.Description,
+		arg.AvatarUrl,
+	)
+	return err
+}
+
 const createSubCategory = `-- name: CreateSubCategory :exec
 INSERT INTO sub_categories(id_cate, "name", description) VALUES($1, $2, $3)
 `
@@ -62,6 +92,14 @@ type CreateSubCategoryParams struct {
 func (q *Queries) CreateSubCategory(ctx context.Context, arg CreateSubCategoryParams) error {
 	_, err := q.db.ExecContext(ctx, createSubCategory, arg.IDCate, arg.Name, arg.Description)
 	return err
+}
+
+const deleteBrand = `-- name: DeleteBrand :execresult
+DELETE FROM brand WHERE id_brand = $1
+`
+
+func (q *Queries) DeleteBrand(ctx context.Context, idBrand int32) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteBrand, idBrand)
 }
 
 const deleteCategory = `-- name: DeleteCategory :execresult
@@ -80,12 +118,54 @@ func (q *Queries) DeleteProductDetail(ctx context.Context, idProduct string) (sq
 	return q.db.ExecContext(ctx, deleteProductDetail, idProduct)
 }
 
+const deleteShopOwner = `-- name: DeleteShopOwner :execresult
+DELETE FROM shop_owner WHERE id_shop_owner = $1
+`
+
+func (q *Queries) DeleteShopOwner(ctx context.Context, idShopOwner int32) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteShopOwner, idShopOwner)
+}
+
 const deleteSubCategory = `-- name: DeleteSubCategory :execresult
 DELETE FROM sub_categories WHERE id_sub_cate = $1
 `
 
 func (q *Queries) DeleteSubCategory(ctx context.Context, idSubCate int32) (sql.Result, error) {
 	return q.db.ExecContext(ctx, deleteSubCategory, idSubCate)
+}
+
+const getAllBrands = `-- name: GetAllBrands :many
+SELECT id_brand, name, created_at, updated_at, deleted_at FROM brand
+`
+
+// ################### Brand
+func (q *Queries) GetAllBrands(ctx context.Context) ([]Brand, error) {
+	rows, err := q.db.QueryContext(ctx, getAllBrands)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Brand
+	for rows.Next() {
+		var i Brand
+		if err := rows.Scan(
+			&i.IDBrand,
+			&i.Name,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getAllCategories = `-- name: GetAllCategories :many
@@ -161,6 +241,44 @@ func (q *Queries) GetAllProductDetails(ctx context.Context) ([]ProductDetail, er
 	return items, nil
 }
 
+const getAllShopOwners = `-- name: GetAllShopOwners :many
+
+SELECT id_shop_owner, uuid, name, description, avatar_url, created_at, updated_at, deleted_at FROM shop_owner
+`
+
+// ################### shop_owner
+func (q *Queries) GetAllShopOwners(ctx context.Context) ([]ShopOwner, error) {
+	rows, err := q.db.QueryContext(ctx, getAllShopOwners)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ShopOwner
+	for rows.Next() {
+		var i ShopOwner
+		if err := rows.Scan(
+			&i.IDShopOwner,
+			&i.Uuid,
+			&i.Name,
+			&i.Description,
+			&i.AvatarUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllSubCategories = `-- name: GetAllSubCategories :many
 
 SELECT id_sub_cate, id_cate, name, description, created_at, updated_at, deleted_at FROM sub_categories
@@ -196,6 +314,40 @@ func (q *Queries) GetAllSubCategories(ctx context.Context) ([]SubCategory, error
 		return nil, err
 	}
 	return items, nil
+}
+
+const getBrandByID = `-- name: GetBrandByID :one
+SELECT id_brand, name, created_at, updated_at, deleted_at FROM brand WHERE id_brand = $1
+`
+
+func (q *Queries) GetBrandByID(ctx context.Context, idBrand int32) (Brand, error) {
+	row := q.db.QueryRowContext(ctx, getBrandByID, idBrand)
+	var i Brand
+	err := row.Scan(
+		&i.IDBrand,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getBrandByName = `-- name: GetBrandByName :one
+SELECT id_brand, name, created_at, updated_at, deleted_at FROM brand WHERE "name" = $1
+`
+
+func (q *Queries) GetBrandByName(ctx context.Context, name string) (Brand, error) {
+	row := q.db.QueryRowContext(ctx, getBrandByName, name)
+	var i Brand
+	err := row.Scan(
+		&i.IDBrand,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
 }
 
 const getCategoryByID = `-- name: GetCategoryByID :one
@@ -253,6 +405,46 @@ func (q *Queries) GetProductDetailByID(ctx context.Context, idProduct string) (P
 	return i, err
 }
 
+const getShopOwnerByID = `-- name: GetShopOwnerByID :one
+SELECT id_shop_owner, uuid, name, description, avatar_url, created_at, updated_at, deleted_at FROM shop_owner WHERE id_shop_owner = $1
+`
+
+func (q *Queries) GetShopOwnerByID(ctx context.Context, idShopOwner int32) (ShopOwner, error) {
+	row := q.db.QueryRowContext(ctx, getShopOwnerByID, idShopOwner)
+	var i ShopOwner
+	err := row.Scan(
+		&i.IDShopOwner,
+		&i.Uuid,
+		&i.Name,
+		&i.Description,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getShopOwnerByName = `-- name: GetShopOwnerByName :one
+SELECT id_shop_owner, uuid, name, description, avatar_url, created_at, updated_at, deleted_at FROM shop_owner WHERE "name" = $1
+`
+
+func (q *Queries) GetShopOwnerByName(ctx context.Context, name string) (ShopOwner, error) {
+	row := q.db.QueryRowContext(ctx, getShopOwnerByName, name)
+	var i ShopOwner
+	err := row.Scan(
+		&i.IDShopOwner,
+		&i.Uuid,
+		&i.Name,
+		&i.Description,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const getSubCategoryByID = `-- name: GetSubCategoryByID :one
 SELECT id_sub_cate, id_cate, name, description, created_at, updated_at, deleted_at FROM sub_categories WHERE id_sub_cate = $1
 `
@@ -289,6 +481,21 @@ func (q *Queries) GetSubCategoryByName(ctx context.Context, name string) (SubCat
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const updateBrandByID_PUT = `-- name: UpdateBrandByID_PUT :execresult
+UPDATE brand 
+SET 	"name" = $1
+WHERE id_brand = $2
+`
+
+type UpdateBrandByID_PUTParams struct {
+	Name    string
+	IDBrand int32
+}
+
+func (q *Queries) UpdateBrandByID_PUT(ctx context.Context, arg UpdateBrandByID_PUTParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateBrandByID_PUT, arg.Name, arg.IDBrand)
 }
 
 const updateCategoryByID_PUT = `-- name: UpdateCategoryByID_PUT :execresult
@@ -381,6 +588,78 @@ type UpdateProductQuantityByID_PATCHParams struct {
 
 func (q *Queries) UpdateProductQuantityByID_PATCH(ctx context.Context, arg UpdateProductQuantityByID_PATCHParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, updateProductQuantityByID_PATCH, arg.Quantity, arg.IDProduct)
+}
+
+const updateShopOwnerAvatarByID_PATCH = `-- name: UpdateShopOwnerAvatarByID_PATCH :execresult
+UPDATE shop_owner 
+SET 	avatar_url = $1
+WHERE id_shop_owner = $2
+`
+
+type UpdateShopOwnerAvatarByID_PATCHParams struct {
+	AvatarUrl   sql.NullString
+	IDShopOwner int32
+}
+
+func (q *Queries) UpdateShopOwnerAvatarByID_PATCH(ctx context.Context, arg UpdateShopOwnerAvatarByID_PATCHParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateShopOwnerAvatarByID_PATCH, arg.AvatarUrl, arg.IDShopOwner)
+}
+
+const updateShopOwnerByID_PUT = `-- name: UpdateShopOwnerByID_PUT :execresult
+UPDATE shop_owner 
+SET 	uuid = $1, 
+		"name" = $2, 
+		description = $3, 
+		avatar_url = $4
+WHERE id_shop_owner = $5
+`
+
+type UpdateShopOwnerByID_PUTParams struct {
+	Uuid        string
+	Name        string
+	Description sql.NullString
+	AvatarUrl   sql.NullString
+	IDShopOwner int32
+}
+
+func (q *Queries) UpdateShopOwnerByID_PUT(ctx context.Context, arg UpdateShopOwnerByID_PUTParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateShopOwnerByID_PUT,
+		arg.Uuid,
+		arg.Name,
+		arg.Description,
+		arg.AvatarUrl,
+		arg.IDShopOwner,
+	)
+}
+
+const updateShopOwnerDescriptionByID_PATCH = `-- name: UpdateShopOwnerDescriptionByID_PATCH :execresult
+UPDATE shop_owner 
+SET 	description = $1
+WHERE id_shop_owner = $2
+`
+
+type UpdateShopOwnerDescriptionByID_PATCHParams struct {
+	Description sql.NullString
+	IDShopOwner int32
+}
+
+func (q *Queries) UpdateShopOwnerDescriptionByID_PATCH(ctx context.Context, arg UpdateShopOwnerDescriptionByID_PATCHParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateShopOwnerDescriptionByID_PATCH, arg.Description, arg.IDShopOwner)
+}
+
+const updateShopOwnerNameByID_PATCH = `-- name: UpdateShopOwnerNameByID_PATCH :execresult
+UPDATE shop_owner 
+SET 	"name" = $1
+WHERE id_shop_owner = $2
+`
+
+type UpdateShopOwnerNameByID_PATCHParams struct {
+	Name        string
+	IDShopOwner int32
+}
+
+func (q *Queries) UpdateShopOwnerNameByID_PATCH(ctx context.Context, arg UpdateShopOwnerNameByID_PATCHParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateShopOwnerNameByID_PATCH, arg.Name, arg.IDShopOwner)
 }
 
 const updateSubCategoryByID_PUT = `-- name: UpdateSubCategoryByID_PUT :execresult

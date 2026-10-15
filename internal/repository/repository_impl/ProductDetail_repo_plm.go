@@ -62,7 +62,10 @@ func (r *ProductDetailRepository) Create(ctx context.Context, obj *models.Produc
 	}
 	if err := r.db.CreateProductDetail(ctx, params); err != nil {
 		r.dblog.LogError("Create", err, zap.String("id_product", obj.IDProduct))
-		return apperrors.NewInternalServerError(err)
+		return MapDBErrorWithContext(
+			err,
+			"Product không tồn tại hoặc dữ liệu product detail không hợp lệ",
+		)
 	}
 	return nil
 }

@@ -54,7 +54,16 @@ func MapDBError(err error) error {
 	case "23505": // Unique violation
 		return mapUniqueViolationError(pqErr)
 	case "23503": // Foreign key violation
-		return apperrors.NewBadRequestError("Dữ liệu tham chiếu không tồn tại hoặc đã bị xóa ")
+		switch pqErr.Constraint{
+			case "fk_product_detail_product":
+				return apperrors.NewBadRequestError(
+					"Product không tồn tại",
+				)
+			default:
+				return apperrors.NewBadRequestError(
+					"Dữ liệu tham chiếu không tồn tại hoặc đã bị xóa",
+				)
+		}
 	case "23502": // Not null violation
 		field := pqErr.Column
 		if field == "" {

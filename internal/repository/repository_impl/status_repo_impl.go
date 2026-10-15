@@ -72,7 +72,7 @@ func (s *StatusRepository) Create(ctx context.Context, obj *models.Status) (int,
 	// Gọi phương thức CreateStatus từ database.Queries để thực hiện việc tạo mới
 	if err := s.db.CreateStatus(ctx, params); err != nil {
 		s.dblog.LogError("Create", err, zap.String("name", obj.Name))
-		return 0, apperrors.NewInternalServerError(err)
+		return 0, MapDBError(err)
 	}
 
 	return 0, nil
@@ -93,7 +93,7 @@ func (s *StatusRepository) Update_Put(ctx context.Context, id int32, obj *models
 	result, err := s.db.UpdateStatus_PUT(ctx, params)
 	if err != nil {
 		s.dblog.LogError("UpdateStatus_PUT", err, zap.Int32("id", id))
-		return apperrors.NewInternalServerError(err)
+		return MapDBError(err)
 	}
 
 	// Kiểm tra số lượng bản ghi bị ảnh hưởng
@@ -132,7 +132,7 @@ func (s *StatusRepository) Update_Patch(ctx context.Context, id int32, obj *mode
 	affected, err := result.RowsAffected()
 	if err != nil {
 		s.dblog.LogError("RowsAffected", err, zap.Int32("id", id))
-		return apperrors.NewInternalServerError(err)
+		return MapDBError(err)
 	}
 
 	if affected == 0 {

@@ -45,6 +45,24 @@ func InitSubCategoryRouterHandler(db *database.Queries, logger *zap.Logger) (*ht
 
 // Injectors from authen.wire.go:
 
+// Injectors from brand.wire.go:
+
+func InitBrandRouterHandler(db *database.Queries, logger *zap.Logger) (*http.BrandController, error) {
+	iBrandRepository := repositoryimpl.NewBrandRepository(db, logger)
+	iBrandService := service.NewBrandService(iBrandRepository, logger)
+	brandController := http.NewBrandController(iBrandService, logger)
+	return brandController, nil
+}
+
+// Injectors from ShopOwner.wire.go:
+
+func InitShopOwnerRouterHandler(db *database.Queries, logger *zap.Logger) (*http.ShopOwnerController, error) {
+	iShopOwnerRepository := repositoryimpl.NewShopOwnerRepository(db, logger)
+	iShopOwnerService := service.NewShopOwnerService(iShopOwnerRepository, logger)
+	shopOwnerController := http.NewShopOwnerController(iShopOwnerService, logger)
+	return shopOwnerController, nil
+}
+
 func InitAuthenRouterHandler(db *sql.DB, queries *database.Queries, logger *zap.Logger) (authen.IAuthenController, error) {
 	iUserRepository := repositoryimpl.NewUserRepository(queries, logger)
 	iUserRoleRepository := repositoryimpl.NewUserRoleRepository(queries, logger)

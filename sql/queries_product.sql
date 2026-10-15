@@ -81,3 +81,66 @@ WHERE id_product = $2;
 UPDATE product_detail 
 SET 	quantity = $1
 WHERE id_product = $2;
+
+-- ################### Brand
+-- name: GetAllBrands :many
+SELECT * FROM brand;
+
+-- name: GetBrandByID :one
+SELECT * FROM brand WHERE id_brand = $1;
+
+-- name: GetBrandByName :one
+SELECT * FROM brand WHERE "name" = $1;
+
+-- name: CreateBrand :exec
+INSERT INTO brand("name") VALUES($1);
+
+-- name: DeleteBrand :execresult
+DELETE FROM brand WHERE id_brand = $1;
+
+-- name: UpdateBrandByID_PUT :execresult
+UPDATE brand 
+SET 	"name" = $1
+WHERE id_brand = $2;
+
+-- ################### shop_owner
+
+-- name: GetAllShopOwners :many
+SELECT * FROM shop_owner;
+
+-- name: GetShopOwnerByID :one
+SELECT * FROM shop_owner WHERE id_shop_owner = $1;
+
+-- name: GetShopOwnerByName :one
+SELECT * FROM shop_owner WHERE "name" = $1;
+
+-- name: CreateShopOwner :exec
+INSERT INTO shop_owner(uuid, "name", description, avatar_url) VALUES($1, $2, $3, $4);
+
+-- name: DeleteShopOwner :execresult
+DELETE FROM shop_owner WHERE id_shop_owner = $1;
+
+-- name: UpdateShopOwnerByID_PUT :execresult
+UPDATE shop_owner 
+SET 	uuid = $1, 
+		"name" = $2, 
+		description = $3, 
+		avatar_url = $4
+WHERE id_shop_owner = $5;
+
+-- name: UpdateShopOwnerNameByID_PATCH :execresult
+UPDATE shop_owner 
+SET 	"name" = $1
+WHERE id_shop_owner = $2;
+
+-- name: UpdateShopOwnerDescriptionByID_PATCH :execresult
+UPDATE shop_owner 
+SET 	description = $1
+WHERE id_shop_owner = $2;
+
+-- name: UpdateShopOwnerAvatarByID_PATCH :execresult
+UPDATE shop_owner 
+SET 	avatar_url = $1
+WHERE id_shop_owner = $2;
+
+-- ################### SHOP_OWNER_NOTIFICATION

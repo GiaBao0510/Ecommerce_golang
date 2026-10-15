@@ -164,6 +164,14 @@ func InitRouter(
 		ManagerGroup.Group("/product-detail"),
 		global.DB,
 		global.Logger.Error)
+	managerRouter.InitBrandRouter(
+		ManagerGroup.Group("/brand"),
+		global.DB,
+		global.Logger.Error)
+	managerRouter.InitShopOwnerRouter(
+		ManagerGroup.Group("/shop-owner"),
+		global.DB,
+		global.Logger.Error)
 	managerRouter.InitRolesRouter(
 		ManagerGroup.Group("/roles"),
 		global.DB,

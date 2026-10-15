@@ -74,8 +74,11 @@ func (r *SubCategoryRepository) Create(ctx context.Context, obj *models.SubCateg
 		},
 	}
 	if err := r.db.CreateSubCategory(ctx, params); err != nil {
-		r.dblog.LogError("Create", err, zap.String("name", obj.Name))
-		return 0, apperrors.NewInternalServerError(err)
+		r.dblog.LogError("Create", err, zap.String("name", obj.Name), zap.Int32("category_id", obj.IDCate))
+		return 0, MapDBErrorWithContext(
+			err,
+			"Category không tồn tại hoặc dữ liệu subcategory không hợp lệ",
+		)
 	}
 	return 0, nil
 }

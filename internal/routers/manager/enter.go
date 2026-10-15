@@ -7,6 +7,8 @@ type ManagerRouterGroup struct {
 	CategoryRouter
 	SubCategoryRouter
 	ProductDetailRouter
+	BrandRouter
+	ShopOwnerRouter
 	RolesRouter
 	PermissionRouter
 	RolePermissionRouter
